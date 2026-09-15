@@ -1,6 +1,6 @@
 # NineLens
 
-NineLens is a local-first baseball intelligence application built with a Ruby on Rails API, PostgreSQL, and a Vue 3 frontend. It downloads and normalizes MLB schedules, rosters, profiles, box scores, season statistics, and Statcast pitches, then turns those sources into searchable player and team profiles, leaderboards, game drill-downs, rolling trends, and contextual benchmarks.
+NineLens is an open-source baseball intelligence platform combining schedules, rosters, player profiles, box scores, season stats, and Statcast data into searchable player and team profiles, leaderboards, trends, benchmarks, game analysis, situational insights, and side-by-side comparisons—built for deeper research and better decisions.
 
 ## Current Features
 
