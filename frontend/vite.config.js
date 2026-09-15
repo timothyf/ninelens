@@ -14,6 +14,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setupTests.js',
+    exclude: ['**/node_modules/**', '**/.git/**', 'e2e/**'],
   },
   server: {
     proxy: {

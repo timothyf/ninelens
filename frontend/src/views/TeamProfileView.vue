@@ -335,7 +335,7 @@ watch(
 
     const now = new Date()
     const currentMonth = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0')].join('-')
-    selectedScheduleMonth.value = availableMonths.includes(currentMonth) ? currentMonth : availableMonths[0]
+    selectedScheduleMonth.value = availableMonths.includes(currentMonth) ? currentMonth : availableMonths[availableMonths.length - 1]
   },
   { immediate: true },
 )

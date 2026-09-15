@@ -1,5 +1,8 @@
-# Keep `db:seed` aligned with SeedFu so one command loads app fixtures.
-SeedFu.seed
+# Keep `db:seed` aligned with SeedFu so one command loads app fixtures. The
+# test suite creates isolated lookup records in its helpers, so loading the
+# development lookup seeds in test would make otherwise independent examples
+# collide on names and identifiers.
+SeedFu.seed unless Rails.env.test?
 
 player_stats_csv = ENV["PLAYER_STATS_CSV"].to_s.strip
 

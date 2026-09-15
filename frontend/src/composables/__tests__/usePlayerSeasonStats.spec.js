@@ -83,6 +83,7 @@ describe('usePlayerSeasonStats', () => {
       dataRange: { type: 'season', start: 1970, end: 2026 },
       availableSeasons: [2026, 2025, 2024],
       availableTeams: [{ id: 1, abbreviation: 'DET', short_name: 'Tigers' }],
+      availablePositions: [],
       columns: [{ key: 'homeRuns', label: 'HR', align: 'numeric' }],
       facetsComplete: true,
     })
