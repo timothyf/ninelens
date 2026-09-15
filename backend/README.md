@@ -95,6 +95,8 @@ bundle exec rspec spec/requests/api/home_spec.rb
 
 `config/routes.rb` is the source of truth for endpoints. The API includes public baseball data such as `/api/home`, `/api/players`, `/api/teams`, `/api/standings`, `/api/games`, and `/api/player_season_stats`, plus authenticated resources for notes, saved analyses, watchlists, lineups, opponent reports, and administration.
 
+Game detail responses include the official `mlb_id`, MLB-style batting and pitching notes, situational analysis, and the normalized box-score, play-by-play, and pitch-analysis data consumed by the frontend.
+
 - `app/controllers/api/` — JSON endpoints and authorization boundaries
 - `app/queries/` — read models for profiles, dashboards, leaderboards, and reports
 - `app/services/` — MLB/Statcast synchronization, imports, and business operations

@@ -32,7 +32,8 @@ NineLens is a local-first baseball intelligence application built with a Ruby on
 - Selectable rolling windows of 25, 50, or 100 plate appearances and 50, 100, or 250 pitches.
 - Trend charts for exit velocity, hard-hit rate, pitch velocity, pitch usage, whiff rate, and chase rate.
 - MLB, position, and pitcher-role averages; player percentiles; period-over-period changes; and sample sizes.
-- A comparison workspace for two or three players, with aligned season and career totals, profile-loading feedback, saved comparison links, and comparison notes. Retired-player comparisons show career totals only.
+- A comparison workspace for two or three players, with aligned season and career totals, profile-loading feedback, saved comparison links, and comparison notes.
+- Comparison tables show an overall 0–100 score for each player. Scores use sensible default stat weights, normalize batting counting statistics such as HR, 2B, 3B, RBI, and SO per at-bat, and can be recalculated with user-adjustable weights from Settings. Retired-player comparisons show career totals only.
 
 ### Team Profiles
 
@@ -54,7 +55,7 @@ NineLens is a local-first baseball intelligence application built with a Ruby on
 - Clickable game results throughout the application that open a tabbed Game Summary page.
 - A persistent scoreboard plus six analytical views:
   - **Overview** — game insights, pitcher decisions, key performers, scoring timeline, and line score.
-  - **Box Score** — team batting and pitching lines with links to Player Profiles.
+  - **Box Score** — team batting and pitching lines, MLB-style batting/pitching detail notes, and links to Player Profiles. The header also identifies the official MLB game ID.
   - **Pitching Analysis** — strike, first-pitch strike, whiff, CSW, chase, velocity, batters faced, times-through-order, and pitch-arsenal metrics for every pitcher.
   - **Batted Ball** — team and leading-hitter exit velocity, hard-hit rate, launch angle, expected wOBA, barrels, and contact distribution.
   - **Situational** — RISP, two-out, bases-loaded, leadoff, pinch-hit, high-leverage, batting-order-trip, and turning-point results.
@@ -381,7 +382,7 @@ Player analysis parameters include `range=season|7|14|30|custom`, `start_date`, 
 ### Games, Schedules, and Rosters
 
 - `GET /api/games`
-- `GET /api/games/:id` — scoreboard, insights, key performers, line/box scores, pitching and batted-ball analysis, situational results, and pitch-level play-by-play
+- `GET /api/games/:id` — scoreboard, official MLB game ID, insights, key performers, line/box scores, MLB-style box-score and game detail notes, pitching and batted-ball analysis, situational results, and pitch-level play-by-play
 - `GET /api/games/upcoming`
 - `GET /api/schedules/:id`
 - `GET /api/roster_snapshots`

@@ -58,9 +58,9 @@ Set `E2E_BASE_URL` to run the tests against already-running servers; that mode d
 - Home dashboard with daily schedule, league leaders, league filter, and team pulse
 - Schedule, standings, Stat Explorer, and pitch-data exploration
 - Player profiles, advanced statistics, trends, notes, and saved analyses
-- Two- or three-player comparison with season/career alignment; retired-player comparisons show career totals only
+- Two- or three-player comparison with season/career alignment, overall weighted scores, per-at-bat normalization for batting counting statistics, and user-adjustable Settings; retired-player comparisons show career totals only
 - Team directory and Team Profiles, including all-MLB Hitting/Pitching Team Stats
-- Game summaries with box score, pitching, batted-ball, situational, and play-by-play views
+- Game summaries with box score, MLB-style detail notes, official MLB game ID in the header, pitching, batted-ball, situational, and play-by-play views
 - Signed-in watchlists, opponent reports, lineup scenarios, and saved analyses
 - Administrator-only synchronization, imports, task monitoring, and data-health workflows
 
