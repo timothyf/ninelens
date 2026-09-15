@@ -130,6 +130,19 @@ function risp(value) {
   return `${value.hits ?? 0}-${value.at_bats ?? 0}`
 }
 
+function boxScoreNoteText(note) {
+  if (note.entries?.length) {
+    return note.entries.map((entry) => {
+      const name = entry.player?.full_name || 'Unknown player'
+      const gameValue = entry.value && Number(entry.value) > 1 ? ` ${entry.value}` : ''
+      const seasonValue = note.label === 'TB' || entry.season_value === null || entry.season_value === undefined || entry.season_value === ''
+        ? '' : ` (${entry.season_value})`
+      return `${name}${gameValue}${seasonValue}`
+    }).join('; ')
+  }
+  return display(note.value)
+}
+
 function scoringPlayText(play) {
   const description = String(play.description || '')
   const playerName = String(play.batter?.full_name || '')
@@ -235,7 +248,10 @@ async function handleTabKey(event, index) {
       <section class="scoreboard" data-test="game-scoreboard">
         <header>
           <div><span>{{ gameState(game) }}</span><strong>{{ formatDate(game.officialDate) }}</strong></div>
-          <p>{{ game.venueName || 'Venue unavailable' }} · {{ game.scheduledAt ? formatTime(game.scheduledAt) : 'Timeunavailable' }}</p>
+          <p>
+            {{ game.venueName || 'Venue unavailable' }} · {{ game.scheduledAt ? formatTime(game.scheduledAt) : 'Time unavailable' }}
+            <small v-if="game.mlbId" class="scoreboard__mlb-id">MLB Game ID {{ game.mlbId }}</small>
+          </p>
         </header>
         <div class="scoreboard__matchup">
           <RouterLink :to="{ name: 'team-profile', params: { id: game.awayTeam.id } }" class="scoreboard__team">
@@ -974,7 +990,7 @@ async function handleTabKey(event, index) {
           <template
             v-if="game.details.synchronized && (game.details.battingLines.length || game.details.pitchingLines.length)">
             <div
-              v-for="section in [{ team: game.awayTeam, batting: awayBatting, pitching: awayPitching }, { team: game.homeTeam, batting: homeBatting, pitching: homePitching }]"
+              v-for="section in [{ team: game.awayTeam, batting: awayBatting, pitching: awayPitching, notes: game.details.boxScoreNotes?.away }, { team: game.homeTeam, batting: homeBatting, pitching: homePitching, notes: game.details.boxScoreNotes?.home }]"
               :key="section.team.id" class="team-box">
               <h3>{{ section.team.name }}</h3>
               <h4>Batting</h4>
@@ -1021,6 +1037,18 @@ async function handleTabKey(event, index) {
                   </tbody>
                 </table>
               </div>
+              <div v-if="section.notes" class="box-score-notes" data-test="box-score-notes">
+                <div v-for="noteSection in [{ title: 'Batting', items: section.notes.batting }, { title: 'Baserunning', items: section.notes.baserunning }, { title: 'Fielding', items: section.notes.fielding }]"
+                  :key="noteSection.title" v-show="noteSection.items?.length" class="box-score-notes__section">
+                  <h4>{{ noteSection.title }}</h4>
+                  <dl>
+                    <template v-for="note in noteSection.items" :key="note.label">
+                      <dt>{{ note.label }}</dt>
+                      <dd>{{ boxScoreNoteText(note) }}</dd>
+                    </template>
+                  </dl>
+                </div>
+              </div>
               <h4>Pitching</h4>
               <div class="box-table-wrap">
                 <table class="box-score-table box-score-table--pitching">
@@ -1063,6 +1091,14 @@ async function handleTabKey(event, index) {
                   </tbody>
                 </table>
               </div>
+            </div>
+            <div v-if="game.details.gameNotes?.length" class="game-box-score-notes" data-test="game-box-score-notes">
+              <dl>
+                <template v-for="note in game.details.gameNotes" :key="note.label">
+                  <dt>{{ note.label }}:</dt>
+                  <dd>{{ note.value }}</dd>
+                </template>
+              </dl>
             </div>
           </template>
           <div v-else class="game-summary-empty">
@@ -1140,6 +1176,14 @@ async function handleTabKey(event, index) {
 .scoreboard>header p {
   color: #cbd6dd;
   font-size: .78rem;
+}
+
+.scoreboard__mlb-id {
+  display: block;
+  margin-top: .2rem;
+  color: rgba(203, 214, 221, .62);
+  font-size: .68rem;
+  letter-spacing: .04em;
 }
 
 .scoreboard__matchup {
@@ -2153,6 +2197,69 @@ table a {
   font-size: .61rem;
   font-weight: 700;
   margin-left: 10px;
+}
+
+.box-score-notes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.15rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(16, 38, 61, .09);
+  border-radius: 14px;
+  background: rgba(231, 237, 241, .38);
+}
+
+.box-score-notes__section h4 {
+  margin-top: 0;
+}
+
+.box-score-notes dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: .45rem .75rem;
+  margin: 0;
+  font-size: .82rem;
+}
+
+.box-score-notes dt {
+  color: #10263d;
+  font-weight: 850;
+}
+
+.box-score-notes dd {
+  margin: 0;
+  color: #68747c;
+}
+
+.game-box-score-notes {
+  margin-top: 1.8rem;
+  padding: 1.1rem 1.2rem;
+  border-top: 1px solid rgba(16, 38, 61, .12);
+}
+
+.game-box-score-notes dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: .45rem .75rem;
+  margin: 0;
+  font-size: .82rem;
+}
+
+.game-box-score-notes dt {
+  color: #10263d;
+  font-weight: 850;
+}
+
+.game-box-score-notes dd {
+  margin: 0;
+  color: #68747c;
+}
+
+@media (max-width: 720px) {
+  .box-score-notes {
+    grid-template-columns: 1fr;
+  }
 }
 
 .game-summary-empty {

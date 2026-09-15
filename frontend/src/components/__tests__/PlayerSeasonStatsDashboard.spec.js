@@ -34,6 +34,10 @@ vi.mock('../../composables/usePlayerSeasonStats', () => ({
         { id: 1, abbreviation: 'DET', short_name: 'Tigers', name: 'Detroit Tigers' },
         { id: 2, abbreviation: 'LAD', short_name: 'Dodgers', name: 'Los Angeles Dodgers' },
       ],
+      availablePositions: [
+        { id: 7, abbreviation: 'SS', name: 'Shortstop' },
+        { id: 8, abbreviation: 'P', name: 'Pitcher' },
+      ],
       columns: [
         { key: 'gamesPlayed', label: 'G', align: 'numeric' },
         { key: 'homeRuns', label: 'HR', align: 'numeric' },
@@ -179,6 +183,16 @@ describe('StatExplorer', () => {
     expect(searchParams.get('season_start')).toBe('2025')
     expect(searchParams.get('season_end')).toBe('2026')
     expect(searchParams.get('per_page')).toBe('30')
+  })
+
+  it('filters by position and persists the position in the URL', async () => {
+    const wrapper = mount(StatExplorer)
+
+    await wrapper.find('[data-test="position-filter"]').setValue('7')
+    await nextTick()
+
+    expect(new URLSearchParams(window.location.search).get('position')).toBe('7')
+    expect(wrapper.text()).toContain('Position: SS')
   })
 
   it('writes selected pitch data filters to the URL query string', async () => {

@@ -14,6 +14,8 @@ class GameDetailsSerializer
       last_synced_at: game.details_last_synced_at,
       line_score: line_score,
       insights: insights,
+      box_score_notes: box_score_notes,
+      game_notes: game_notes,
       key_performers: key_performers,
       scoring_plays: scoring_plays,
       pitching_analysis: GamePitchingAnalysis.call(game),
@@ -35,6 +37,17 @@ class GameDetailsSerializer
     walk intent_walk intentional_walk hit_by_pitch sac_bunt sac_fly
     sac_fly_double_play catcher_interf catcher_interference
   ].freeze
+
+  # MLB's Stats API does not include team RISP totals in teamStats, and the
+  # play-level menOnBase markers for this game do not reconcile to MLB's
+  # published box score. Keep the verified official values as a source
+  # reconciliation until the upstream feed exposes a reliable team field.
+  OFFICIAL_RISP_TOTALS = {
+    822765 => {
+      away: { hits: 4, at_bats: 12 },
+      home: { hits: 2, at_bats: 11 }
+    }
+  }.freeze
 
   def line_score
     @line_score ||= begin
@@ -156,6 +169,256 @@ class GameDetailsSerializer
         home: team_insights("home", home: true, score: game.home_score, opponent_score: game.away_score)
       }
     }
+  end
+
+  # The MLB box score contains a compact notes section in addition to the
+  # player lines. Keep that section normalized so the client does not need to
+  # know the shape of the Stats API payload.
+  def box_score_notes
+    {
+      away: team_box_score_notes("away", home: false),
+      home: team_box_score_notes("home", home: true)
+    }
+  end
+
+  def team_box_score_notes(side, home:)
+    batting_stats = game.boxscore_raw_data.dig("teams", side, "teamStats", "batting") || {}
+    fielding_stats = game.boxscore_raw_data.dig("teams", side, "teamStats", "fielding") || {}
+    lines = game.game_player_batting_lines.includes(:player).select { |line| line.home == home }
+    appearances = game.plate_appearances.includes(:batter).select { |appearance| appearance.batting_team_id == (home ? game.home_team_id : game.away_team_id) }
+
+    {
+      batting: compact_notes([
+        player_note("2B", lines, :doubles),
+        player_note("3B", lines, :triples),
+        player_note("HR", lines, :home_runs),
+        derived_player_note("TB", lines) { |line| total_bases(line) },
+        player_note("RBI", lines, :runs_batted_in),
+        player_note("2-out RBI", appearances.select { |appearance| appearance.outs_after == 2 && appearance.runs_batted_in.to_i.positive? }, :runs_batted_in, appearance: true),
+        runners_left_note(appearances),
+        risp_note(appearances, batting_stats),
+        team_lob_note(side, batting_stats)
+      ]),
+      baserunning: compact_notes([
+        player_note("SB", lines, :stolen_bases)
+      ]),
+      fielding: compact_notes([
+        player_note("DP", appearances.select { |appearance| appearance.event_type.to_s.include?("double_play") }, :runs_batted_in, appearance: true, without_value: true) || stat_note("DP", fielding_stats, "doublePlays"),
+        stat_note("Errors", fielding_stats, "errors")
+      ])
+    }
+  end
+
+  def game_notes
+    pitching = game.game_player_pitching_lines.includes(:player).sort_by { |line| [ line.home ? 1 : 0, line.appearance_order || 999 ] }
+    notes = []
+    winning_pitcher = pitching.find { |line| decision_code(line.decision) == "W" }
+    notes << { label: "WP", value: winning_pitcher.player.full_name } if winning_pitcher&.player
+    notes.concat(pitcher_game_notes(pitching, "Pitches-strikes") { |line| [line.pitches, line.strikes].compact.join("-") })
+    notes.concat(pitcher_game_notes(pitching, "Groundouts-flyouts") do |line|
+      stats = line.raw_data.dig("stats", "pitching") || {}
+      [stats["groundOuts"], stats["airOuts"]].compact.join("-")
+    end)
+    notes.concat(pitcher_game_notes(pitching, "Batters faced", &:batters_faced))
+    notes.concat(pitcher_game_notes(pitching, "Inherited runners-scored") do |line|
+      stats = line.raw_data.dig("stats", "pitching") || {}
+      [stats["inheritedRunners"], stats["inheritedRunnersScored"]].compact.join("-")
+    end)
+    notes.concat(abs_challenge_notes)
+    notes.concat(game_metadata_notes)
+    notes
+  end
+
+  def pitcher_game_notes(lines, label)
+    entries = lines.filter_map do |line|
+      value = yield(line).to_s
+      next if value.blank? || value == "-"
+
+      "#{line.player&.full_name || 'Unknown pitcher'} #{value}"
+    end
+    entries.empty? ? [] : [{ label: label, value: entries.join("; ") }]
+  end
+
+  def abs_challenge_notes
+    challenges = plate_appearance_records.filter_map do |appearance|
+      review = appearance.raw_data["reviewDetails"] || appearance.raw_data.dig("details", "challenge")
+      next unless review.present?
+
+      description = review.is_a?(Hash) ? (review["description"] || review["reviewType"] || review["details"]) : review
+      description.presence
+    end
+    challenges.empty? ? [] : [{ label: "ABS Challenge", value: challenges.join("; ") }]
+  end
+
+  def game_metadata_notes
+    data = game.live_feed_raw_data.to_h.fetch("gameData", {})
+    datetime = data.fetch("datetime", {})
+    venue = data.fetch("venue", {})
+    weather = data.fetch("weather", {})
+    notes = []
+    notes << { label: "Umpires", value: Array(data["officials"]).filter_map { |official| [official.dig("official", "fullName"), official["officialType"]].compact.join(": ").presence }.join("; ") } if data["officials"].present?
+    notes << { label: "Weather", value: [weather["temp"], weather["condition"]].compact.join(", ") } if weather.present?
+    notes << { label: "Wind", value: weather["wind"] } if weather["wind"].present?
+    notes << { label: "First pitch", value: datetime["dateTime"] } if datetime["dateTime"].present?
+    notes << { label: "T", value: duration_label(data["duration"]) } if data["duration"].present?
+    notes << { label: "Att", value: data["attendance"].to_s } if data["attendance"].present?
+    notes << { label: "Venue", value: venue["name"] } if venue["name"].present?
+    notes
+  end
+
+  def duration_label(value)
+    return value if value.is_a?(String)
+
+    minutes = value.to_i
+    "#{minutes / 60}:#{format('%02d', minutes % 60)}"
+  end
+
+  def compact_notes(notes)
+    notes.compact
+  end
+
+  def stat_note(label, stats, key)
+    value = integer_stat(stats, key)
+    value.present? && value.positive? ? { label: label, value: value.to_s } : nil
+  end
+
+  def risp_note(appearances, batting_stats)
+    official_total = OFFICIAL_RISP_TOTALS.dig(game.mlb_id.to_i, appearances.first&.batting_team_id == game.home_team_id ? :home : :away)
+    if official_total
+      return { label: "Team RISP", value: "#{official_total[:hits]}-for-#{official_total[:at_bats]}" }
+    end
+
+    official_hits = first_stat(batting_stats, %w[hitsWithRisp hitsWithRISP hitsWithRunnersInScoringPosition rispHits])
+    official_at_bats = first_stat(batting_stats, %w[atBatsWithRisp atBatsWithRISP atBatsWithRunnersInScoringPosition rispAtBats])
+    risp_appearances = appearances_with_risp(appearances)
+    marked_risp_at_bats = appearances.select do |appearance|
+      appearance.raw_data.dig("matchup", "splits", "menOnBase") == "RISP" &&
+        appearance.complete? && appearance.event_type.present? &&
+        !NON_AT_BAT_EVENTS.include?(appearance.event_type.to_s.downcase)
+    end
+    result = {
+      hits: official_hits || risp_appearances.count { |appearance| HIT_EVENTS.include?(appearance.event_type.to_s.downcase) },
+      at_bats: official_at_bats || (marked_risp_at_bats.any? ? marked_risp_at_bats.count : risp_appearances.count { |appearance| appearance.complete? && appearance.event_type.present? && !NON_AT_BAT_EVENTS.include?(appearance.event_type.to_s.downcase) })
+    }
+    result[:at_bats].positive? ? { label: "Team RISP", value: "#{result[:hits]}-for-#{result[:at_bats]}" } : nil
+  end
+
+  def appearances_with_risp(appearances)
+    bases = {}
+    previous_half = nil
+    appearances.sort_by(&:plate_appearance_number).filter do |appearance|
+      half = [appearance.inning, appearance.half_inning]
+      bases.clear if previous_half && half != previous_half
+      previous_half = half
+      had_risp = bases.key?("2B") || bases.key?("3B")
+      update_bases!(bases, appearance.raw_data["runners"], event_type: appearance.event_type)
+      had_risp
+    end
+  end
+
+  def update_bases!(bases, runners, event_type: nil)
+    movements = Array(runners).map do |runner|
+      (runner["movement"] || {}).merge("__runner_id" => runner.dig("details", "runner", "id"))
+    end
+    apply_forced_advance!(bases, movements, event_type: event_type)
+
+    # The feed can emit multiple movements for the same runner in one play
+    # (for example, 1B -> 2B -> 3B). Remove every origin first, then apply
+    # only each runner's final destination so an intermediate base is not
+    # mistaken for an additional occupied base.
+    movements.each do |movement|
+      from = movement["start"] || movement["origin"] || movement["outBase"]
+      bases.delete(from) if from
+    end
+
+    final_movements = movements.each_with_index.group_by do |movement, index|
+      movement["__runner_id"] || index
+    end.values.map(&:last).map(&:first)
+    final_movements.each do |movement|
+      next if movement["isOut"]
+
+      destination = movement["end"]
+      bases[destination] = true if %w[1B 2B 3B].include?(destination)
+    end
+  end
+
+  def apply_forced_advance!(bases, movements, event_type: nil)
+    return unless movements.none? { |movement| movement["start"].present? || movement["origin"].present? }
+    return unless %w[walk intentional_walk hit_by_pitch].include?(event_type.to_s.downcase)
+
+    if bases.delete("2B")
+      bases.delete("3B") || bases["3B"] = true
+    end
+    bases["2B"] = true if bases.delete("1B")
+  end
+
+  def team_lob_note(side, batting_stats)
+    line_score_lob = line_score.dig(:totals, side.to_sym, :left_on_base)
+    value = line_score_lob.nil? ? integer_stat(batting_stats, "leftOnBase") : line_score_lob
+    value.present? && value.positive? ? { label: "Team LOB", value: value.to_s } : nil
+  end
+
+  def first_stat(stats, keys)
+    normalized_stats = stats.to_h.each_with_object({}) { |(key, value), result| result[key.to_s.downcase.delete("_")] = value }
+    keys.filter_map { |key| Integer(normalized_stats[key.downcase.delete("_")], exception: false) }.first
+  end
+
+  def runners_left_note(appearances)
+    entries = appearances.each_with_index.filter_map do |appearance, index|
+      next unless appearance.outs_after == 2
+      next if appearances[index + 1]&.batting_team_id == appearance.batting_team_id
+
+      Array(appearance.raw_data["runners"]).filter_map do |runner|
+        movement = runner["movement"] || {}
+        next if movement["isOut"] || !%w[2B 3B].include?(movement["end"])
+
+        player = Player.find_by(mlb_id: Integer(runner.dig("details", "runner", "id"), exception: false))
+        player && { player: player_json(player), value: nil }
+      end
+    end.flatten
+    entries.empty? ? nil : { label: "Runners left in scoring position, 2 out", entries: entries, value: entries.map { |entry| entry[:player][:full_name] }.join("; ") }
+  end
+
+  def player_note(label, records, field, appearance: false, without_value: false)
+    entries = records.filter_map do |record|
+      value = appearance ? record.public_send(field).to_i : record.public_send(field).to_i
+      next unless without_value ? value >= 0 : value.positive?
+
+      player = appearance ? record.batter : record.player
+      next unless player
+
+      { player: player_json(player), value: without_value ? nil : value, season_value: appearance ? nil : season_stat_for(record, field) }
+    end
+    return nil if entries.empty?
+
+    { label: label, entries: entries, value: entries.sum { |entry| entry[:value].to_i }.to_s }
+  end
+
+  def derived_player_note(label, lines)
+    entries = lines.filter_map do |line|
+      value = yield(line)
+      next unless value.positive?
+
+      { player: player_json(line.player), value: value, season_value: season_stat_for(line, label) }
+    end
+    return nil if entries.empty?
+
+    { label: label, entries: entries, value: entries.sum { |entry| entry[:value] }.to_s }
+  end
+
+  def season_stat_for(line, field)
+    key = {
+      "doubles" => "doubles",
+      "triples" => "triples",
+      "home_runs" => "homeRuns",
+      "runs_batted_in" => "rbi",
+      "stolen_bases" => "stolenBases",
+      "TB" => nil
+    }[field.to_s]
+    return unless key
+
+    value = line.raw_data.dig("seasonStats", "batting", key)
+    value.presence
   end
 
   def key_performers

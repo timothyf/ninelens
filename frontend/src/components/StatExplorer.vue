@@ -20,6 +20,7 @@ const FILTER_URL_CATEGORIES = new Set(['batting', 'pitching', 'pitchData'])
 const filters = reactive({
   playerName: '',
   teamId: '',
+  positionId: '',
   league: '',
   seasonStart: '',
   seasonEnd: '',
@@ -83,6 +84,7 @@ const query = computed(() => ({
   filters: {
     player_name: filters.playerName,
     team_id: filters.teamId,
+    position_id: filters.positionId,
     league: filters.league,
     season_start: filters.seasonStart,
     season_end: filters.seasonEnd,
@@ -135,6 +137,7 @@ watch(
     filters.category,
     filters.playerName,
     filters.teamId,
+    filters.positionId,
     filters.league,
     filters.seasonStart,
     filters.seasonEnd,
@@ -160,7 +163,7 @@ watch(
 )
 
 watch(
-  () => [filters.playerName, filters.teamId, filters.league, filters.seasonStart, filters.seasonEnd, filters.category, pagination.perPage, sort.value],
+  () => [filters.playerName, filters.teamId, filters.positionId, filters.league, filters.seasonStart, filters.seasonEnd, filters.category, pagination.perPage, sort.value],
   () => {
     pagination.page = 1
   },
@@ -228,8 +231,23 @@ watch(
   { deep: true },
 )
 
+watch(
+  () => meta.value.availablePositions,
+  (availablePositions) => {
+    if (!filters.positionId) return
+
+    if (!(availablePositions || []).some((position) => String(position.id) === String(filters.positionId))) {
+      filters.positionId = ''
+    }
+  },
+  { deep: true },
+)
+
 const selectedTeam = computed(() =>
   meta.value.availableTeams.find((team) => String(team.id) === String(filters.teamId)) || null,
+)
+const selectedPosition = computed(() =>
+  (meta.value.availablePositions || []).find((position) => String(position.id) === String(filters.positionId)) || null,
 )
 
 const pitchTypeOptions = computed(() => {
@@ -335,6 +353,7 @@ const filterSummary = computed(() => {
       `Team: ${selectedTeam.value.abbreviation || selectedTeam.value.short_name || selectedTeam.value.team_name || selectedTeam.value.name}`,
     filters.league === 'american' && 'League: American League',
     filters.league === 'national' && 'League: National League',
+    selectedPosition.value && `Position: ${selectedPosition.value.abbreviation || selectedPosition.value.name}`,
     seasonRangeLabel,
     filters.category && `Category: ${filters.category}`,
   ].filter(Boolean)
@@ -362,6 +381,7 @@ function applyUrlState() {
 
   filters.playerName = searchParams.get('player') || filters.playerName
   filters.teamId = searchParams.get('team') || filters.teamId
+  filters.positionId = searchParams.get('position') || filters.positionId
   filters.league = ['american', 'national'].includes(searchParams.get('league')) ? searchParams.get('league') : filters.league
   filters.seasonStart = searchParams.get('season_start') || filters.seasonStart
   filters.seasonEnd = searchParams.get('season_end') || filters.seasonEnd
@@ -400,6 +420,7 @@ function syncUrlState() {
   } else {
     setSearchParam(searchParams, 'player', filters.playerName)
     setSearchParam(searchParams, 'team', filters.teamId)
+    setSearchParam(searchParams, 'position', filters.positionId)
     setSearchParam(searchParams, 'league', filters.league)
     setSearchParam(searchParams, 'season_start', filters.seasonStart)
     setSearchParam(searchParams, 'season_end', filters.seasonEnd)
@@ -555,6 +576,7 @@ function resetFilters() {
 
   filters.playerName = ''
   filters.teamId = ''
+  filters.positionId = ''
   filters.league = ''
   filters.seasonStart = ''
   filters.seasonEnd = ''
@@ -653,6 +675,16 @@ function resetFilters() {
             <option value="">All teams</option>
             <option v-for="teamOption in meta.availableTeams" :key="teamOption.id" :value="String(teamOption.id)">
               {{ teamOption.abbreviation }} · {{ teamOption.short_name || teamOption.team_name || teamOption.name }}
+            </option>
+          </select>
+        </label>
+
+        <label v-if="filters.category !== 'pitchData'" class="field">
+          <span>Position</span>
+          <select v-model="filters.positionId" data-test="position-filter">
+            <option value="">All positions</option>
+            <option v-for="positionOption in meta.availablePositions" :key="positionOption.id" :value="String(positionOption.id)">
+              {{ positionOption.abbreviation }} · {{ positionOption.name }}
             </option>
           </select>
         </label>

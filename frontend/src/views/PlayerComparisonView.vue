@@ -44,6 +44,14 @@ const sameCategory = computed(() =>
 )
 const seasonRows = computed(() => alignedRows('season'))
 const careerRows = computed(() => alignedRows('career'))
+const settingsOpen = ref(false)
+const DEFAULT_STAT_WEIGHTS = {
+  avg: 12, obp: 16, slg: 14, ops: 18, war: 12,
+  era: 18, whip: 14, 'k/9': 10, 'bb/9': 8, 'k/bb': 12,
+  hits: 6, runs: 6, homeruns: 9, rbi: 8, stolenbases: 4,
+  wins: 5, saves: 5, strikeouts: 8, inningspitched: 6,
+}
+const weightOverrides = ref({})
 const LOWER_IS_BETTER = {
   batting: new Set(['strikeouts', 'caughtstealing', 'k_percentage']),
   pitching: new Set(['l', 'era', 'hits', 'runs', 'er', 'homeruns', 'hitbypitch', 'baseonballs', 'whip', 'avg', 'bb_percentage']),
@@ -53,6 +61,11 @@ const DECIMAL_STAT_KEYS = new Set([
   'k/9', 'bb/9', 'k/bb', 'hr/9', 'h/9', 'war',
 ])
 const PERCENTAGE_STAT_KEYS = new Set(['k_percentage', 'bb_percentage'])
+const AT_BAT_KEYS = new Set(['atbats', 'ab'])
+const PER_AT_BAT_STAT_KEYS = new Set([
+  'hits', 'runs', 'homeruns', 'doubles', 'triples', 'rbi', 'runsbattedin',
+  'strikeouts', 'walks', 'stolenbases', 'caughtstealing', 'totalbases',
+])
 
 watch([leftId, rightId, thirdId], () => {
   const query = {}
@@ -82,6 +95,77 @@ function alignedRows(scope) {
   }
   const valuesByPlayer = statsByPlayer.map((stats) => Object.fromEntries(stats.map((stat) => [stat.key, stat.value])))
   return [...definitions].map(([key, label]) => ({ key, label, values: valuesByPlayer.map((values) => values[key]), left: valuesByPlayer[0]?.[key], right: valuesByPlayer[1]?.[key] }))
+}
+
+const settingRows = computed(() => {
+  const rows = [...seasonRows.value, ...careerRows.value]
+  const seen = new Set()
+  return rows.filter((row) => {
+    if (seen.has(row.key)) return false
+    seen.add(row.key)
+    return true
+  })
+})
+
+function statWeight(key) {
+  const normalizedKey = String(key).trim().toLowerCase()
+  return Number(weightOverrides.value[normalizedKey] ?? DEFAULT_STAT_WEIGHTS[normalizedKey] ?? 5)
+}
+
+function setWeight(key, value) {
+  weightOverrides.value[String(key).trim().toLowerCase()] = Number(value)
+}
+
+function scoreValue(row, playerIndex, scope) {
+  const value = Number(row.values[playerIndex])
+  const category = scope === 'season'
+    ? comparisonPlayers.value[playerIndex]?.seasonOverview.category
+    : comparisonPlayers.value[playerIndex]?.careerOverview.category
+  const normalizedKey = String(row.key).trim().toLowerCase()
+  const shouldNormalize = category === 'batting' && PER_AT_BAT_STAT_KEYS.has(normalizedKey)
+  const comparableValue = shouldNormalize ? perAtBatValue(value, playerIndex, scope) : value
+  const values = comparisonPlayers.value.map((_, index) => {
+    const candidate = Number(row.values[index])
+    return shouldNormalize ? perAtBatValue(candidate, index, scope) : candidate
+  }).filter(Number.isFinite)
+  if (!Number.isFinite(comparableValue) || values.length < 2) return null
+
+  const minimum = Math.min(...values)
+  const maximum = Math.max(...values)
+  if (minimum === maximum) return 100
+
+  const lowerIsBetter = LOWER_IS_BETTER[category]?.has(String(row.key).toLowerCase()) === true
+  const normalized = lowerIsBetter
+    ? (maximum - comparableValue) / (maximum - minimum)
+    : (comparableValue - minimum) / (maximum - minimum)
+  return normalized * 100
+}
+
+function perAtBatValue(value, playerIndex, scope) {
+  if (!Number.isFinite(value)) return null
+  const rows = scope === 'season' ? seasonRows.value : careerRows.value
+  const atBatsRow = rows.find((row) => AT_BAT_KEYS.has(String(row.key).trim().toLowerCase()))
+  const atBats = Number(atBatsRow?.values[playerIndex])
+  return Number.isFinite(atBats) && atBats > 0 ? value / atBats : null
+}
+
+function overallScore(scope, playerIndex) {
+  const rows = scope === 'season' ? seasonRows.value : careerRows.value
+  let weightedTotal = 0
+  let totalWeight = 0
+  rows.forEach((row) => {
+    const weight = statWeight(row.key)
+    const score = scoreValue(row, playerIndex, scope)
+    if (weight > 0 && score !== null) {
+      weightedTotal += score * weight
+      totalWeight += weight
+    }
+  })
+  return totalWeight ? Math.round(weightedTotal / totalWeight) : null
+}
+
+function resetWeights() {
+  weightOverrides.value = {}
 }
 
 function selectPlayer(side, player) {
@@ -161,6 +245,25 @@ function comparisonClass(row, playerIndex, scope) {
       <PlayerComparisonPicker v-else label="Player C" :selected-player="null" :selected-player-id="thirdId" :profile-loading="thirdLoading" :excluded-player-ids="[leftId, rightId]" @select="selectPlayer('third', $event)" @clear="clearPlayer('third')" />
     </section>
 
+    <section v-if="ready" class="comparison-settings" data-test="comparison-settings">
+      <button type="button" class="comparison-settings__toggle" :aria-expanded="settingsOpen" @click="settingsOpen = !settingsOpen">
+        Settings <span>{{ settingsOpen ? 'Hide weights' : 'Adjust weights' }}</span>
+      </button>
+      <div v-if="settingsOpen" class="comparison-settings__panel">
+        <div>
+          <strong>Overall score weights</strong>
+          <p>Scores are relative to the selected players; higher scores indicate stronger performance for the weighted stats.</p>
+        </div>
+        <div class="comparison-settings__weights">
+          <label v-for="row in settingRows" :key="row.key">
+            <span>{{ row.label }}</span>
+            <input :value="statWeight(row.key)" type="number" min="0" max="100" step="1" :aria-label="`${row.label} weight`" @input="setWeight(row.key, $event.target.value)" />
+          </label>
+        </div>
+        <button type="button" class="comparison-settings__reset" @click="resetWeights">Reset defaults</button>
+      </div>
+    </section>
+
     <div v-if="leftLoading || rightLoading || thirdLoading" class="comparison-state">Loading player profiles…</div>
     <div v-else-if="(leftError && leftId) || (rightError && rightId) || (thirdError && thirdId)" class="comparison-state comparison-state--error">{{ leftError || rightError || thirdError }}</div>
     <section v-else-if="!ready" class="comparison-state">Choose at least two different players to begin the comparison.</section>
@@ -183,7 +286,7 @@ function comparisonClass(row, playerIndex, scope) {
       <section v-if="showSeasonComparison" class="comparison-table-panel" data-test="season-comparison">
         <header><div><p>Current production</p><h2>Season comparison</h2></div><span>{{ comparisonPlayers.map((player) => player.seasonOverview.season || '—').join(' / ') }}</span></header>
         <table>
-          <thead><tr><th>{{ leftPlayer.fullName }}</th><th>Statistic</th><th>{{ rightPlayer.fullName }}</th><th v-if="hasThirdPlayer">{{ thirdPlayer.fullName }}</th></tr></thead>
+          <thead><tr><th>{{ leftPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('season', 0) ?? '—' }}/100</strong></small></th><th>Statistic</th><th>{{ rightPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('season', 1) ?? '—' }}/100</strong></small></th><th v-if="hasThirdPlayer">{{ thirdPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('season', 2) ?? '—' }}/100</strong></small></th></tr></thead>
           <tbody>
             <tr v-for="row in seasonRows" :key="row.key" :data-test="`season-stat-${row.key}`">
               <td :class="comparisonClass(row, 0, 'season')">{{ statValue(row.key, row.values[0]) }}</td>
@@ -198,7 +301,7 @@ function comparisonClass(row, playerIndex, scope) {
       <section class="comparison-table-panel" data-test="career-comparison">
         <header><div><p>Career ledger</p><h2>Career comparison</h2></div><span>{{ comparisonPlayers.map((player) => `${player.careerOverview.seasonCount} seasons`).join(' / ') }}</span></header>
         <table>
-          <thead><tr><th>{{ leftPlayer.fullName }}</th><th>Statistic</th><th>{{ rightPlayer.fullName }}</th><th v-if="hasThirdPlayer">{{ thirdPlayer.fullName }}</th></tr></thead>
+          <thead><tr><th>{{ leftPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('career', 0) ?? '—' }}/100</strong></small></th><th>Statistic</th><th>{{ rightPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('career', 1) ?? '—' }}/100</strong></small></th><th v-if="hasThirdPlayer">{{ thirdPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('career', 2) ?? '—' }}/100</strong></small></th></tr></thead>
           <tbody>
             <tr v-for="row in careerRows" :key="row.key" :data-test="`career-stat-${row.key}`">
               <td :class="comparisonClass(row, 0, 'career')">{{ statValue(row.key, row.values[0]) }}</td>
@@ -241,9 +344,20 @@ function comparisonClass(row, playerIndex, scope) {
 .comparison-table-panel th,.comparison-table-panel td { width: 33.333%; padding: .7rem; border-top: 1px solid rgba(16,38,61,.09); text-align: center; }
 .comparison-table-panel:has(th:nth-child(4)) th,.comparison-table-panel:has(th:nth-child(4)) td { width: 25%; }
 .comparison-table-panel thead th { color: #6d7a83; font-size: .7rem; text-transform: uppercase; }
+.comparison-score { display: block; margin-top: .35rem; color: #a93627; font-size: .66rem; font-weight: 800; letter-spacing: .03em; text-transform: none; }
+.comparison-score strong { color: #17613d; font-size: .9rem; }
 .comparison-table-panel tbody td { font-family: 'Avenir Next Condensed',sans-serif; font-size: 1.2rem; font-weight: 900; }
 .comparison-table-panel tbody td.is-better { color: #17613d; background: rgba(42,145,91,.12); }
 .comparison-table-panel tbody td.is-lesser { color: #982f27; background: rgba(181,61,48,.1); }
 .comparison-table-panel tbody th { color: #61717d; font-size: .72rem; text-transform: uppercase; }
+.comparison-settings { margin-top: 1rem; }
+.comparison-settings__toggle { display: inline-flex; align-items: center; gap: .55rem; padding: .65rem .9rem; border: 1px solid rgba(16,38,61,.14); border-radius: 999px; color: #fffaf0; background: #20543c; font: inherit; font-size: .78rem; font-weight: 900; cursor: pointer; }
+.comparison-settings__toggle span { color: #cfe1d5; font-size: .68rem; font-weight: 700; }
+.comparison-settings__panel { margin-top: .7rem; padding: 1rem; border: 1px solid rgba(16,38,61,.12); border-radius: 16px; background: rgba(255,252,245,.9); }
+.comparison-settings__panel p { margin: .25rem 0 0; color: #687781; font-size: .75rem; }
+.comparison-settings__weights { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .8rem; }
+.comparison-settings__weights label { display: grid; gap: .25rem; min-width: 105px; color: #61717d; font-size: .68rem; font-weight: 800; }
+.comparison-settings__weights input { width: 100%; padding: .45rem .5rem; border: 1px solid rgba(16,38,61,.16); border-radius: 8px; color: #10263d; background: #fff; font: inherit; }
+.comparison-settings__reset { margin-top: .8rem; padding: .45rem .7rem; border: 1px solid rgba(169,54,39,.25); border-radius: 8px; color: #a93627; background: transparent; font: inherit; font-size: .7rem; font-weight: 800; cursor: pointer; }
 @media (max-width: 650px) { .comparison-selectors,.comparison-selectors--three { grid-template-columns: 1fr; } .comparison-versus { margin: 0 auto; } .comparison-table-panel { overflow-x: auto; } .comparison-table-panel table { min-width: 560px; } }
 </style>

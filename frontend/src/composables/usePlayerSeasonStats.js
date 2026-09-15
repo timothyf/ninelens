@@ -31,6 +31,7 @@ function normalizeMeta(meta = {}) {
     dataRange: meta.data_range || null,
     availableSeasons: meta.available_seasons || [],
     availableTeams: meta.available_teams || [],
+    availablePositions: meta.available_positions || [],
     columns: meta.columns || [],
     facetsComplete: meta.facets_complete !== false,
   }
@@ -75,6 +76,7 @@ export function usePlayerSeasonStats(queryRef) {
             dataRange: meta.value.dataRange,
             availableSeasons: meta.value.availableSeasons,
             availableTeams: meta.value.availableTeams,
+            availablePositions: meta.value.availablePositions,
           }
         : nextMeta
 

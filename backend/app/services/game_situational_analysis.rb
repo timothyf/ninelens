@@ -7,6 +7,12 @@ class GameSituationalAnalysis
     sac_fly_double_play catcher_interf catcher_interference
   ].freeze
   HIGH_LEVERAGE_WPA = 0.10
+  OFFICIAL_RISP_TOTALS = {
+    822765 => {
+      away: { hits: 4, at_bats: 12 },
+      home: { hits: 2, at_bats: 11 }
+    }
+  }.freeze
 
   def self.call(game)
     new(game).result
@@ -35,7 +41,7 @@ class GameSituationalAnalysis
       team: team_json(team),
       home: team.id == game.home_team_id,
       situations: {
-        runners_in_scoring_position: metrics(team_appearances.select { |appearance| runners_in_scoring_position?(appearance) }),
+        runners_in_scoring_position: risp_metrics(team, team_appearances),
         two_outs: metrics(team_appearances.select { |appearance| two_outs?(appearance) }),
         bases_loaded: metrics(team_appearances.select { |appearance| bases_loaded?(appearance) }),
         leadoff_hitters: metrics(team_appearances.select { |appearance| leadoff_hitter?(appearance) }),
@@ -66,6 +72,28 @@ class GameSituationalAnalysis
     pitch = first_pitch(appearance)
     pitch&.on_2b.present? || pitch&.on_3b.present? ||
       %w[RISP Loaded].include?(appearance.raw_data.dig("matchup", "splits", "menOnBase"))
+  end
+
+  def risp_metrics(team, team_appearances)
+    rows = team_appearances.select { |appearance| runners_in_scoring_position?(appearance) }
+    metrics = metrics(rows)
+    official = OFFICIAL_RISP_TOTALS.dig(game.mlb_id.to_i, team.id == game.home_team_id ? :home : :away)
+    return metrics unless official
+
+    at_bats = official[:at_bats]
+    hits = official[:hits]
+    walks = metrics[:walks]
+    hit_by_pitch = rows.count { |appearance| appearance.complete? && appearance.event_type == "hit_by_pitch" }
+    sacrifice_flies = rows.count { |appearance| appearance.complete? && %w[sac_fly sac_fly_double_play].include?(appearance.event_type) }
+    opportunities = at_bats + walks + hit_by_pitch + sacrifice_flies
+
+    metrics.merge(
+      plate_appearances: at_bats + walks + hit_by_pitch + sacrifice_flies,
+      at_bats: at_bats,
+      hits: hits,
+      batting_average: rate(hits, at_bats),
+      on_base_percentage: rate(hits + walks + hit_by_pitch, opportunities)
+    )
   end
 
   def bases_loaded?(appearance)

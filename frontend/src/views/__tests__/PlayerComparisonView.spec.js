@@ -116,6 +116,11 @@ describe('PlayerComparisonView', () => {
     expect(career.text()).toContain('353')
     expect(career.text()).toContain('24.0%')
     expect(career.text()).toContain('15.0%')
+
+    const settings = wrapper.get('[data-test="comparison-settings"]')
+    await settings.get('button').trigger('click')
+    expect(settings.get('input[aria-label="OPS weight"]').element.value).toBe('18')
+    expect(settings.get('input[aria-label="HR weight"]').element.value).toBe('9')
   })
 
   it('adds an optional third player to the comparison', async () => {

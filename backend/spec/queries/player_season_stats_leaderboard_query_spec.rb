@@ -13,6 +13,22 @@ RSpec.describe PlayerSeasonStatsLeaderboardQuery, type: :model do
     expect(query.send(:available_stat_names)).to contain_exactly("homeRuns", "ops")
   end
 
+  it "filters leaderboard rows by player position and exposes position facets" do
+    team = create_team
+    player = create_player(team: team)
+    position = create_position(abbreviation: "QSS", name: "Query Shortstop", position_type: "infielder")
+    create_player_position(player: player, position: position, attributes: { is_primary: true })
+    stat_type = StatType.find_or_create_by!(name: "homeRuns") { |stat| stat.label = "HR"; stat.category = "batting" }
+    create_player_season_stat(player: player, stat_type: stat_type, attributes: { season: 2024, value: 20 })
+
+    query = described_class.new(params: { filter: { category: "batting", position_id: position.id } })
+
+    expect(query.results.map { |row| row.dig(:player, :id) }).to eq([player.id])
+    expect(query.metadata[:available_positions]).to include(
+      id: position.id, abbreviation: "QSS", name: "Query Shortstop"
+    )
+  end
+
   it "returns player leaderboard rows with batting stats across columns" do
     tigers = create_team(
       mlb_id: 116,

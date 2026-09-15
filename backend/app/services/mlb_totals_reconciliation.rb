@@ -61,7 +61,7 @@ class MlbTotalsReconciliation
       name: "Official MLB #{category} team totals agree",
       affected_count: mismatches.length,
       examples: mismatches,
-      recommendation: "Re-import player season statistics for the affected teams, then re-run this reconciliation."
+      recommendation: "Re-synchronize finalized game details for the affected teams, then re-run this reconciliation."
     )
   rescue StandardError => error
     unavailable_check("official_#{category}_team_totals", "Official MLB #{category} team totals are available", error)

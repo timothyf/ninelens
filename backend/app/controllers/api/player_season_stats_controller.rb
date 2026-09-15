@@ -108,7 +108,7 @@ module Api
         :sort,
         :defer_facets,
         :metadata_only,
-        filter: [:season, :season_start, :season_end, :team_id, :league, :scope_type, :scope_key, :player_id, :team_name, :player_name, :stat_type_name, :category, :min_value, :max_value]
+        filter: [:season, :season_start, :season_end, :team_id, :position_id, :league, :scope_type, :scope_key, :player_id, :team_name, :player_name, :stat_type_name, :category, :min_value, :max_value]
       ).to_h
     end
 

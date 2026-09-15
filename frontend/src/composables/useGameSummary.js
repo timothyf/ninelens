@@ -32,6 +32,22 @@ function normalizeSituation(metrics = {}) {
   }
 }
 
+function normalizeBoxScoreNotes(notes = {}) {
+  const normalizeTeam = (team = {}) => ({
+    batting: (team.batting || []).map((note) => ({
+      ...note,
+      entries: (note.entries || []).map((entry) => ({ ...entry, player: entry.player || null })),
+    })),
+    baserunning: (team.baserunning || []).map((note) => ({ ...note })),
+    fielding: (team.fielding || []).map((note) => ({
+      ...note,
+      entries: (note.entries || []).map((entry) => ({ ...entry, player: entry.player || null })),
+    })),
+  })
+
+  return { away: normalizeTeam(notes.away), home: normalizeTeam(notes.home) }
+}
+
 function normalizeGame(data) {
   const details = data.details || {}
   const lineScore = details.line_score || {}
@@ -61,6 +77,8 @@ function normalizeGame(data) {
         decisions: { winning_pitcher: null, losing_pitcher: null, save: null },
         teams: { away: {}, home: {} },
       },
+      boxScoreNotes: normalizeBoxScoreNotes(details.box_score_notes),
+      gameNotes: details.game_notes || [],
       keyPerformers: {
         topHitters: {
           away: normalizePerformer(topHitters.away),

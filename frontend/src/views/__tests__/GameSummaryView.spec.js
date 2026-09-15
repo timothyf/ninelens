@@ -385,6 +385,7 @@ const payload = {
           id: 1, home: false, player: { id: 20, full_name: 'Steven Kwan' }, position: 'LF',
           at_bats: 4, runs: 1, hits: 2, doubles: 1, triples: 0, home_runs: 0,
           runs_batted_in: 1, walks: 0, strikeouts: 1, batting_average: '0.3010', ops: '0.8120',
+          season_stats: { atBats: 512, runs: 84, hits: 154, homeRuns: 8, rbi: 54, avg: '.301' },
         },
         {
           id: 2, home: true, player: { id: 21, full_name: 'Riley Greene' }, position: 'CF',
@@ -392,6 +393,20 @@ const payload = {
           runs_batted_in: 3, walks: 0, strikeouts: 1, batting_average: '0.2870', ops: '0.8420',
         },
       ],
+      box_score_notes: {
+        away: {
+          batting: [
+            { label: '2B', entries: [{ player: { id: 20, full_name: 'Steven Kwan' }, value: 1, season_value: 12 }], value: '1' },
+            { label: 'TB', entries: [{ player: { id: 20, full_name: 'Steven Kwan' }, value: 3, season_value: 999 }], value: '3' },
+            { label: 'Team RISP', value: '1-for-5' },
+          ],
+          fielding: [{ label: 'DP', value: '1' }],
+        },
+        home: {
+          batting: [{ label: 'HR', entries: [{ player: { id: 21, full_name: 'Riley Greene' }, value: 1 }], value: '1' }],
+          fielding: [{ label: 'Errors', value: '1' }],
+        },
+      },
       pitching_lines: [
         {
           id: 3, home: false, player: { id: 22, full_name: 'Tanner Bibee' }, innings_pitched: '6.1',
@@ -432,6 +447,7 @@ describe('GameSummaryView', () => {
     expect(wrapper.find('[data-test="game-panel-batted-ball"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="game-panel-situational"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="game-panel-play-by-play"]').exists()).toBe(false)
+    expect(wrapper.get('.scoreboard__mlb-id').text()).toBe('MLB Game ID 823443')
 
     await boxScoreTab.trigger('click')
     expect(boxScoreTab.attributes('aria-selected')).toBe('true')
@@ -601,6 +617,13 @@ describe('GameSummaryView', () => {
     expect(boxScore).not.toContain('0.842')
     expect(boxScore).toContain('2.01')
     expect(boxScore).toContain('0.99')
+    expect(boxScore).toContain('Team RISP')
+    expect(boxScore).toContain('1-for-5')
+    expect(boxScore).toContain('Errors')
+    expect(boxScore).toContain('Steven Kwan (12)')
+    expect(boxScore).toContain('Steven Kwan 3')
+    expect(boxScore).not.toContain('(999)')
+    expect(boxScore).not.toContain('Season:')
   })
 
   it('shows a useful error when the game does not exist', async () => {

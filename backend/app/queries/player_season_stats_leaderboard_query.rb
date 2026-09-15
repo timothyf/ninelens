@@ -91,6 +91,7 @@ class PlayerSeasonStatsLeaderboardQuery
       data_range: data_range,
       available_seasons: available_seasons,
       available_teams: available_teams,
+      available_positions: available_positions,
       facets_complete: true
     )
   end
@@ -342,6 +343,22 @@ class PlayerSeasonStatsLeaderboardQuery
       end
   end
 
+  def available_positions
+    @available_positions ||= begin
+      position_scope = apply_filters(
+        base_relation.joins(player: { player_positions: :position }),
+        include_season: true,
+        include_team: true,
+        position_filter: false
+      )
+      position_scope
+        .distinct
+        .order("positions.sort_order ASC", "positions.abbreviation ASC")
+        .pluck("positions.id", "positions.abbreviation", "positions.name", "positions.sort_order")
+        .map { |id, abbreviation, name, _sort_order| { id: id, abbreviation: abbreviation, name: name } }
+    end
+  end
+
   def requested_sort
     @requested_sort ||= (params["sort"] || params[:sort]).presence || default_sort
   end
@@ -392,7 +409,7 @@ class PlayerSeasonStatsLeaderboardQuery
   def normalized_filters
     @normalized_filters ||= begin
       filters = raw_filters
-        .slice("season", "season_start", "season_end", "team_id", "league", "scope_type", "scope_key", "player_id", "team_name", "player_name", "category")
+        .slice("season", "season_start", "season_end", "team_id", "position_id", "league", "scope_type", "scope_key", "player_id", "team_name", "player_name", "category")
         .transform_values { |value| value.is_a?(String) ? value.strip : value }
         .compact_blank
 
@@ -400,6 +417,7 @@ class PlayerSeasonStatsLeaderboardQuery
       integer_filter!(filters, "season_start")
       integer_filter!(filters, "season_end")
       integer_filter!(filters, "team_id")
+      integer_filter!(filters, "position_id")
       integer_filter!(filters, "player_id")
       filters.delete("league") unless %w[american national].include?(filters["league"])
       normalize_scope_type!(filters)
@@ -452,8 +470,13 @@ class PlayerSeasonStatsLeaderboardQuery
     filters["season_start"], filters["season_end"] = filters["season_end"], filters["season_start"]
   end
 
-  def apply_filters(scope, include_season:, include_team:, stat_names: available_alias_names)
+  def apply_filters(scope, include_season:, include_team:, stat_names: available_alias_names, position_filter: true)
     filtered_scope = scope.where(stat_types: { category: category, name: stat_names })
+
+    if position_filter && normalized_filters[:position_id].present?
+      filtered_scope = filtered_scope.joins(player: { player_positions: :position })
+        .where(positions: { id: normalized_filters[:position_id] })
+    end
 
     if include_season && normalized_filters[:season].present?
       filtered_scope = filtered_scope.where(player_season_stats: { season: normalized_filters[:season] })

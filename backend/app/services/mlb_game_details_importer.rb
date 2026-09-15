@@ -122,6 +122,11 @@ class MlbGameDetailsImporter
     pitcher_ids = Array(payload["pitchers"]).filter_map { |id| parse_integer(id) }
     batting_order_ids = Array(payload["battingOrder"]).filter_map { |id| parse_integer(id) }
 
+    # A later official box score can remove a player that was present in an
+    # earlier/live payload. Upserting the new payload alone leaves that stale
+    # line contributing to season totals (for example, one extra hit allowed).
+    prune_stale_game_lines!(home: home, batter_ids: batter_ids, pitcher_ids: pitcher_ids)
+
     payload.fetch("players", {}).each_value do |player_payload|
       mlb_id = parse_integer(player_payload.dig("person", "id"))
       next if mlb_id.nil?
@@ -163,6 +168,19 @@ class MlbGameDetailsImporter
         counts[:lineup_entry_count] += 1
       end
     end
+  end
+
+  def prune_stale_game_lines!(home:, batter_ids:, pitcher_ids:)
+    if batter_ids.present?
+      game.game_player_batting_lines.where(home:).where.not(player_id: player_ids_for(batter_ids)).delete_all
+    end
+    if pitcher_ids.present?
+      game.game_player_pitching_lines.where(home:).where.not(player_id: player_ids_for(pitcher_ids)).delete_all
+    end
+  end
+
+  def player_ids_for(mlb_ids)
+    Player.where(mlb_id: mlb_ids).pluck(:id)
   end
 
   def upsert_batting_line!(player, player_payload, stats, season_stats, team, opponent, home)
