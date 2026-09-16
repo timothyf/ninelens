@@ -6,7 +6,7 @@ All notable changes to NineLens are documented here.
 
 - Updates intended for the next release go here.
 
-## [1.0.0] - 2026-09-15
+## [1.0.0] - 2026-09-16
 
 Initial public release.
 
@@ -18,4 +18,3 @@ Initial public release.
 - Administrator workflows for data synchronization, imports, task monitoring, and data health.
 - Rails API, Vue frontend, background jobs, and automated unit, request, service, and browser coverage.
 
-This entry remains provisional until the release checklist in `RELEASING.md` is complete.
