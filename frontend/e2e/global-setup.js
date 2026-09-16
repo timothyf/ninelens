@@ -90,6 +90,7 @@ function rails(...argumentsList) {
 
 export default function globalSetup() {
   rails('db:prepare')
+  rails('test:reset')
   rails('runner', seedUsers)
   rails('runner', seedPlayerComparisonScenario)
 }

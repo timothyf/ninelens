@@ -2,6 +2,8 @@
 
 NineLens is an open-source baseball intelligence platform combining schedules, rosters, player profiles, box scores, season stats, and Statcast data into searchable player and team profiles, leaderboards, trends, benchmarks, game analysis, situational insights, and side-by-side comparisons—built for deeper research and better decisions.
 
+The current application version is recorded in [`VERSION`](VERSION). See [`CHANGELOG.md`](CHANGELOG.md) for release history and [`RELEASING.md`](RELEASING.md) for the signed-tag release process.
+
 ## Current Features
 
 ### Home Dashboard
