@@ -1,6 +1,12 @@
 # NineLens
 
+[![GitHub Sponsors](https://img.shields.io/badge/GitHub%20Sponsors-Support%20NineLens-ec5985?logo=github-sponsors)](https://github.com/sponsors/timothyf)
+
 NineLens is an open-source baseball intelligence platform combining schedules, rosters, player profiles, box scores, season stats, and Statcast data into searchable player and team profiles, leaderboards, trends, benchmarks, game analysis, situational insights, and side-by-side comparisons—built for deeper research and better decisions.
+
+## Support
+
+If you find this project useful, you can support its development via GitHub Sponsors.
 
 The current application version is recorded in [`VERSION`](VERSION). See [`CHANGELOG.md`](CHANGELOG.md) for release history and [`RELEASING.md`](RELEASING.md) for the signed-tag release process.
 

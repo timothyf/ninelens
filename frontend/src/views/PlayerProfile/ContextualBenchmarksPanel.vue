@@ -106,7 +106,7 @@ const benchmarkMetrics = computed(() => player.value.contextualBenchmarks.metric
       </div>
     </div>
     <p v-else class="profile-empty">
-      {{ emptyMessage }}
+      {{ player.contextualBenchmarks.unavailableReason || emptyMessage }}
     </p>
   </section>
 </template>

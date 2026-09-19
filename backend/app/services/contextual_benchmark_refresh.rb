@@ -90,6 +90,7 @@ class ContextualBenchmarkRefresh
   def preview_for(player_id)
     return preview_result([]) if end_date < start_date || calculation_version.blank?
 
+    all_observations = observations(start_date, end_date)
     current = qualified_observations
     metrics = grouped_observations(current).filter_map do |_identity, metric_rows|
       player_row = metric_rows.find { |row| row[:player_id] == player_id }
@@ -101,14 +102,19 @@ class ContextualBenchmarkRefresh
       role = groups.find { |type, _key, peers| type == "pitcher_role" && peers.include?(player_row) }
       preview_metric(player_row, league, position, role)
     end
-    preview_result(metrics.sort_by { |metric| [ metric[:metric_group], metric[:display_name], metric[:dimension_value].to_s ] })
+    sorted_metrics = metrics.sort_by { |metric| [ metric[:metric_group], metric[:display_name], metric[:dimension_value].to_s ] }
+    unavailable_reason = if sorted_metrics.empty? && all_observations.any? { |row| row[:player_id] == player_id } && !current.any? { |row| row[:player_id] == player_id }
+      benchmark_eligibility_message(all_observations.select { |row| row[:player_id] == player_id })
+    end
+
+    preview_result(sorted_metrics, unavailable_reason: unavailable_reason)
   end
 
   private
 
   attr_reader :start_date, :end_date, :calculation_version, :calculated_at
 
-  def preview_result(metrics)
+  def preview_result(metrics, unavailable_reason: nil)
     {
       available: metrics.any?,
       cached: false,
@@ -116,8 +122,17 @@ class ContextualBenchmarkRefresh
       source_end_date: end_date,
       calculation_version: calculation_version,
       calculated_at: calculated_at,
-      metrics: metrics
+      metrics: metrics,
+      unavailable_reason: unavailable_reason
     }
+  end
+
+  def benchmark_eligibility_message(player_observations)
+    if player_observations.any? { |row| %w[pitching pitch_type].include?(row[:metric_group]) }
+      "Benchmarks are not shown because this player has not yet met the minimum pitching sample-size requirement of 1.25 appearances per team game."
+    else
+      "Benchmarks are not shown because this player has not yet met the minimum batting sample-size requirement of 2.1 appearances per team game."
+    end
   end
 
   def preview_metric(player_row, league, position, role)

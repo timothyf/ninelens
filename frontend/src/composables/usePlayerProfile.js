@@ -356,6 +356,7 @@ function normalizeProfile(data = {}) {
     },
     contextualBenchmarks: {
       available: benchmarks.available === true,
+      unavailableReason: benchmarks.unavailable_reason,
       sourceStartDate: benchmarks.source_start_date,
       sourceEndDate: benchmarks.source_end_date,
       calculationVersion: benchmarks.calculation_version,
