@@ -36,12 +36,12 @@ RSpec.describe StatType, type: :model do
   it "loads the catalog once and invalidates it after writes" do
     stat_type = create_stat_type(name: "avg", category: "batting")
 
-    expect(described_class).to receive(:all).once.and_call_original
-    expect(described_class.cached_find_by(category: "batting", name: "avg")).to eq(stat_type)
-    expect(described_class.cached_find_by(category: "batting", name: "avg")).to eq(stat_type)
+    expect(described_class).to receive(:all).twice.and_call_original
+    expect(described_class.catalog_find_by(category: "batting", name: "avg")).to eq(stat_type)
+    expect(described_class.catalog_find_by(category: "batting", name: "avg")).to eq(stat_type)
 
-    create_stat_type(name: "ops", category: "batting")
+    described_class.create!(name: "ops", label: "OPS", category: "batting")
 
-    expect(described_class.cached_find_by(category: "batting", name: "ops")).to be_present
+    expect(described_class.catalog_find_by(category: "batting", name: "ops")).to be_present
   end
 end

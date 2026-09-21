@@ -8,6 +8,8 @@ class StatType < ApplicationRecord
   validates :category, presence: true
 
   after_commit :invalidate_catalog_cache
+  after_rollback :invalidate_catalog_cache
+  after_save :invalidate_catalog_cache
 
   class << self
     def load_catalog_cache!
@@ -26,7 +28,7 @@ class StatType < ApplicationRecord
       records
     end
 
-    def cached_find_by(category:, name:)
+    def catalog_find_by(category:, name:)
       cached_where(category: category, name: name).first
     end
 
