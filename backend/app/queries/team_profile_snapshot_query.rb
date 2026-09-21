@@ -683,6 +683,8 @@ class TeamProfileSnapshotQuery
           losses: aggregate[:losses],
           runs_scored: aggregate[:runs_scored],
           runs_allowed: aggregate[:runs_allowed],
+          home_runs: aggregate[:home_runs],
+          runs_per_game: aggregate[:runs_per_game],
           run_differential: aggregate[:run_differential],
           winning_percentage: ratio_or_nil(aggregate[:wins], aggregate[:wins] + aggregate[:losses]),
           ops: aggregate[:ops],

@@ -125,7 +125,13 @@ class MlbGameDetailsImporter
     # A later official box score can remove a player that was present in an
     # earlier/live payload. Upserting the new payload alone leaves that stale
     # line contributing to season totals (for example, one extra hit allowed).
-    prune_stale_game_lines!(home: home, batter_ids: batter_ids, pitcher_ids: pitcher_ids)
+    prune_stale_game_lines!(
+      home: home,
+      batter_ids: batter_ids,
+      pitcher_ids: pitcher_ids,
+      authoritative_batters: payload.key?("batters"),
+      authoritative_pitchers: payload.key?("pitchers")
+    )
 
     payload.fetch("players", {}).each_value do |player_payload|
       mlb_id = parse_integer(player_payload.dig("person", "id"))
@@ -170,11 +176,11 @@ class MlbGameDetailsImporter
     end
   end
 
-  def prune_stale_game_lines!(home:, batter_ids:, pitcher_ids:)
-    if batter_ids.present?
+  def prune_stale_game_lines!(home:, batter_ids:, pitcher_ids:, authoritative_batters:, authoritative_pitchers:)
+    if authoritative_batters
       game.game_player_batting_lines.where(home:).where.not(player_id: player_ids_for(batter_ids)).delete_all
     end
-    if pitcher_ids.present?
+    if authoritative_pitchers
       game.game_player_pitching_lines.where(home:).where.not(player_id: player_ids_for(pitcher_ids)).delete_all
     end
   end

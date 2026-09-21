@@ -11,10 +11,16 @@ class User < ApplicationRecord
   has_many :note_revisions, foreign_key: :editor_id, dependent: :restrict_with_error
   has_many :created_tags, class_name: "Tag", foreign_key: :created_by_id, dependent: :restrict_with_error
   has_many :audit_logs, dependent: :nullify
+  has_many :alert_subscriptions, dependent: :destroy
+  has_many :alerts, dependent: :destroy
+  has_many :assigned_alerts, class_name: "Alert", foreign_key: :assigned_to_id, dependent: :nullify
 
   validates :email, presence: true, uniqueness: { case_sensitive: false }, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :name, presence: true
   validates :role, inclusion: { in: ROLES }
+  validates :alert_digest_frequency, inclusion: { in: %w[off daily weekly] }, if: -> { respond_to?(:alert_digest_frequency) }
+  validates :alert_digest_day, numericality: { only_integer: true, in: 0..6 }, allow_nil: true, if: -> { respond_to?(:alert_digest_day) }
+  validates :alert_digest_hour, numericality: { only_integer: true, in: 0..23 }, if: -> { respond_to?(:alert_digest_hour) }
   validates :password, length: { minimum: 8 }, allow_nil: true, on: :create
 
   scope :active, -> { where(disabled_at: nil) }

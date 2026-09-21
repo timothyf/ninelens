@@ -11,7 +11,7 @@ class MlbTotalsReconciliation
     ],
     "pitching" => [
       { key: "inningsPitched", aliases: %w[inningsPitched IP], innings: true },
-      { key: "hits", aliases: %w[hits H] },
+      { key: "hits", aliases: %w[hits H], label: "hits allowed" },
       { key: "runs", aliases: %w[runs R] },
       { key: "earnedRuns", aliases: %w[earnedRuns ER] },
       { key: "homeRuns", aliases: %w[homeRuns HR] },
@@ -125,7 +125,7 @@ class MlbTotalsReconciliation
       local_value = stat_value(local_rows, definition, prefer_combined:, local_values:)
       next if equal_stat_values?(local_value, official_value, definition)
 
-      "#{label} #{definition.fetch(:key)}: local #{display_value(local_value, definition)} vs MLB #{official_value}"
+      "#{label} #{definition[:label] || definition.fetch(:key)}: local #{display_value(local_value, definition)} vs MLB #{official_value}"
     end
   end
 

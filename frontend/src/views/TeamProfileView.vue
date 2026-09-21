@@ -1297,6 +1297,8 @@ async function saveLineupScenario() {
                   <dt>Last {{ window }} games</dt>
                   <dd>
                     {{ dashboard.recentForm?.[window]?.wins || 0 }}-{{ dashboard.recentForm?.[window]?.losses || 0 }} ·
+                    HR {{ formatInteger(dashboard.recentForm?.[window]?.home_runs) }} ·
+                    R/G {{ formatDecimal(dashboard.recentForm?.[window]?.runs_per_game, 2) }} ·
                     OPS {{ formatDecimal(dashboard.recentForm?.[window]?.ops) }} ·
                     ERA {{ formatTwoDecimalPitchingRate(dashboard.recentForm?.[window]?.era) }}
                   </dd>

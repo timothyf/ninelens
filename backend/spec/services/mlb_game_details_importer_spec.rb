@@ -117,6 +117,21 @@ RSpec.describe MlbGameDetailsImporter do
     )
   end
 
+  it "removes stale lines when an authoritative box score has an empty player list" do
+    import
+    boxscore_payload = boxscore.deep_dup
+    boxscore_payload["teams"]["home"]["batters"] = []
+    boxscore_payload["teams"]["home"]["players"] = {}
+    boxscore_payload["teams"]["home"]["pitchers"] = []
+    boxscore_payload["teams"]["home"]["players"] = {}
+
+    result = import(boxscore_payload: boxscore_payload)
+
+    expect(result[:success]).to be(true)
+    expect(GamePlayerBattingLine.where(game:, home: true)).to be_empty
+    expect(GamePlayerPitchingLine.where(game:, home: true)).to be_empty
+  end
+
   private
 
   def import(boxscore_payload: boxscore, live_payload: live_feed, fetched_at: sync_time)

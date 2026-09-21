@@ -40,7 +40,7 @@ class PlayerTrendEventRefresh
           event.update!(candidate.except(:onset_date).merge(last_observed_at: observed_at))
           counts[:updated] += 1
         else
-          player.trend_events.create!(
+          event = player.trend_events.create!(
             candidate.merge(
               status: "active",
               detected_at: observed_at,
@@ -49,12 +49,14 @@ class PlayerTrendEventRefresh
           )
           counts[:created] += 1
         end
+        AlertInboxSync.call(event: event)
       end
 
       player.trend_events.active
         .where(identity_key: result.evaluated_identities - candidates_by_identity.keys)
         .find_each do |event|
           event.resolve!(at: observed_at)
+          Alert.where(player_trend_event: event).where.not(status: "resolved").update_all(status: "resolved", resolved_at: observed_at, updated_at: observed_at)
           counts[:resolved] += 1
         end
     end

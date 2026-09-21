@@ -277,9 +277,9 @@ const payload = {
         context: { total_teams: 30 },
       },
       recent_form: {
-        '7': { wins: 5, losses: 2, ops: 0.791, era: 3.43 },
-        '15': { wins: 9, losses: 6, ops: 0.768, era: 3.76 },
-        '30': { wins: 17, losses: 13, ops: 0.751, era: 3.92 },
+        '7': { wins: 5, losses: 2, home_runs: 11, runs_per_game: 5.14, ops: 0.791, era: 3.43 },
+        '15': { wins: 9, losses: 6, home_runs: 23, runs_per_game: 4.87, ops: 0.768, era: 3.76 },
+        '30': { wins: 17, losses: 13, home_runs: 41, runs_per_game: 4.63, ops: 0.751, era: 3.92 },
       },
       home_road_splits: {
         home: { wins: 27, losses: 19, run_differential: 22 },
@@ -450,6 +450,9 @@ describe('TeamProfileView', () => {
     expect(wrapper.get('[data-test="team-season-select"]').text()).toContain('2025')
     expect(wrapper.get('[data-test="team-performance-dashboard"]').text()).toContain('Team performance dashboard')
     expect(wrapper.get('[data-test="team-performance-dashboard"]').text()).toContain('Last 7 games')
+    expect(wrapper.get('[data-test="team-performance-dashboard"]').text()).toContain('HR 11 · R/G 5.14')
+    expect(wrapper.get('[data-test="team-performance-dashboard"]').text()).toContain('HR 23 · R/G 4.87')
+    expect(wrapper.get('[data-test="team-performance-dashboard"]').text()).toContain('HR 41 · R/G 4.63')
     expect(wrapper.get('[data-test="pitching-ranking-era"]').text()).toContain('3.81')
     expect(wrapper.get('[data-test="pitching-ranking-era"]').text()).toContain('#7')
     expect(wrapper.get('[data-test="pitching-ranking-whip"]').text()).toContain('1.23')

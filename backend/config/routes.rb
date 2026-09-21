@@ -61,6 +61,17 @@ Rails.application.routes.draw do
         get :audit_history
       end
     end
+    resources :alert_subscriptions, only: [ :index, :create, :update, :destroy ]
+    resources :alerts, only: [ :index, :show ] do
+      collection { get :digest, to: "alert_digest#show"; patch :digest, to: "alert_digest#update" }
+      member do
+        post :acknowledge
+        post :snooze
+        post :assign
+        post :resolve
+      end
+    end
+    resource :alert_digest, only: [ :show, :update ], controller: :alert_digest
     resource :home, only: [:show], controller: :home
     resource :standings, only: [:show], controller: :standings
     resources :positions, only: [:index]

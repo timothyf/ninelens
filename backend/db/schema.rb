@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_08_17_224000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_21_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -51,6 +51,48 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_17_224000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["admin_task_run_id"], name: "index_admin_task_uploads_on_admin_task_run_id", unique: true
+  end
+
+  create_table "alert_subscriptions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "player_id"
+    t.bigint "watchlist_id"
+    t.string "name"
+    t.string "minimum_severity", default: "warning", null: false
+    t.string "event_types", default: [], null: false, array: true
+    t.boolean "enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["player_id"], name: "index_alert_subscriptions_on_player_id"
+    t.index ["user_id", "player_id"], name: "idx_alert_subscriptions_user_player", unique: true, where: "(player_id IS NOT NULL)"
+    t.index ["user_id", "watchlist_id"], name: "idx_alert_subscriptions_user_watchlist", unique: true, where: "(watchlist_id IS NOT NULL)"
+    t.index ["user_id"], name: "index_alert_subscriptions_on_user_id"
+    t.index ["watchlist_id"], name: "index_alert_subscriptions_on_watchlist_id"
+    t.check_constraint "(player_id IS NOT NULL) <> (watchlist_id IS NOT NULL)", name: "alert_subscriptions_one_target"
+    t.check_constraint "minimum_severity::text = ANY (ARRAY['warning'::character varying, 'critical'::character varying]::text[])", name: "alert_subscriptions_valid_severity"
+  end
+
+  create_table "alerts", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "player_trend_event_id", null: false
+    t.bigint "alert_subscription_id"
+    t.bigint "assigned_to_id"
+    t.string "status", default: "active", null: false
+    t.jsonb "supporting_evidence", default: {}, null: false
+    t.jsonb "links", default: {}, null: false
+    t.datetime "acknowledged_at"
+    t.datetime "snoozed_until"
+    t.datetime "resolved_at"
+    t.datetime "last_digest_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["alert_subscription_id"], name: "index_alerts_on_alert_subscription_id"
+    t.index ["assigned_to_id"], name: "index_alerts_on_assigned_to_id"
+    t.index ["player_trend_event_id"], name: "index_alerts_on_player_trend_event_id"
+    t.index ["user_id", "player_trend_event_id"], name: "idx_alerts_user_event_unique", unique: true
+    t.index ["user_id", "status", "created_at"], name: "idx_alerts_user_inbox"
+    t.index ["user_id"], name: "index_alerts_on_user_id"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'acknowledged'::character varying, 'snoozed'::character varying, 'resolved'::character varying]::text[])", name: "alerts_valid_status"
   end
 
   create_table "audit_logs", force: :cascade do |t|
@@ -1192,8 +1234,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_17_224000) do
     t.boolean "system_account", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "alert_digest_frequency", default: "off", null: false
+    t.integer "alert_digest_day"
+    t.integer "alert_digest_hour", default: 8, null: false
     t.index "lower((email)::text)", name: "idx_users_lower_email", unique: true
     t.index ["auth_token_digest"], name: "index_users_on_auth_token_digest", unique: true
+    t.check_constraint "alert_digest_day IS NULL OR alert_digest_day >= 0 AND alert_digest_day <= 6", name: "users_valid_alert_digest_day"
+    t.check_constraint "alert_digest_frequency::text = ANY (ARRAY['off'::character varying, 'daily'::character varying, 'weekly'::character varying]::text[])", name: "users_valid_alert_digest_frequency"
+    t.check_constraint "alert_digest_hour >= 0 AND alert_digest_hour <= 23", name: "users_valid_alert_digest_hour"
     t.check_constraint "role::text = ANY (ARRAY['admin'::character varying::text, 'administrator'::character varying::text, 'analyst'::character varying::text, 'coach'::character varying::text, 'scout'::character varying::text, 'editor'::character varying::text, 'viewer'::character varying::text])", name: "users_valid_role"
   end
 
@@ -1251,6 +1299,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_08_17_224000) do
 
   add_foreign_key "admin_task_runs", "users", column: "initiated_by_id"
   add_foreign_key "admin_task_uploads", "admin_task_runs"
+  add_foreign_key "alert_subscriptions", "players"
+  add_foreign_key "alert_subscriptions", "users"
+  add_foreign_key "alert_subscriptions", "watchlists"
+  add_foreign_key "alerts", "alert_subscriptions"
+  add_foreign_key "alerts", "player_trend_events"
+  add_foreign_key "alerts", "users"
+  add_foreign_key "alerts", "users", column: "assigned_to_id"
   add_foreign_key "audit_logs", "users"
   add_foreign_key "batter_split_summaries", "players"
   add_foreign_key "batter_split_summaries", "teams"

@@ -2,6 +2,7 @@ class Watchlist < ApplicationRecord
   belongs_to :owner, class_name: "User", optional: true
   belongs_to :need_profile, optional: true
   has_many :entries, class_name: "WatchlistEntry", dependent: :destroy, inverse_of: :watchlist
+  has_many :alert_subscriptions, dependent: :destroy
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
 

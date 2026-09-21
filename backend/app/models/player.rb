@@ -29,6 +29,7 @@ class Player < ApplicationRecord
   has_many :pitcher_split_summaries, dependent: :destroy
   has_many :player_metric_percentiles, dependent: :destroy
   has_many :trend_events, class_name: "PlayerTrendEvent", dependent: :destroy, inverse_of: :player
+  has_many :alert_subscriptions, dependent: :destroy
   has_one :player_id_mapping, primary_key: :mlb_id, foreign_key: :mlb_id
 
   validates :mlb_id, presence: true, uniqueness: true
