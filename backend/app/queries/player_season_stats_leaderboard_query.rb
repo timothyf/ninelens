@@ -72,7 +72,7 @@ class PlayerSeasonStatsLeaderboardQuery
     "pitchStats" => "-pitch_usage"
   }.freeze
 
-  def initialize(params:, relation: PlayerSeasonStat.all, stat_type_relation: StatType.all)
+  def initialize(params:, relation: PlayerSeasonStat.all, stat_type_relation: StatType.cached_all)
     @params = params
     @relation = relation
     @stat_type_relation = stat_type_relation
@@ -123,7 +123,7 @@ class PlayerSeasonStatsLeaderboardQuery
   end
 
   def base_relation
-    @base_relation ||= relation.joins(:stat_type, :player).left_outer_joins(:team)
+    @base_relation ||= relation.joins(:player).left_outer_joins(:team)
   end
 
   def filtered_relation
@@ -240,8 +240,20 @@ class PlayerSeasonStatsLeaderboardQuery
   end
 
   def max_case_expression(alias_name)
-    quoted_name = connection.quote(alias_name)
-    "MAX(CASE WHEN stat_types.name = #{quoted_name} THEN player_season_stats.value END)"
+    stat_type_ids = stat_type_ids_for_names([ alias_name ])
+    ids_sql = stat_type_ids.presence&.join(", ") || "NULL"
+    "MAX(CASE WHEN player_season_stats.stat_type_id IN (#{ids_sql}) THEN player_season_stats.value END)"
+  end
+
+  def stat_type_ids_for_category
+    @stat_type_ids_for_category ||= StatType.cached_where(category: category).map(&:id)
+  end
+
+  def stat_type_ids_for_names(names)
+    names = Array(names).map(&:to_s)
+    StatType.cached_all
+      .select { |stat_type| stat_type.category == category && names.include?(stat_type.name) }
+      .map(&:id)
   end
 
   def group_by_fields
@@ -313,7 +325,7 @@ class PlayerSeasonStatsLeaderboardQuery
 
   def data_range
     @data_range ||= begin
-      scope = relation.joins(:stat_type).where(stat_types: { category: category })
+      scope = relation.where(player_season_stats: { stat_type_id: stat_type_ids_for_category })
       min_season = scope.minimum(:season)
       max_season = scope.maximum(:season)
 
@@ -471,7 +483,7 @@ class PlayerSeasonStatsLeaderboardQuery
   end
 
   def apply_filters(scope, include_season:, include_team:, stat_names: available_alias_names, position_filter: true)
-    filtered_scope = scope.where(stat_types: { category: category, name: stat_names })
+    filtered_scope = scope.where(player_season_stats: { stat_type_id: stat_type_ids_for_names(stat_names) })
 
     if position_filter && normalized_filters[:position_id].present?
       filtered_scope = filtered_scope.joins(player: { player_positions: :position })
@@ -597,9 +609,13 @@ class PlayerSeasonStatsLeaderboardQuery
   end
 
   def available_stat_names
-    @available_stat_names ||= stat_type_relation
-      .where(category: category, name: available_alias_names)
-      .pluck(:name)
+    @available_stat_names ||= if stat_type_relation.respond_to?(:where) && stat_type_relation.respond_to?(:pluck)
+      stat_type_relation.where(category: category, name: available_alias_names).pluck(:name)
+    else
+      stat_type_relation
+        .select { |stat_type| stat_type.category == category && available_alias_names.include?(stat_type.name) }
+        .map(&:name)
+    end
   end
 
   def normalize_scope_type!(filters)

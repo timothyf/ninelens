@@ -286,7 +286,7 @@ class PlayerStatsImporter
   end
 
   def stat_types_for_category(category)
-    @stat_types_for_category ||= StatType.all.group_by(&:category)
+    @stat_types_for_category ||= StatType.cached_all.group_by(&:category)
     @stat_types_for_category.fetch(category, [])
   end
   def parse_fielding_position_rows(value)

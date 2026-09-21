@@ -6,6 +6,7 @@ class PlayerSeasonStat < ApplicationRecord
   belongs_to :stat_type
 
   before_validation :normalize_scope_fields
+  after_find :hydrate_stat_type_from_catalog
 
   validates :season, presence: true
   validates :value, presence: true, numericality: true
@@ -13,6 +14,11 @@ class PlayerSeasonStat < ApplicationRecord
   validates :scope_key, presence: true
 
   private
+
+  def hydrate_stat_type_from_catalog
+    stat_type = StatType.cached_find(stat_type_id)
+    association(:stat_type).target = stat_type if stat_type
+  end
 
   def normalize_scope_fields
     self.scope_type = scope_type.to_s.presence || infer_scope_type

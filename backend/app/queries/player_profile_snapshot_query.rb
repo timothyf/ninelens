@@ -1582,7 +1582,7 @@ class PlayerProfileSnapshotQuery
   end
 
   def build_derived_stat_rows(category, season, team, values)
-    stat_types = StatType.where(category: category, name: values.keys).index_by(&:name)
+    stat_types = StatType.cached_where(category: category, name: values.keys).index_by(&:name)
     values.filter_map do |name, value|
       stat_type = stat_types[name.to_s]
       next if stat_type.nil? || value.nil?
