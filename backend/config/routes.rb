@@ -35,7 +35,10 @@ Rails.application.routes.draw do
       end
     end
     resources :opponent_reports, only: [ :show, :update ] do
-      member { get :audit_history }
+      member do
+        get :audit_history
+        post :refresh
+      end
     end
     resources :lineup_scenarios, only: [ :show, :update ] do
       member { get :audit_history }

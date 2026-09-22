@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { formatTwoDecimalPitchingRate } from '../utils/baseballStatFormatting'
 import { adminRequestHeaders } from '../composables/apiAuth'
 
@@ -10,7 +10,10 @@ const props = defineProps({
 const report = ref(null)
 const loading = ref(false)
 const error = ref('')
+const refreshError = ref('')
+const refreshing = ref(false)
 const snapshot = computed(() => report.value?.snapshot || {})
+let refreshTimer
 
 async function load() {
   loading.value = true
@@ -22,6 +25,7 @@ async function load() {
     const payload = await response.json().catch(() => ({}))
     if (!response.ok) throw new Error(payload.message || 'Unable to load opponent report.')
     report.value = payload.data
+    if (needsPacketRefresh(payload.data)) await refreshReport()
   } catch (requestError) {
     error.value = requestError.message
   } finally {
@@ -57,7 +61,34 @@ function printReport() {
   window.print()
 }
 
-onMounted(load)
+async function refreshReport() {
+  refreshing.value = true
+  refreshError.value = ''
+  try {
+    const response = await fetch(`/api/opponent_reports/${encodeURIComponent(props.reportId)}/refresh`, {
+      method: 'POST', headers: adminRequestHeaders({ Accept: 'application/json' }),
+    })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(payload.message || `Refresh failed (${response.status}).`)
+    if (payload.data) report.value = payload.data
+  } catch (_error) {
+    refreshError.value = _error.message || 'Unable to refresh packet.'
+  } finally {
+    refreshing.value = false
+  }
+}
+
+function needsPacketRefresh(value) {
+  const starters = value?.snapshot?.probable_starters || []
+  return starters.some((starter) => !Object.prototype.hasOwnProperty.call(starter, 'batter_matchups'))
+    || !Object.prototype.hasOwnProperty.call(value?.snapshot || {}, 'expected_lineups')
+}
+
+onMounted(() => {
+  load()
+  refreshTimer = window.setInterval(refreshReport, 60000)
+})
+onUnmounted(() => window.clearInterval(refreshTimer))
 watch(() => props.reportId, load)
 </script>
 
@@ -83,7 +114,9 @@ watch(() => props.reportId, load)
           <span>Data is preserved as of this time</span>
         </div>
         <button class="report-print" type="button" data-test="print-report" @click="printReport">Print / PDF</button>
+        <button class="report-refresh" type="button" data-test="refresh-report" :disabled="refreshing" @click="refreshReport">{{ refreshing ? 'Refreshing…' : 'Refresh packet' }}</button>
       </header>
+      <p v-if="refreshError" class="report-state report-state--error" role="alert">{{ refreshError }}</p>
 
       <section class="report-panel report-series">
         <header><p>Series plan</p><h2>{{ snapshot.opponent?.name }}</h2></header>
@@ -100,6 +133,20 @@ watch(() => props.reportId, load)
       </section>
 
       <section class="report-panel">
+        <header><p>Expected lineup</p><h2>Opponent batting plans</h2></header>
+        <p v-if="snapshot.roster" class="report-callout">{{ snapshot.roster.player_count }} players in the {{ snapshot.roster.roster_type }} roster · synced {{ formatTimestamp(snapshot.roster.last_synced_at) }}</p>
+        <div v-for="lineup in snapshot.expected_lineups || []" :key="lineup.game_id" class="report-lineup">
+          <strong>{{ formatDate(lineup.official_date) }} · {{ lineup.status }}</strong>
+          <ol>
+            <li v-for="entry in lineup.entries || []" :key="entry.player.id">
+              <span>{{ entry.batting_order || '—' }}. {{ entry.player.full_name }}</span>
+              <small>{{ entry.position || '—' }} · {{ entry.bats || '—' }}</small>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="report-panel">
         <header><p>Recent form</p><h2>Opponent performance</h2></header>
         <dl class="report-metrics">
           <div><dt>Record</dt><dd>{{ snapshot.recent_performance?.wins }}–{{ snapshot.recent_performance?.losses }}</dd></div>
@@ -107,6 +154,16 @@ watch(() => props.reportId, load)
           <div><dt>OPS</dt><dd>{{ decimal(snapshot.recent_performance?.ops, 3) }}</dd></div>
           <div><dt>ERA</dt><dd>{{ formatTwoDecimalPitchingRate(snapshot.recent_performance?.era) }}</dd></div>
         </dl>
+      </section>
+
+      <section v-if="!(snapshot.probable_starters || []).length" class="report-panel report-data-status" data-test="scouting-data-status">
+        <header><p>Scouting coverage</p><h2>Pitcher matchup data</h2></header>
+        <p>No probable opponent starter has been announced for this series yet. The following packet sections will populate automatically when a probable pitcher and pitch history arrive:</p>
+        <div class="report-data-status__grid">
+          <article><strong>Batter vs pitcher</strong><span>Waiting for probable starter</span></article>
+          <article><strong>Batter vs pitch type</strong><span>Waiting for probable starter</span></article>
+          <article><strong>Pitch usage</strong><span>Count · zone · batter handedness</span></article>
+        </div>
       </section>
 
       <section
@@ -150,6 +207,7 @@ watch(() => props.reportId, load)
                 :to="{ name: 'game-summary', params: { id: split.evidence[0].game_id }, hash: `#plate-appearance-${split.evidence[0].plate_appearance_id}` }"
               >Supporting PA →</RouterLink>
             </article>
+            <p v-if="!starter.handedness_splits?.length" class="report-callout">No batter-handedness pitch sample is available.</p>
             <h3>Recent changes</h3>
             <article v-for="change in starter.recent_changes" :key="change.key">
               <strong>{{ change.label }}</strong><span>{{ changeLabel(change) }}</span>
@@ -165,12 +223,12 @@ watch(() => props.reportId, load)
             <h3>Usage by count</h3>
             <table>
               <thead><tr><th>Count</th><th>Pitches</th><th>Usage</th><th>Primary pitch</th></tr></thead>
-              <tbody>
+              <tbody v-if="starter.usage_by_count?.length">
                 <tr v-for="count in starter.usage_by_count || []" :key="count.count">
                   <th>{{ count.count }}</th><td>{{ count.pitches }}</td><td>{{ decimal(count.percentage) }}%</td>
                   <td>{{ count.repertoire?.[0]?.pitch_name || '—' }}</td>
                 </tr>
-              </tbody>
+              </tbody><tbody v-else><tr><td colspan="4">No count-level pitch data is available.</td></tr></tbody>
             </table>
           </section>
           <section>
@@ -193,11 +251,11 @@ watch(() => props.reportId, load)
           </section>
           <section>
             <h3>Location zones</h3>
-            <ul class="report-list">
+            <ul v-if="starter.location_zones?.length" class="report-list">
               <li v-for="zone in starter.location_zones || []" :key="zone.label">
                 <strong>{{ zone.label }}</strong><span>{{ decimal(zone.percentage) }}%</span>
               </li>
-            </ul>
+            </ul><p v-else class="report-callout">No zone-level pitch data is available.</p>
           </section>
           <section>
             <h3>Put-away pitches</h3>
@@ -217,6 +275,17 @@ watch(() => props.reportId, load)
               </tr></tbody>
             </table>
           </section>
+          <section>
+            <h3>Batter vs pitcher</h3>
+            <table v-if="starter.batter_matchups?.length"><thead><tr><th>Batter</th><th>PA</th><th>Whiff</th><th>wOBA</th></tr></thead>
+              <tbody><tr v-for="matchup in starter.batter_matchups" :key="matchup.batter.mlb_id"><th>{{ matchup.batter.full_name }}</th><td>{{ matchup.plate_appearances }}</td><td>{{ decimal(matchup.whiff_rate) }}%</td><td>{{ decimal(matchup.woba, 3) }}</td></tr></tbody>
+            </table><p v-else class="report-callout">No batter-vs-pitcher history is available for this probable starter.</p>
+          </section>
+          <section>
+            <h3>Batter vs pitch type</h3>
+            <ul v-if="starter.batter_pitch_type_matchups?.length" class="report-list"><li v-for="matchup in starter.batter_pitch_type_matchups" :key="`${matchup.batter.mlb_id}-${matchup.pitch_type}`"><strong>{{ matchup.batter.full_name }} · {{ matchup.pitch_name }}</strong><span>{{ matchup.pitches }} pitches · {{ decimal(matchup.whiff_rate) }}% whiff</span></li></ul>
+            <p v-else class="report-callout">No batter-vs-pitch-type history is available for this probable starter.</p>
+          </section>
         </div>
         <section class="report-attack-plan" data-test="hitter-attack-plan">
           <h3>Evidence-backed hitter attack plan</h3>
@@ -231,6 +300,12 @@ watch(() => props.reportId, load)
             >Supporting pitch →</RouterLink>
           </article>
         </section>
+      </section>
+      <section class="report-panel" v-if="snapshot.bullpen">
+        <header><p>Relief corps</p><h2>Bullpen availability</h2><span>{{ snapshot.bullpen.games_sampled }} games sampled</span></header>
+        <table><thead><tr><th>Pitcher</th><th>Recent pitches</th><th>Last used</th><th>Status</th></tr></thead>
+          <tbody><tr v-for="pitcher in snapshot.bullpen.pitchers || []" :key="pitcher.player.id"><th>{{ pitcher.player.full_name }}</th><td>{{ pitcher.pitches }}</td><td>{{ formatDate(pitcher.last_used_on) }}</td><td>{{ pitcher.available ? 'Available' : 'Rest / monitor' }}</td></tr></tbody>
+        </table>
       </section>
     </template>
   </main>
@@ -251,11 +326,20 @@ watch(() => props.reportId, load)
 .report-stamp small { color: #b79569; text-transform: uppercase; }
 .report-stamp span { margin-top: .2rem; font-size: .7rem; }
 .report-print { align-self: center; padding: .7rem 1rem; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; color: #fffaf0; background: rgba(255,255,255,.08); font: inherit; font-weight: 900; cursor: pointer; }
+.report-refresh { align-self: center; padding: .7rem 1rem; border: 1px solid #b79569; border-radius: 999px; color: #10263d; background: #f0d39b; font: inherit; font-weight: 900; cursor: pointer; }
 .report-panel { margin-top: 1rem; padding: 1.4rem; }
 .report-panel > header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; margin-bottom: 1rem; }
 .report-panel h2 { color: #10263d; font-size: 2rem; }
 .report-series > div,.report-metrics { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: .7rem; }
 .report-series article,.report-metrics div,.report-columns aside article { padding: .8rem; border-radius: 14px; background: rgba(16,38,61,.05); }
+.report-lineup { margin-bottom: 1rem; }
+.report-lineup ol { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: .45rem; padding: 0; list-style: none; }
+.report-lineup li { display: flex; justify-content: space-between; gap: .5rem; padding: .55rem .7rem; border-radius: 10px; background: rgba(16,38,61,.05); }
+.report-lineup small { color: #667680; }
+.report-data-status > p { max-width: 62rem; color: #667680; }
+.report-data-status__grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: .7rem; }
+.report-data-status__grid article { display: grid; gap: .25rem; padding: .9rem; border-radius: 14px; background: rgba(16,38,61,.05); }
+.report-data-status__grid span { color: #667680; font-size: .85rem; }
 .report-series strong,.report-series span,.report-series small { display: block; }
 .report-series span,.report-series small { margin-top: .2rem; color: #667680; }
 .report-metrics dt { color: #71808c; font-size: .7rem; font-weight: 900; text-transform: uppercase; }

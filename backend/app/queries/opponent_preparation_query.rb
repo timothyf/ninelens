@@ -17,8 +17,12 @@ class OpponentPreparationQuery
 
     {
       opponent: serialize_team(opponent),
+      series: series_games.map { |game| GameSerializer.call(game) },
+      roster: roster_status,
       recent_performance: recent_performance,
-      probable_starters: opponent_starters.map { |pitcher| pitcher_report(pitcher) }
+      expected_lineups: expected_lineups,
+      probable_starters: opponent_starters.map { |pitcher| pitcher_report(pitcher) },
+      bullpen: bullpen_report
     }
   end
 
@@ -27,7 +31,7 @@ class OpponentPreparationQuery
   attr_reader :team, :upcoming_games, :season, :on
 
   def empty_result
-    { opponent: nil, recent_performance: nil, probable_starters: [] }
+    { opponent: nil, series: [], roster: nil, recent_performance: nil, expected_lineups: [], probable_starters: [], bullpen: empty_bullpen }
   end
 
   def series_games
@@ -54,6 +58,86 @@ class OpponentPreparationQuery
     series_games.filter_map do |game|
       game.home_team_id == opponent.id ? game.home_probable_pitcher : game.away_probable_pitcher
     end.uniq(&:id)
+  end
+
+  def expected_lineups
+    series_games.map do |game|
+      entries = game.lineup_entries.includes(:player).where(team_id: opponent.id).order(:batting_order).to_a
+      serialized_entries = if entries.any?
+        entries.map { |entry| serialize_lineup_entry(entry) }
+      else
+        projected_lineup(game)
+      end
+      {
+        game_id: game.id,
+        official_date: game.official_date,
+        status: entries.any? ? "confirmed" : "projected",
+        entries: serialized_entries
+      }
+    end
+  end
+
+  def projected_lineup(game)
+    prior_game = Game.for_team(opponent)
+      .where("official_date < ?", game.official_date)
+      .where.not(home_score: nil, away_score: nil)
+      .order(official_date: :desc, mlb_id: :desc)
+      .first
+    return projected_roster_lineup unless prior_game
+
+    prior_game.game_player_batting_lines
+      .where(team_id: opponent.id, starter: true)
+      .includes(:player)
+      .order(:batting_order)
+      .limit(9)
+      .map { |line| serialize_lineup_player(line.player, line.batting_order.to_i / 100, line.position) }
+  end
+
+  def projected_roster_lineup
+    roster = opponent.rosters.find_by(season: season)
+    return [] unless roster
+
+    roster.players.includes(:profile, player_positions: :position).filter_map do |player|
+      position = player.player_positions
+        .select { |assignment| assignment.season.nil? || assignment.season == season }
+        .sort_by { |assignment| [ assignment.is_primary? ? 0 : 1, assignment.position.sort_order ] }
+        .first&.position
+      next if position&.position_type == "pitcher"
+
+      serialize_lineup_player(player, nil, position&.abbreviation)
+    end.sort_by { |entry| [ entry[:position].to_s, entry[:player][:full_name] ] }.first(9)
+  end
+
+  def serialize_lineup_player(player, batting_order, position)
+    {
+      batting_order: batting_order,
+      position: position,
+      starter: true,
+      player: serialize_player(player),
+      bats: player.profile&.bats
+    }
+  end
+
+  def roster_status
+    roster = opponent.rosters.find_by(season: season)
+    return nil unless roster
+
+    {
+      season: roster.season,
+      roster_type: roster.roster_type,
+      player_count: roster.roster_players.count,
+      last_synced_at: roster.last_synced_at
+    }
+  end
+
+  def serialize_lineup_entry(entry)
+    {
+      batting_order: entry.batting_slot || entry.batting_order,
+      position: entry.position,
+      starter: entry.starter,
+      player: serialize_player(entry.player),
+      bats: entry.player.profile&.bats
+    }
   end
 
   def recent_performance
@@ -110,9 +194,92 @@ class OpponentPreparationQuery
       put_away_pitches: put_away_pitches(pitches),
       times_through_order: times_through_order(pitches),
       hitter_attack_plan: hitter_attack_plan(pitches),
+      batter_matchups: batter_matchups(pitcher),
+      batter_pitch_type_matchups: batter_pitch_type_matchups(pitcher),
       recent_changes: recent_changes(current, previous),
       evidence: evidence(pitches.first(5))
     }
+  end
+
+  def batter_matchups(pitcher)
+    rows = matchup_pitches(pitcher)
+    rows.group_by(&:batter).sort_by { |_batter, batter_rows| -batter_rows.length }.first(12).map do |batter_id, batter_rows|
+      batter = Player.find_by(mlb_id: batter_id)
+      matchup_summary(batter, batter_rows)
+    end
+  end
+
+  def batter_pitch_type_matchups(pitcher)
+    rows = matchup_pitches(pitcher)
+    rows.group_by { |pitch| [ pitch.batter, pitch.pitch_type ] }.sort_by { |_key, type_rows| -type_rows.length }.first(30).map do |(batter_id, pitch_type), type_rows|
+      batter = Player.find_by(mlb_id: batter_id)
+      matchup_summary(batter, type_rows).merge(
+        pitch_type: pitch_type,
+        pitch_name: type_rows.filter_map(&:pitch_name).first || pitch_type
+      )
+    end
+  end
+
+  def matchup_pitches(pitcher)
+    @matchup_pitches ||= {}
+    @matchup_pitches[pitcher.id] ||= PitchDatum.where(
+      pitcher: pitcher.mlb_id,
+      game_date: Date.new(season, 1, 1)..on,
+      batter: team_batter_mlb_ids
+    ).where.not(pitch_type: nil).to_a
+  end
+
+  def team_batter_mlb_ids
+    @team_batter_mlb_ids ||= begin
+      ids = series_games.flat_map { |game| game.lineup_entries.where(team_id: team.id).pluck(:player_id) }
+      ids = team.game_player_batting_lines.where(game_id: recent_team_game_ids).pluck(:player_id) if ids.empty?
+      Player.where(id: ids).pluck(:mlb_id)
+    end
+  end
+
+  def recent_team_game_ids
+    Game.for_team(team).where("official_date < ?", on).order(official_date: :desc).limit(RECENT_GAME_LIMIT).pluck(:id)
+  end
+
+  def matchup_summary(batter, rows)
+    appearances = rows.map { |pitch| plate_appearance_key(pitch) }.uniq.length
+    swings = rows.count { |pitch| DailyAnalyticsCalculator.swing?(pitch) }
+    hits = rows.count { |pitch| pitch.events.to_s.downcase.in?(%w[single double triple home_run]) }
+    {
+      batter: batter ? serialize_player(batter) : { mlb_id: rows.first.batter, full_name: "Batter #{rows.first.batter}" },
+      pitches: rows.length,
+      plate_appearances: appearances,
+      batting_average: percentage(hits, appearances),
+      whiff_rate: percentage(rows.count { |pitch| DailyAnalyticsCalculator.whiff?(pitch) }, swings),
+      woba: average(rows.filter_map(&:woba_value)),
+      evidence: evidence(rows.first(3))
+    }
+  end
+
+  def bullpen_report
+    games = Game.for_team(opponent).where("official_date < ?", on).where.not(home_score: nil, away_score: nil)
+      .order(official_date: :desc).limit(5).to_a
+    rows = GamePlayerPitchingLine.where(team_id: opponent.id, game_id: games.map(&:id), starter: false).includes(:player, :game).to_a
+    by_player = rows.group_by(&:player)
+    {
+      games_sampled: games.length,
+      pitchers: by_player.map do |player, appearances|
+        recent = appearances.max_by { |appearance| appearance.game.official_date }
+        {
+          player: serialize_player(player),
+          appearances: appearances.length,
+          pitches: appearances.sum { |appearance| appearance.pitches.to_i },
+          outs: appearances.sum { |appearance| appearance.outs_recorded.to_i },
+          last_used_on: recent&.game&.official_date,
+          days_rest: recent ? (on - recent.game.official_date).to_i : nil,
+          available: recent.nil? || (on - recent.game.official_date).to_i >= 1
+        }
+      end.sort_by { |pitcher| [ pitcher[:available] ? 0 : 1, -pitcher[:pitches] ] }
+    }
+  end
+
+  def empty_bullpen
+    { games_sampled: 0, pitchers: [] }
   end
 
   def repertoire(pitches)

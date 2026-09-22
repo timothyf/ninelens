@@ -42,6 +42,22 @@ module Api
       render json: { message: error.record.errors.full_messages.to_sentence }, status: :unprocessable_content
     end
 
+    def refresh
+      report = OpponentReport.find(params[:id])
+      return unless authorize!(report, :update?)
+
+      OpponentReportGenerator.new(
+        team: report.team,
+        season: report.season,
+        on: Date.current,
+        owner: report.owner
+      ).refresh!(report)
+      AuditLog.record!(user: current_user, action: "refreshed", record: report, changes: report.saved_changes)
+      render json: { data: serialize_report(report) }
+    rescue ArgumentError => error
+      render json: { message: error.message, errors: [ error.message ] }, status: :unprocessable_content
+    end
+
     def audit_history
       report = OpponentReport.find(params[:id])
       return unless authorize!(report, :read?)

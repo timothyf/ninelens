@@ -13,16 +13,12 @@ class OpponentReportGenerator
   end
 
   def call
-    preparation = OpponentPreparationQuery.new(
-      team: team,
-      upcoming_games: upcoming_games,
-      season: season,
-      on: on
-    ).result
+    preparation = preparation_query.result
     opponent_id = preparation.dig(:opponent, :id)
     raise ArgumentError, "No upcoming opponent is available for this season." unless opponent_id
 
     games = series_games(opponent_id)
+    return report if games.empty?
     opponent = Team.find(opponent_id)
     generated_at = Time.current
 
@@ -35,18 +31,61 @@ class OpponentReportGenerator
       series_ends_on: games.last.official_date,
       title: "#{team.abbreviation} vs #{opponent.abbreviation} · #{series_label(games)}",
       generated_at: generated_at,
-      snapshot: {
-        generated_at: generated_at,
-        team: serialize_team(team),
-        opponent: serialize_team(opponent),
-        series: games.map { |game| GameSerializer.call(game) },
-        recent_performance: preparation.fetch(:recent_performance),
-        probable_starters: preparation.fetch(:probable_starters)
-      }
+      snapshot: snapshot_for(preparation, games, opponent, generated_at)
     )
   end
 
+  def refresh!(report)
+    preparation = preparation_query.result
+    opponent_id = preparation.dig(:opponent, :id)
+    return report unless opponent_id
+
+    games = series_games(opponent_id)
+    opponent = Team.find(opponent_id)
+    generated_at = Time.current
+    report.update!(
+      opponent_team: opponent,
+      series_starts_on: games.first.official_date,
+      series_ends_on: games.last.official_date,
+      generated_at: generated_at,
+      snapshot: snapshot_for(preparation, games, opponent, generated_at)
+    )
+    report
+  end
+
   private
+
+  def preparation_query
+    OpponentPreparationQuery.new(
+      team: team,
+      upcoming_games: upcoming_games,
+      season: season,
+      on: on
+    )
+  end
+
+  def snapshot_for(preparation, games, opponent, generated_at)
+    {
+      generated_at: generated_at,
+      team: serialize_team(team),
+      opponent: serialize_team(opponent),
+      series: games.map { |game| GameSerializer.call(game) },
+      roster: preparation.fetch(:roster),
+      recent_performance: preparation.fetch(:recent_performance),
+      expected_lineups: preparation.fetch(:expected_lineups),
+      probable_starters: preparation.fetch(:probable_starters),
+      bullpen: preparation.fetch(:bullpen),
+      source_fingerprint: source_fingerprint(games, preparation)
+    }
+  end
+
+  def source_fingerprint(games, preparation)
+    [
+      games.map { |game| [ game.id, game.updated_at.to_i, game.home_probable_pitcher_id, game.away_probable_pitcher_id ] },
+      preparation.fetch(:roster),
+      preparation.fetch(:expected_lineups).map { |lineup| lineup[:entries].map { |entry| entry.dig(:player, :id) } }
+    ].flatten.hash.to_s
+  end
 
   attr_reader :team, :season, :on, :owner
 
