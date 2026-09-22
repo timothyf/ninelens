@@ -518,6 +518,7 @@ class TeamProfileSnapshotQuery
       injured: MlbRosterStatus.injured?(normalized_status),
       jersey_number: entry.jersey_number,
       primary_position: entry.position_code,
+      pitching_role: pitching_role_for(player),
       starts_on: nil,
       last_synced_at: entry.roster_snapshot.last_synced_at,
       player: {
@@ -543,6 +544,7 @@ class TeamProfileSnapshotQuery
       injured: membership.injured?,
       jersey_number: membership.jersey_number,
       primary_position: position,
+      pitching_role: pitching_role_for(player),
       starts_on: membership.starts_on,
       last_synced_at: membership.last_synced_at,
       player: {
@@ -564,6 +566,15 @@ class TeamProfileSnapshotQuery
 
   def current_primary_position(player)
     player.player_positions.find { |assignment| assignment.season.nil? && assignment.is_primary? }&.position
+  end
+
+  def pitching_role_for(player)
+    return nil unless player
+
+    row = aggregate_player_rows(team_player_pitching_rows).find { |entry| entry[:player]&.id == player.id }
+    return nil unless row
+
+    row[:games_started].positive? ? "starter" : "reliever"
   end
 
   def roster_summary(forty_man_roster, active_roster)

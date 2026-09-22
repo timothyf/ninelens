@@ -30,6 +30,7 @@ function normalizeMembership(membership) {
     injured: membership.injured,
     jerseyNumber: membership.jersey_number,
     primaryPosition: membership.primary_position,
+    pitchingRole: membership.pitching_role,
     startsOn: membership.starts_on,
     lastSyncedAt: membership.last_synced_at,
     player: {

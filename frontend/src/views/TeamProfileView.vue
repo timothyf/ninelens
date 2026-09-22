@@ -175,6 +175,73 @@ const displayedRoster = computed(() => {
   return team.value?.rosters?.[selectedRosterView.value] || []
 })
 
+const DEPTH_CHART_GROUPS = Object.freeze([
+  { key: 'rotation', label: 'Starters', role: 'Starting pitchers', positions: ['SP'], pitchingRole: 'starter' },
+  { key: 'bullpen', label: 'Relievers', role: 'Relief pitchers', positions: ['RP', 'P'], pitchingRole: 'reliever' },
+  { key: 'catcher', label: 'Catcher', role: 'Battery', positions: ['C'] },
+  { key: 'infield', label: 'Infield', role: 'Position players', positions: ['1B', '2B', '3B', 'SS'] },
+  { key: 'outfield', label: 'Outfield', role: 'Position players', positions: ['LF', 'CF', 'RF'] },
+  { key: 'dh-utility', label: 'DH / utility', role: 'Flexible role', positions: ['DH', 'UT', 'UTIL'] },
+])
+const DEPTH_CHART_SECONDARY_POSITIONS = Object.freeze({
+  '116:eduardo valencia': ['C'],
+})
+
+function depthChartPositions(membership) {
+  const primaryPosition = String(membership.primaryPosition || '').toUpperCase()
+  const configuredPositions = DEPTH_CHART_SECONDARY_POSITIONS[
+    `${team.value?.mlbId}:${String(membership.player?.fullName || '').toLowerCase()}`
+  ] || []
+  const suppliedPositions = membership.positions || membership.secondaryPositions || []
+
+  return [...new Set([primaryPosition, ...suppliedPositions, ...configuredPositions].filter(Boolean))]
+    .map((position) => String(position).toUpperCase())
+}
+
+function depthChartGroupMatches(group, membership) {
+  const positions = depthChartPositions(membership)
+  if (!group.pitchingRole) return positions.includes(group.positions[0]) || group.positions.some((position) => positions.includes(position))
+  if (positions.includes('SP')) return group.pitchingRole === 'starter'
+  if (positions.includes('RP')) return group.pitchingRole !== 'starter'
+  if (positions.includes('P')) return membership.pitchingRole === group.pitchingRole
+  return false
+}
+
+const depthChartGroups = computed(() => {
+  const roster = displayedRoster.value
+  const assignedIds = new Set()
+
+  const groups = DEPTH_CHART_GROUPS.map((group) => {
+    const lanes = group.positions.map((position) => ({
+      position,
+      players: roster.filter((membership) => {
+        const matchesGenericPitcherLane = group.pitchingRole === 'starter' && position === 'SP' &&
+          depthChartPositions(membership).includes('P')
+        const isMatch = depthChartGroupMatches(group, membership) &&
+          (depthChartPositions(membership).includes(position) || matchesGenericPitcherLane)
+        if (isMatch) assignedIds.add(membership.id)
+        return isMatch
+      }),
+    })).filter((lane) => lane.players.length)
+
+    return { ...group, lanes, playerCount: lanes.reduce((count, lane) => count + lane.players.length, 0) }
+  }).filter((group) => group.playerCount)
+
+  const otherPlayers = roster.filter((membership) => !assignedIds.has(membership.id))
+  if (otherPlayers.length) {
+    groups.push({
+      key: 'other',
+      label: 'Other roles',
+      role: 'Roster depth',
+      positions: [],
+      lanes: [{ position: '—', players: otherPlayers }],
+      playerCount: otherPlayers.length,
+    })
+  }
+
+  return groups
+})
+
 const rosterViewLabel = computed(() => ({
   active: 'Active roster',
   injured: 'Injured list',
@@ -1473,6 +1540,39 @@ async function saveLineupScenario() {
             <small>As of {{ formatDate(team.rosterAsOf, true) }}</small>
           </div>
         </header>
+        <section v-if="depthChartGroups.length" class="depth-chart" data-test="team-depth-chart"
+          aria-labelledby="team-depth-chart-heading">
+          <div class="depth-chart__intro">
+            <div>
+              <p>Position coverage</p>
+              <h3 id="team-depth-chart-heading">Depth chart</h3>
+            </div>
+            <small>Based on the selected roster view</small>
+          </div>
+          <div class="depth-chart__grid">
+            <article v-for="group in depthChartGroups" :key="group.key" class="depth-chart__group">
+              <header>
+                <div>
+                  <span class="depth-chart__role">{{ group.role }}</span>
+                  <h4>{{ group.label }}</h4>
+                </div>
+                <b>{{ group.playerCount }}</b>
+              </header>
+              <div v-for="lane in group.lanes" :key="lane.position" class="depth-chart__lane">
+                <span class="depth-chart__position">{{ lane.position }}</span>
+                <ol>
+                  <li v-for="membership in lane.players" :key="membership.id">
+                    <span class="depth-chart__rank">{{ lane.players.indexOf(membership) + 1 }}</span>
+                    <RouterLink :to="{ name: 'player-profile', params: { id: membership.player.id } }">
+                      {{ membership.player.fullName }}
+                    </RouterLink>
+                    <span v-if="membership.injured" class="depth-chart__status">IL</span>
+                  </li>
+                </ol>
+              </div>
+            </article>
+          </div>
+        </section>
         <div v-if="displayedRoster.length" class="roster-table-wrap" data-test="team-roster">
           <table>
             <thead>
@@ -3425,6 +3525,147 @@ async function saveLineupScenario() {
   white-space: nowrap;
 }
 
+.depth-chart {
+  margin: 1.25rem 0 1.5rem;
+  padding: 1rem;
+  border: 1px solid #e7e2d8;
+  border-radius: 16px;
+  background: #f8f6ef;
+}
+
+.depth-chart__intro {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: .85rem;
+}
+
+.depth-chart__intro p,
+.depth-chart__role {
+  margin: 0 0 .2rem;
+  color: #a93627;
+  font-size: .63rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.depth-chart__intro h3 {
+  margin: 0;
+  color: #10263d;
+  font-size: 1.15rem;
+}
+
+.depth-chart__intro small {
+  color: #778087;
+  font-size: .7rem;
+}
+
+.depth-chart__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .7rem;
+}
+
+.depth-chart__group {
+  min-width: 0;
+  padding: .85rem;
+  border: 1px solid #e8e5dd;
+  border-radius: 12px;
+  background: #fffdf8;
+}
+
+.depth-chart__group>header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: .5rem;
+  padding-bottom: .55rem;
+  border-bottom: 1px solid #ebe7de;
+}
+
+.depth-chart__group h4 {
+  margin: 0;
+  color: #10263d;
+  font-size: .88rem;
+}
+
+.depth-chart__group>header>b {
+  display: grid;
+  place-items: center;
+  min-width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  color: #fffaf0;
+  background: #10263d;
+  font-size: .68rem;
+}
+
+.depth-chart__lane {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: .5rem;
+  padding-top: .65rem;
+}
+
+.depth-chart__position {
+  color: #69747c;
+  font-size: .68rem;
+  font-weight: 800;
+}
+
+.depth-chart__lane ol {
+  display: grid;
+  gap: .35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.depth-chart__lane li {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  min-width: 0;
+  color: #10263d;
+  font-size: .76rem;
+}
+
+.depth-chart__lane a {
+  overflow: hidden;
+  color: inherit;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.depth-chart__lane a:hover {
+  color: #a93627;
+}
+
+.depth-chart__rank {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  color: #69747c;
+  background: #ebe8df;
+  font-size: .6rem;
+  font-weight: 800;
+}
+
+.depth-chart__status {
+  margin-left: auto;
+  padding: .16rem .3rem;
+  border-radius: 999px;
+  color: #8d392e;
+  background: #f3dfd8;
+  font-size: .58rem;
+  font-weight: 800;
+}
+
 .roster-table-wrap {
   overflow-x: auto;
 }
@@ -3574,6 +3815,10 @@ th {
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .depth-chart__grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 900px) {
@@ -3642,6 +3887,20 @@ th {
   }
 
   .performance-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .depth-chart {
+    padding: .8rem;
+  }
+
+  .depth-chart__intro {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .35rem;
+  }
+
+  .depth-chart__grid {
     grid-template-columns: 1fr;
   }
 
