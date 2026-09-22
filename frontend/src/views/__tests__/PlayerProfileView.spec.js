@@ -556,6 +556,16 @@ describe('PlayerProfileView', () => {
     expect(wrapper.text()).toContain('Riley Greene')
     expect(wrapper.text()).toContain('Detroit Tigers')
     expect(wrapper.text()).toContain('Active')
+    expect(wrapper.get('.profile-hero').attributes('style')).toContain('--profile-team-primary: #0c2340')
+    expect(wrapper.findAll('.profile-summary-metric')).toHaveLength(4)
+    expect(wrapper.get('[data-test="summary-metric-home-runs"] strong').text()).toBe('18')
+    expect(wrapper.get('[data-test="summary-metric-war"] strong').text()).toBe('3.2')
+    expect(wrapper.get('.profile-summary-metric').text()).not.toContain('Recent form')
+    expect(wrapper.text()).toContain('Games played')
+    expect(wrapper.get('.profile-summary-insight').text()).toBe(
+      'Chase rate rose 10.0 pts (24.0 to 34.0) across 32 observations, shaping his results.',
+    )
+    expect(wrapper.get('.profile-explore-links__label').text()).toBe('Explore this player')
     expect(wrapper.find('[data-test="player-last-season"]').exists()).toBe(false)
     expect(wrapper.findComponent(AddToWatchlistControl).exists()).toBe(true)
     expect(wrapper.get('[data-test="compare-player-link"]').text()).toContain('Compare player')
