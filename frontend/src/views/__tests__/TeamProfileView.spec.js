@@ -349,6 +349,8 @@ describe('TeamProfileView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain("Detroit Tigers")
+    expect(wrapper.get('.team-hero').attributes('style')).toContain('--profile-team-primary: #0c2340')
+    expect(wrapper.get('.team-hero__pattern').exists()).toBe(true)
     const externalLinks = wrapper.findAll(".team-external-links a")
     expect(externalLinks).toHaveLength(4)
     expect(externalLinks.map((link) => link.attributes("href"))).toEqual([

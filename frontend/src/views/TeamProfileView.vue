@@ -8,6 +8,7 @@ import { formatTwoDecimalPitchingRate } from '../utils/baseballStatFormatting'
 import SavedAnalysisControls from '../components/SavedAnalysisControls.vue'
 import TeamLeadersCard from '../components/TeamLeadersCard.vue'
 import { frontendConfig, teamLogoUrl } from '../config'
+import { teamThemeStyle } from '../utils/teamThemes'
 
 const props = defineProps({
   teamId: { type: [String, Number], required: true },
@@ -61,6 +62,7 @@ const savedAnalysisUrl = computed(() => {
   return `/teams/${encodeURIComponent(teamId.value)}${query.size ? `?${query}` : ''}`
 })
 const { team, loading, error, refresh } = useTeamProfile(teamId, selectedSeason, requestedProfileSection)
+const teamHeaderStyle = computed(() => teamThemeStyle(team.value?.mlbId || team.value?.mlb_id))
 const externalTeamLinks = computed(() => {
   if (!team.value?.mlbId) return []
 
@@ -774,7 +776,13 @@ async function saveLineupScenario() {
     <template v-else-if="team">
       <RouterLink class="team-back" :to="{ name: 'teams' }">← All MLB teams</RouterLink>
 
-      <section class="team-hero">
+      <section class="team-hero" :style="teamHeaderStyle">
+        <svg class="team-hero__pattern" viewBox="0 0 720 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <path d="M455 24 696 180 455 336 214 180Z" />
+          <path d="m455 74 164 106-164 106-164-106Z" />
+          <circle cx="455" cy="180" r="32" />
+          <path d="M455 38v284M313 180h284" />
+        </svg>
         <div class="team-logo"><img :src="team.logoUrl" :alt="`${team.name} logo`" /></div>
         <div class="team-identity">
           <p>Unified team profile · MLB {{ team.mlbId }}</p>
@@ -1683,15 +1691,45 @@ async function saveLineupScenario() {
 }
 
 .team-hero {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: 180px 1fr auto;
   gap: 2rem;
   align-items: center;
   margin-top: 1rem;
   padding: 2rem;
-  border: 1px solid #d9d7ce;
+  border: 1px solid color-mix(in srgb, var(--profile-team-primary) 60%, #10263d);
   border-radius: 36px;
-  background: rgba(255, 250, 240, .8);
+  color: #fffdf7;
+  background: linear-gradient(124deg, var(--profile-team-primary), var(--profile-team-secondary));
+  box-shadow: 0 20px 58px rgba(64, 43, 20, .11);
+}
+
+.team-hero__pattern {
+  position: absolute;
+  z-index: -1;
+  top: -5rem;
+  right: -1rem;
+  width: min(56%, 720px);
+  height: 150%;
+  color: var(--profile-team-accent);
+  opacity: .12;
+  transform: rotate(-7deg);
+  pointer-events: none;
+}
+
+.team-hero__pattern path,
+.team-hero__pattern circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 6;
+}
+
+.team-hero__pattern path:first-child {
+  fill: currentColor;
+  opacity: .24;
+  stroke: none;
 }
 
 .team-logo {
@@ -1700,7 +1738,7 @@ async function saveLineupScenario() {
   width: 160px;
   height: 160px;
   border-radius: 50%;
-  background: white;
+  background: rgba(255, 255, 255, .94);
   box-shadow: inset 0 0 0 1px #dedbd2;
 }
 
@@ -1710,7 +1748,15 @@ async function saveLineupScenario() {
   object-fit: contain;
 }
 
-.team-identity p,
+.team-identity p {
+  margin: 0;
+  color: rgba(255, 253, 247, .72);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
 .team-panel header p {
   margin: 0;
   color: #a93627;
@@ -1731,18 +1777,19 @@ async function saveLineupScenario() {
   font-family: 'Avenir Next Condensed', sans-serif;
   font-size: clamp(3.5rem, 7vw, 7rem);
   line-height: .9;
+  color: #fffdf7;
   text-transform: uppercase;
 }
 
 .team-identity span {
-  color: #53616c;
+  color: rgba(255, 253, 247, .78);
   font-size: 1.05rem;
 }
 
 .season-picker__label {
   display: block;
   margin-bottom: .35rem;
-  color: #68737b;
+  color: rgba(255, 253, 247, .72);
   font-size: .72rem;
   font-weight: 800;
   text-transform: uppercase;
