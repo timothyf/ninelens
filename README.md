@@ -126,6 +126,7 @@ The `/admin` page centralizes the application's data operations:
 - Download or import player season statistics and Statcast pitches.
 - Synchronize MLB schedules, game details, player profiles, and 40-man rosters.
 - Synchronize MLB transaction histories used to reconstruct Player Profile team tenures.
+- Download player salary and contract data from FanGraphs RosterResource.
 - Track game-detail progress in real time, recover active progress after a page reload, and cancel safely between games.
 - Capture dated active and 40-man roster snapshots.
 - Rebuild normalized current player positions.
@@ -288,6 +289,21 @@ bin/rails 'player_stats:seed[/absolute/path/to/player_season_stats.csv]'
 # or
 PLAYER_STATS_CSV=/absolute/path/to/player_season_stats.csv bin/rails player_stats:seed
 ```
+
+### Player Salaries and Contracts
+
+Download current MLB salary and contract rows from FanGraphs RosterResource. The
+download includes the contract description, AAV, year-by-year salary values,
+source player URL, source URL, and retrieval timestamp.
+
+```bash
+bin/rails 'mlb_contracts:download[2026]'
+OUTPUT=/absolute/path/to/mlb_contracts.csv bin/rails 'mlb_contracts:download[2026]'
+```
+
+The default output is `backend/tmp/mlb_contracts_2026.csv`. The source URL and
+request user agent can be overridden with `FANGRAPHS_PAYROLL_URL` and
+`FANGRAPHS_PAYROLL_USER_AGENT`.
 
 Reseed stat types and reimport the preferred local CSV:
 

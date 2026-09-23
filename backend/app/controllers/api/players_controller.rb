@@ -21,7 +21,7 @@ module Api
       )
 
       render json: {
-        data: serialize_player(player, include_profile: true, include_positions: true).merge(snapshot)
+        data: serialize_player(player, include_profile: true, include_positions: true, include_contract: true).merge(snapshot)
       }
     rescue ArgumentError => error
       render json: { message: error.message, errors: [ error.message ] }, status: :unprocessable_content
@@ -47,7 +47,7 @@ module Api
       params[:sections].to_s.split(",").map(&:strip).reject(&:blank?)
     end
 
-    def serialize_player(player, include_profile: false, include_positions: false)
+    def serialize_player(player, include_profile: false, include_positions: false, include_contract: false)
       data = {
         id: player.id,
         mlb_id: player.mlb_id,
@@ -59,6 +59,12 @@ module Api
         created_at: player.created_at,
         updated_at: player.updated_at
       }
+
+      if include_contract
+        current_contract = player.current_contract
+        data[:current_salary] = current_contract&.salary_amount
+        data[:current_salary_season] = current_contract&.season
+      end
 
       data[:profile] = serialize_profile(player.profile) if include_profile
       data[:positions] = serialize_player_positions(player.player_positions) if include_positions

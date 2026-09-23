@@ -1,3 +1,5 @@
+require "fileutils"
+
 class AdminTaskRunner
   TASKS = {
     "mlb_schedule_sync" => {
@@ -15,6 +17,10 @@ class AdminTaskRunner
     "mlb_player_team_histories_sync" => {
       name: "MLB player organization history sync",
       description: "Download official MLB transactions, rebuild dated organization tenures, and store complete trade packages."
+    },
+    "mlb_player_contracts_download" => {
+      name: "MLB player salary and contract download",
+      description: "Download current player salary and contract rows from FanGraphs RosterResource and save the CSV locally."
     },
     "mlb_roster_sync" => {
       name: "MLB 40-man roster sync",
@@ -104,6 +110,29 @@ class AdminTaskRunner
     MlbPlayerTeamHistoriesSync.call(
       limit: optional_positive_integer(:limit),
       mlb_ids: params[:mlb_ids].presence
+    )
+  end
+
+  def mlb_player_contracts_download
+    season = positive_integer(:season, default: Date.current.year)
+    result = MlbPlayerContractsDownloader.call(season: season)
+    return result unless result[:success]
+
+    import_result = MlbPlayerContractsImporter.call(csv_data: result.dig(:data, :csv_data))
+    return import_result unless import_result[:success]
+
+    output_path = Rails.root.join("tmp", "mlb_contracts_#{season}.csv").to_s
+    FileUtils.mkdir_p(File.dirname(output_path))
+    File.write(output_path, result.dig(:data, :csv_data).to_s)
+
+    imported_count = import_result.dig(:data, :imported_count).to_i
+    result.merge(
+      message: "Updated #{imported_count} player contract rows in the database",
+      data: result.fetch(:data).merge(
+        downloaded_count: result.dig(:data, :row_count),
+        imported_count: imported_count,
+        unmatched_count: import_result.dig(:data, :unmatched_count)
+      ).except(:csv_data)
     )
   end
 

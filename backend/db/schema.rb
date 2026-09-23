@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_09_21_000000) do
+ActiveRecord::Schema[7.1].define(version: 2026_09_22_020000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -660,6 +660,24 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_21_000000) do
     t.index ["team_id"], name: "index_player_batting_daily_on_team_id"
     t.check_constraint "sample_size >= 0", name: "player_batting_daily_sample_size_nonnegative"
     t.check_constraint "source_end_date >= source_start_date", name: "player_batting_daily_source_range_valid"
+  end
+
+  create_table "player_contracts", force: :cascade do |t|
+    t.bigint "player_id", null: false
+    t.integer "season", null: false
+    t.string "team_slug"
+    t.string "contract"
+    t.integer "aav_amount"
+    t.integer "salary_amount"
+    t.jsonb "salary_by_year", default: {}, null: false
+    t.string "source_player_id"
+    t.string "source_url", null: false
+    t.datetime "fetched_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["player_id", "season"], name: "index_player_contracts_on_player_id_and_season", unique: true
+    t.index ["player_id"], name: "index_player_contracts_on_player_id"
+    t.index ["season"], name: "index_player_contracts_on_season"
   end
 
   create_table "player_id_mappings", force: :cascade do |t|
@@ -1353,6 +1371,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_09_21_000000) do
   add_foreign_key "plate_appearances", "teams", column: "fielding_team_id"
   add_foreign_key "player_batting_daily", "players"
   add_foreign_key "player_batting_daily", "teams"
+  add_foreign_key "player_contracts", "players"
   add_foreign_key "player_metric_percentiles", "league_metric_benchmarks"
   add_foreign_key "player_metric_percentiles", "players"
   add_foreign_key "player_pitching_daily", "players"

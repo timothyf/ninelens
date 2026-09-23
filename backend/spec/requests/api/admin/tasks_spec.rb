@@ -31,6 +31,7 @@ RSpec.describe "Api::Admin::Tasks", type: :request do
       "mlb_game_details_sync",
       "mlb_player_profiles_sync",
       "mlb_player_team_histories_sync",
+      "mlb_player_contracts_download",
       "mlb_roster_sync",
       "mlb_roster_snapshots_sync",
       "player_positions_backfill",

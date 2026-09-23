@@ -27,6 +27,7 @@ describe('AdminTaskResult', () => {
           data: {
             downloaded_count: 42,
             replace_season: false,
+            csv_data: 'source_season,player_name\n2026,Example Player',
             ignored_array: ['value'],
             ignored_object: { value: 1 },
             ignored_null: null,
@@ -42,6 +43,8 @@ describe('AdminTaskResult', () => {
     expect(result.text()).toContain('Downloaded Count')
     expect(result.text()).toContain('42')
     expect(result.text()).toContain('Replace Season')
+    expect(result.text()).not.toContain('Csv Data')
+    expect(result.text()).not.toContain('Example Player')
     expect(result.text()).not.toContain('Ignored Array')
     expect(result.text()).not.toContain('Ignored Object')
     expect(result.text()).not.toContain('Ignored Null')

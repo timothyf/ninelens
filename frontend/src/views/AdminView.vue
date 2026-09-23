@@ -7,6 +7,7 @@ import AdminDatabaseDetailsDialog from '../components/admin/AdminDatabaseDetails
 import AdminGameDetailsSyncCard from '../components/admin/AdminGameDetailsSyncCard.vue'
 import AdminPitchDataSyncCard from '../components/admin/AdminPitchDataSyncCard.vue'
 import AdminPlayerMaintenanceCards from '../components/admin/AdminPlayerMaintenanceCards.vue'
+import AdminPlayerContractsDownloadCard from '../components/admin/AdminPlayerContractsDownloadCard.vue'
 import AdminPlayerStatsDownloadCard from '../components/admin/AdminPlayerStatsDownloadCard.vue'
 import AdminRosterSyncCard from '../components/admin/AdminRosterSyncCard.vue'
 import AdminRosterSnapshotWorkspace from '../components/admin/AdminRosterSnapshotWorkspace.vue'
@@ -46,6 +47,8 @@ const statsOptions = reactive({
   endYear: currentSeason,
   replaceSeason: true,
 })
+
+const contractsOptions = reactive({ season: currentSeason })
 
 const pitchOptions = reactive({
   startDate: today,
@@ -99,7 +102,7 @@ const contextualBenchmarkOptions = reactive({
 const {
   runningTask,
   error: taskError,
-  currentTask,
+  currentTask = ref(null),
   cancelCurrentTask,
   lastResult,
   overviewLoading,
@@ -207,6 +210,20 @@ const anyActionRunning = computed(
     rosterSnapshotsLoading.value,
 )
 
+const contractTask = computed(() =>
+  currentTask.value?.taskName === 'mlb_player_contracts_download' ? currentTask.value : null,
+)
+const contractDownloading = computed(() =>
+  Boolean(runningTask.value === 'mlb_player_contracts_download') || ['queued', 'running'].includes(contractTask.value?.status),
+)
+const contractError = computed(() =>
+  contractTask.value?.status === 'failed' ? contractTask.value.errorMessage || contractTask.value.resultData?.message || '' : '',
+)
+const contractSummary = computed(() => {
+  if (contractTask.value?.status !== 'completed') return ''
+  return contractTask.value.resultData?.message || 'Salary and contract data updated.'
+})
+
 onMounted(() =>
   Promise.all([
     loadOverview(),
@@ -252,6 +269,11 @@ function handleAdminTabKeydown(event, currentIndex) {
 async function handleStatsDownload() {
   normalizeYearRange(statsOptions)
   const result = await downloadStats(statsOptions)
+  if (result) await loadOverview()
+}
+
+async function handleContractsDownload() {
+  const result = await runTask('mlb_player_contracts_download', { season: contractsOptions.season })
   if (result) await loadOverview()
 }
 
@@ -575,6 +597,15 @@ async function closeDatabaseDetails() {
           :error="statsDownloadError"
           :summary="statsDownloadSummary"
           @submit="handleStatsDownload"
+        />
+
+        <AdminPlayerContractsDownloadCard
+          :options="contractsOptions"
+          :downloading="contractDownloading"
+          :any-action-running="anyActionRunning"
+          :error="contractError"
+          :summary="contractSummary"
+          @submit="handleContractsDownload"
         />
 
         <AdminRosterSyncCard

@@ -11,7 +11,13 @@ const props = defineProps({
 const resultEntries = computed(() => {
   const data = props.result?.data || {}
   return Object.entries(data)
-    .filter(([, value]) => value !== null && value !== undefined && !Array.isArray(value) && typeof value !== 'object')
+    .filter(([key, value]) => (
+      key !== 'csv_data' &&
+      value !== null &&
+      value !== undefined &&
+      !Array.isArray(value) &&
+      typeof value !== 'object'
+    ))
     .slice(0, 8)
 })
 

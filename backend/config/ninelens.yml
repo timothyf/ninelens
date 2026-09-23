@@ -34,6 +34,9 @@ default: &default
       batting_war_url: <%= ENV.fetch("BASEBALL_REFERENCE_BATTING_WAR_URL", "https://www.baseball-reference.com/data/war_daily_bat.txt") %>
     fangraphs:
       leaders_url: <%= ENV.fetch("FANGRAPHS_LEADERS_URL", "https://www.fangraphs.com/api/leaders/major-league/data") %>
+      payroll_url: <%= ENV.fetch("FANGRAPHS_PAYROLL_URL", "https://www.fangraphs.com/roster-resource/payroll/%{team}?season=%{season}") %>
+      payroll_timeout_seconds: <%= ENV.fetch("FANGRAPHS_PAYROLL_TIMEOUT_SECONDS", 120) %>
+      payroll_user_agent: <%= ENV.fetch("FANGRAPHS_PAYROLL_USER_AGENT", "NineLens/1.0 (MLB contract data download)") %>
     mlb_assets:
       static_base_url: <%= ENV.fetch("MLB_STATIC_BASE_URL", "https://www.mlbstatic.com") %>
       headshot_base_url: <%= ENV.fetch("MLB_HEADSHOT_BASE_URL", "https://img.mlbstatic.com") %>

@@ -25,6 +25,7 @@ class Player < ApplicationRecord
   has_many :player_batting_daily, dependent: :destroy
   has_many :player_pitching_daily, dependent: :destroy
   has_many :pitcher_pitch_type_daily, dependent: :destroy
+  has_many :player_contracts, dependent: :destroy
   has_many :batter_split_summaries, dependent: :destroy
   has_many :pitcher_split_summaries, dependent: :destroy
   has_many :player_metric_percentiles, dependent: :destroy
@@ -38,6 +39,10 @@ class Player < ApplicationRecord
 
   def full_name
     [ first_name, last_name ].compact.join(" ")
+  end
+
+  def current_contract
+    player_contracts.find_by(season: Date.current.year)
   end
 
   def primary_position(season: nil)

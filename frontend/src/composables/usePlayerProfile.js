@@ -112,6 +112,8 @@ function normalizeProfile(data = {}) {
     firstName: data.first_name,
     lastName: data.last_name,
     fullName: data.full_name,
+    currentSalary: data.current_salary,
+    currentSalarySeason: data.current_salary_season,
     team: normalizeTeam(data.team),
     displayTeam: normalizeTeam(data.display_team),
     externalIds: {

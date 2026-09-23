@@ -7,6 +7,7 @@ const GENERIC_ADMIN_TASKS = [
   'mlb_schedule_sync',
   'mlb_player_profiles_sync',
   'mlb_player_team_histories_sync',
+  'mlb_player_contracts_download',
   'mlb_roster_snapshots_sync',
   'player_positions_backfill',
   'daily_analytics_refresh',

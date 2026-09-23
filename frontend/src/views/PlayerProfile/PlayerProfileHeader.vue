@@ -88,7 +88,7 @@ const summaryMetrics = computed(() => {
   return isPitcher.value
     ? [
         metric(['ERA', 'era'], 'ERA'),
-        metric(['strikeOuts', 'strikeouts', 'SO'], 'Strikeouts'),
+        metric(['strikeOuts', 'strikeouts', 'SO'], 'Strikeouts', { decimals: 0, testKey: 'strikeouts' }),
         metric(['whip', 'WHIP'], 'WHIP'),
         metric('WAR', 'WAR', { decimals: 1, testKey: 'war' }),
       ]
@@ -138,6 +138,13 @@ const lastSeason = computed(() => {
 
   const year = String(props.player.profile?.lastPlayedDate || '').match(/^(\d{4})/)
   return year ? Number(year[1]) : null
+})
+
+const currentSalary = computed(() => {
+  const amount = Number(props.player.currentSalary)
+  return Number.isFinite(amount) && amount > 0
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount)
+    : props.displayValue(props.player.currentSalary)
 })
 </script>
 
@@ -213,6 +220,10 @@ const lastSeason = computed(() => {
       <div>
         <dt>Born</dt>
         <dd>{{ formatDate(player.profile?.birthDate) }}</dd>
+      </div>
+      <div data-test="player-salary">
+        <dt>Salary</dt>
+        <dd>{{ currentSalary }}</dd>
       </div>
       <div v-if="lastSeason" data-test="player-last-season">
         <dt>Last season</dt>

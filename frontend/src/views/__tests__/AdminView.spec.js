@@ -370,6 +370,7 @@ describe('AdminView', () => {
     expect(wrapper.get('[data-test="pitch-data-coverage"]').text()).toContain('May 31, 2026')
     expect(wrapper.get('[data-test="pitch-data-coverage"]').text()).toContain('125,000 pitch rows')
     expect(wrapper.get('[data-test="stats-download-form"]').text()).toContain('season-level batting or pitching statistics')
+    expect(wrapper.get('[data-test="contracts-download-form"]').text()).toContain('player contract details')
     expect(wrapper.get('[data-test="pitch-download-form"]').text()).toContain('pitch-by-pitch Statcast data')
     expect(wrapper.text()).toContain('Local file imports')
     expect(wrapper.text()).toContain('MLB schedule synchronization')
@@ -412,6 +413,7 @@ describe('AdminView', () => {
       'MLB game detail synchronization',
       'Statcast pitch data',
       'Player season statistics',
+      'Player salaries and contracts',
       'MLB 40-man roster synchronization',
       'MLB profile synchronization',
       'MLB transaction history synchronization',
@@ -448,12 +450,18 @@ describe('AdminView', () => {
       expect.objectContaining({ category: 'batting', replaceSeason: true }),
     )
 
+    await wrapper.get('[data-test="contracts-download-form"]').trigger('submit')
+    expect(runTask).toHaveBeenCalledWith(
+      'mlb_player_contracts_download',
+      expect.objectContaining({ season: expect.any(Number) }),
+    )
+
     await wrapper.get('[data-test="schedule-sync-form"]').trigger('submit')
     expect(runTask).toHaveBeenCalledWith(
       'mlb_schedule_sync',
       expect.objectContaining({ game_types: 'R', sport_id: 1 }),
     )
-    expect(loadOverview).toHaveBeenCalledTimes(3)
+    expect(loadOverview).toHaveBeenCalledTimes(4)
 
     await wrapper.get('[data-test="game-details-sync-form"]').trigger('submit')
     await flushPromises()
@@ -464,7 +472,7 @@ describe('AdminView', () => {
     expect(startGameDetailsSync).toHaveBeenCalledWith(
       expect.objectContaining({ start_date: expect.any(String), end_date: expect.any(String), mlb_game_id: null }),
     )
-    expect(loadOverview).toHaveBeenCalledTimes(3)
+    expect(loadOverview).toHaveBeenCalledTimes(4)
 
     await wrapper.get('[data-test="pitch-download-form"]').trigger('submit')
     await flushPromises()
