@@ -64,7 +64,8 @@ build-iPhoneSimulator/
 scratch.txt
 backend/config/master.key
 ingest_data_from_postgres*
-/docs/
+/docs/*
+!/docs/NineLensIntroduction.pdf
 .cloudflare-dev/logs
 *cloudflare*
 output/*
