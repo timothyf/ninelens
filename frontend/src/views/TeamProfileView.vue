@@ -783,16 +783,12 @@ async function saveLineupScenario() {
           <circle cx="455" cy="180" r="32" />
           <path d="M455 38v284M313 180h284" />
         </svg>
+        <p class="team-hero__title">Team profile <span>MLB ID: {{ team.mlbId }}</span></p>
+
         <div class="team-logo"><img :src="team.logoUrl" :alt="`${team.name} logo`" /></div>
         <div class="team-identity">
-          <p>Unified team profile · MLB {{ team.mlbId }}</p>
           <h1>{{ team.name }}</h1>
           <span>{{ team.abbreviation }} · {{ team.locationName }}</span>
-          <nav class="team-external-links" aria-label="External team profiles">
-            <a v-for="link in externalTeamLinks" :key="link.key" :href="link.href" target="_blank" rel="noopener noreferrer" data-test="external-team-link">
-              {{ link.label }} <span aria-hidden="true">↗</span>
-            </a>
-          </nav>
         </div>
         <label class="season-picker">
           <span class="season-picker__label">Profile season</span>
@@ -804,49 +800,60 @@ async function saveLineupScenario() {
             Loading {{ selectedSeason }} season…
           </span>
         </label>
-      </section>
 
-      <section class="team-summary" aria-label="Season summary">
-        <article class="team-summary__record">
-          <div>
-            <span>{{ team.season }} record</span><strong>{{ recordLabel }}</strong><small>{{ team.record.games_played ||
-              0 }} games</small>
+        <section class="team-summary" aria-label="Season summary">
+          <article class="team-summary__record">
+            <div>
+              <span>{{ team.season }} record</span><strong>{{ recordLabel }}</strong><small>{{ team.record.games_played ||
+                0 }} games</small>
+            </div>
+            <dl v-if="recentRecordEntries.length" class="team-summary__recent-records">
+              <div v-for="entry in recentRecordEntries" :key="entry.window">
+                <dt>Last {{ entry.window }}</dt>
+                <dd>{{ entry.label }}</dd>
+              </div>
+            </dl>
+          </article>
+          <article><span>Run differential</span><strong>{{ (team.record.runs_scored || 0) - (team.record.runs_allowed ||
+              0) }}</strong><small>{{ team.record.runs_scored || 0 }} RS · {{ team.record.runs_allowed || 0 }} RA</small>
+          </article>
+          <article data-test="division-rank">
+            <span>Division rank</span><strong>{{ team.divisionRank ? '#' + team.divisionRank.rank : '—' }}</strong>
+            <small>
+              {{ team.divisionRank?.division?.name || 'Division unavailable' }}
+              <br/><template v-if="divisionGapLabel"> · {{ divisionGapLabel }}</template>
+            </small>
+          </article>
+          <article class="team-summary__leaders" data-test="team-stat-summary">
+            <span>Team stats</span>
+            <dl>
+              <div>
+                <dt>AVG</dt>
+                <dd>{{ formatTeamSummaryStat('avg', team.teamStatsSummary?.batting?.avg?.value) }} <small>#{{ team.teamStatsSummary?.batting?.avg?.rank || '—' }}</small></dd>
+              </div>
+              <div>
+                <dt>ERA</dt>
+                <dd>{{ formatTeamSummaryStat('ERA', team.teamStatsSummary?.pitching?.ERA?.value) }} <small>#{{ team.teamStatsSummary?.pitching?.ERA?.rank || '—' }}</small></dd>
+              </div>
+              <div>
+                <dt>HR</dt>
+                <dd>{{ formatTeamSummaryStat('HR', team.teamStatsSummary?.batting?.homeRuns?.value) }} <small>#{{ team.teamStatsSummary?.batting?.homeRuns?.rank || '—' }}</small></dd>
+              </div>
+            </dl>
+          </article>
+        </section>
+
+        <div class="team-hero__footer">
+          <div class="team-explore-links">
+            <span class="team-explore-links__label">Explore this team</span>
+            <nav class="team-external-links" aria-label="External team profiles">
+              <a v-for="link in externalTeamLinks" :key="link.key" :href="link.href" target="_blank" rel="noopener noreferrer" data-test="external-team-link">
+                {{ link.label }} <span aria-hidden="true">↗</span>
+              </a>
+            </nav>
           </div>
-          <dl v-if="recentRecordEntries.length" class="team-summary__recent-records">
-            <div v-for="entry in recentRecordEntries" :key="entry.window">
-              <dt>Last {{ entry.window }}</dt>
-              <dd>{{ entry.label }}</dd>
-            </div>
-          </dl>
-        </article>
-        <article><span>Run differential</span><strong>{{ (team.record.runs_scored || 0) - (team.record.runs_allowed ||
-            0) }}</strong><small>{{ team.record.runs_scored || 0 }} RS · {{ team.record.runs_allowed || 0 }} RA</small>
-        </article>
-        <article data-test="division-rank">
-          <span>Division rank</span><strong>{{ team.divisionRank ? '#' + team.divisionRank.rank : '—' }}</strong>
-          <small>
-            {{ team.divisionRank?.division?.name || 'Division unavailable' }}
-            <br/><template v-if="divisionGapLabel"> · {{ divisionGapLabel }}</template>
-          </small>
-        </article>
-        <article class="team-summary__leaders" data-test="team-stat-summary">
-          <span>Team stats</span>
-          <dl>
-            <div>
-              <dt>AVG</dt>
-              <dd>{{ formatTeamSummaryStat('avg', team.teamStatsSummary?.batting?.avg?.value) }} <small>#{{ team.teamStatsSummary?.batting?.avg?.rank || '—' }}</small></dd>
-            </div>
-            <div>
-              <dt>ERA</dt>
-              <dd>{{ formatTeamSummaryStat('ERA', team.teamStatsSummary?.pitching?.ERA?.value) }} <small>#{{ team.teamStatsSummary?.pitching?.ERA?.rank || '—' }}</small></dd>
-            </div>
-            <div>
-              <dt>HR</dt>
-              <dd>{{ formatTeamSummaryStat('HR', team.teamStatsSummary?.batting?.homeRuns?.value) }} <small>#{{ team.teamStatsSummary?.batting?.homeRuns?.rank || '—' }}</small></dd>
-            </div>
-          </dl>
-        </article>
-       </section>
+        </div>
+      </section>
 
       <nav class="team-profile-tabs" role="tablist" aria-label="Team profile sections">
         <button v-for="(tab, index) in profileTabs" :id="`team-profile-tab-${tab.id}`" :key="tab.id" type="button"
@@ -1698,12 +1705,29 @@ async function saveLineupScenario() {
   gap: 2rem;
   align-items: center;
   margin-top: 1rem;
-  padding: 2rem;
+  padding: 1.35rem 2rem 0;
   border: 1px solid color-mix(in srgb, var(--profile-team-primary) 60%, #10263d);
-  border-radius: 36px;
+  border-radius: 28px;
   color: #fffdf7;
   background: linear-gradient(124deg, var(--profile-team-primary), var(--profile-team-secondary));
   box-shadow: 0 20px 58px rgba(64, 43, 20, .11);
+}
+
+.team-hero__title {
+  grid-column: 1 / -1;
+  margin: 0 0 .1rem 2.65rem;
+  color: rgba(255, 253, 247, .72);
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.team-hero__title span {
+  color: rgba(255, 253, 247, .48);
+  font-size: 1em;
+  letter-spacing: .08em;
 }
 
 .team-hero__pattern {
@@ -1748,15 +1772,6 @@ async function saveLineupScenario() {
   object-fit: contain;
 }
 
-.team-identity p {
-  margin: 0;
-  color: rgba(255, 253, 247, .72);
-  font-size: .72rem;
-  font-weight: 800;
-  letter-spacing: .16em;
-  text-transform: uppercase;
-}
-
 .team-panel header p {
   margin: 0;
   color: #a93627;
@@ -1766,8 +1781,35 @@ async function saveLineupScenario() {
   text-transform: uppercase;
 }
 
-.team-external-links { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
-.team-external-links a { display: inline-flex; align-items: center; gap: .3rem; padding: .42rem .68rem; border: 1px solid rgba(91,109,126,.16); border-radius: 999px; color: #526779; background: rgba(255,255,255,.7); font-size: .68rem; font-weight: 850; text-decoration: none; transition: transform .16s ease, background .16s ease, color .16s ease; }
+.team-hero__footer {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  margin: 0 -2rem;
+  padding: .7rem 2rem 1rem;
+  border-radius: 0 0 27px 27px;
+  background: #fffdf7;
+}
+
+.team-explore-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .7rem 1rem;
+  align-items: center;
+}
+
+.team-explore-links__label {
+  color: #65747e;
+  font-size: .67rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.team-external-links { display: flex; flex-wrap: wrap; gap: .5rem; }
+.team-external-links a { display: inline-flex; align-items: center; gap: .3rem; padding: .28rem .62rem; border: 1px solid rgba(83,101,117,.12); border-radius: 999px; color: #526779; background: #eef2f5; box-shadow: inset 0 -1px 0 rgba(255,255,255,.12); font-size: .78rem; font-weight: 400; line-height: 1; text-decoration: none; transition: transform .16s ease, background .16s ease, color .16s ease; }
 .team-external-links a:hover { color: #fffaf0; background: #526779; transform: translateY(-1px); }
 .team-external-links a:focus-visible { outline: 3px solid rgba(31,111,235,.32); outline-offset: 2px; }
 .team-external-links a span { color: inherit; font-size: inherit; }
@@ -1847,11 +1889,13 @@ async function saveLineupScenario() {
 .team-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8rem;
-  margin: 1rem 0;
+  gap: 0;
+  grid-column: 1 / -1;
+  margin: 0 -2rem;
   line-height: 1.2;
-  padding-right: 50px;
-  padding-left: 50px;
+  padding: 1.2rem 2rem .65rem;
+  color: #10263d;
+  background: #fffdf7;
 }
 
 .team-summary article,
@@ -1862,9 +1906,16 @@ async function saveLineupScenario() {
 }
 
 .team-summary article {
-  padding: 1.2rem;
+  min-width: 0;
+  padding: 0 .8rem;
+  border-width: 0 1px 0 0;
+  border-radius: 0;
+  background: transparent;
   text-align: center;
 }
+
+.team-summary article:first-child { padding-left: 0; }
+.team-summary article:last-child { padding-right: 0; border-right: 0; }
 
 .team-summary span,
 .team-summary small,
@@ -1873,18 +1924,19 @@ async function saveLineupScenario() {
 }
 
 .team-summary span {
-  color: #69747c;
-  font-size: .9rem;
+  color: #65747e;
+  font-size: .67rem;
   font-weight: 800;
   letter-spacing: .1em;
   text-transform: uppercase;
-  margin-bottom: 12px;
+  margin-bottom: .25rem;
 }
 
 .team-summary strong {
   margin: .25rem 0;
   font-family: 'Avenir Next Condensed', sans-serif;
-  font-size: 2.3rem;
+  font-size: clamp(1.75rem, 3.2vw, 3.1rem);
+  line-height: .9;
 }
 
 .team-summary .summary-date {
@@ -1894,9 +1946,8 @@ async function saveLineupScenario() {
 }
 
 .team-summary small {
-  color: #788188;
-  color: #111;
-  font-size: 14px;
+  color: #69747c;
+  font-size: .72rem;
 }
 
 .team-summary__record {
@@ -1904,6 +1955,7 @@ async function saveLineupScenario() {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  text-align: left;
 }
 
 .team-summary__recent-records {
@@ -3878,6 +3930,12 @@ th {
   .team-hero {
     grid-template-columns: 1fr;
     padding: 1.25rem;
+  }
+
+  .team-summary,
+  .team-hero__footer {
+    margin-inline: -1.25rem;
+    padding-inline: 1.25rem;
   }
 
   .team-summary {

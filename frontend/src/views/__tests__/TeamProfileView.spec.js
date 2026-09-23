@@ -351,6 +351,8 @@ describe('TeamProfileView', () => {
     expect(wrapper.text()).toContain("Detroit Tigers")
     expect(wrapper.get('.team-hero').attributes('style')).toContain('--profile-team-primary: #0c2340')
     expect(wrapper.get('.team-hero__pattern').exists()).toBe(true)
+    expect(wrapper.get('.team-hero__footer').text()).toContain('Explore this team')
+    expect(wrapper.find('.team-identity .team-external-links').exists()).toBe(false)
     const externalLinks = wrapper.findAll(".team-external-links a")
     expect(externalLinks).toHaveLength(4)
     expect(externalLinks.map((link) => link.attributes("href"))).toEqual([
