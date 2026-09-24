@@ -153,6 +153,11 @@ function normalizeProfile(data = {}) {
       comparisonStats: career.comparison_stats || [],
       statValues: Object.fromEntries((career.stats || []).map((stat) => [stat.key, stat.value])),
     },
+    gameLogs: {
+      category: data.game_logs?.category || season.category || 'batting',
+      batting: (data.game_logs?.batting || []).map(normalizeGameLog),
+      pitching: (data.game_logs?.pitching || []).map(normalizeGameLog),
+    },
     advancedStats: {
       category: advancedStats.category,
       groups: advancedStats.groups || [],
@@ -441,6 +446,15 @@ function normalizeProfile(data = {}) {
         lastUpdatedAt: dataset.last_updated_at,
       })),
     },
+  }
+}
+
+function normalizeGameLog(log = {}) {
+  return {
+    date: log.date,
+    team: log.team,
+    opponent: log.opponent,
+    ...log,
   }
 }
 

@@ -67,6 +67,46 @@ RSpec.describe PlayerProfileSnapshotQuery do
       .to eq(%w[last_7_games last_15_games last_30_games])
   end
 
+  it "returns enough recent batting and pitching game logs for the profile selector" do
+    team = create_team(attributes: { abbreviation: "TST" })
+    opponent = create_team(attributes: { abbreviation: "OPP" })
+    player = create_player(team: team)
+
+    11.times do |index|
+      game = create_game(
+        home_team: team,
+        away_team: opponent,
+        official_date: Date.new(2026, 4, 1) + index,
+        status: "final"
+      )
+      GamePlayerBattingLine.create!(
+        game: game, player: player, team: team, opponent_team: opponent, home: true,
+        at_bats: 4, hits: 1, source_name: "spec", last_synced_at: Time.current
+      )
+    end
+
+    6.times do |index|
+      game = create_game(
+        home_team: team,
+        away_team: opponent,
+        official_date: Date.new(2026, 5, 1) + index,
+        status: "final"
+      )
+      GamePlayerPitchingLine.create!(
+        game: game, player: player, team: team, opponent_team: opponent, home: true,
+        innings_pitched: "6.0", decision: "W", source_name: "spec", last_synced_at: Time.current
+      )
+    end
+
+    logs = described_class.new(player: player).result.fetch(:game_logs)
+
+    expect(logs[:batting].length).to eq(11)
+    expect(logs[:pitching].length).to eq(6)
+    expect(logs[:batting].first[:date]).to eq(Date.new(2026, 4, 11))
+    expect(logs[:pitching].first[:date]).to eq(Date.new(2026, 5, 6))
+    expect(logs[:batting].first[:opponent]).to eq("@ OPP")
+  end
+
   it "displays the team a retired player spent the most seasons with" do
     longest_team = create_team(name: "Detroit Tigers")
     recent_team = create_team(name: "Miami Marlins")

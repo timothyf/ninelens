@@ -136,6 +136,7 @@ class PlayerProfileSnapshotQuery
     payload = {
       season_overview: season_overview,
       career_overview: career_overview,
+      game_logs: game_logs,
       display_team: serialize_team(display_team),
       external_ids: external_ids,
       current_membership: serialize_membership(current_membership),
@@ -253,6 +254,112 @@ class PlayerProfileSnapshotQuery
       seasons: [],
       stats: []
     }
+  end
+
+  def game_logs
+    {
+      category: preferred_category,
+      batting: recent_batting_game_logs,
+      pitching: recent_pitching_game_logs
+    }
+  end
+
+  def recent_batting_game_logs
+    @recent_batting_game_logs ||= player.game_player_batting_lines
+      .joins(:game, :team, :opponent_team)
+      .where(games: { status: "final" })
+      .includes(:game, :team, :opponent_team)
+      .order("games.official_date DESC, games.scheduled_at DESC, games.mlb_id DESC")
+      .limit(30)
+      .map { |line| serialize_batting_game_log(line) }
+  end
+
+  def recent_pitching_game_logs
+    @recent_pitching_game_logs ||= player.game_player_pitching_lines
+      .joins(:game, :team, :opponent_team)
+      .where(games: { status: "final" })
+      .includes(:game, :team, :opponent_team)
+      .order("games.official_date DESC, games.scheduled_at DESC, games.mlb_id DESC")
+      .limit(15)
+      .map { |line| serialize_pitching_game_log(line) }
+  end
+
+  def serialize_batting_game_log(line)
+    stats = line.raw_data.to_h.fetch("stats", {})
+    {
+      date: line.game.official_date,
+      team: line.team.abbreviation,
+      opponent: opponent_label(line),
+      at_bats: line.at_bats,
+      runs: line.runs,
+      hits: line.hits,
+      total_bases: raw_integer_stat(stats, "totalBases") || total_bases(line),
+      doubles: line.doubles,
+      triples: line.triples,
+      home_runs: line.home_runs,
+      runs_batted_in: line.runs_batted_in,
+      walks: line.walks,
+      intentional_walks: raw_integer_stat(stats, "intentionalWalks"),
+      strikeouts: line.strikeouts,
+      stolen_bases: line.stolen_bases,
+      caught_stealing: line.caught_stealing,
+      batting_average: line.batting_average,
+      on_base_percentage: line.on_base_percentage,
+      slugging_percentage: line.slugging_percentage,
+      hit_by_pitch: raw_integer_stat(stats, "hitByPitch"),
+      sacrifice_hits: raw_integer_stat(stats, "sacBunts"),
+      sacrifice_flies: raw_integer_stat(stats, "sacFlies")
+    }
+  end
+
+  def serialize_pitching_game_log(line)
+    stats = line.raw_data.to_h.fetch("stats", {})
+    {
+      date: line.game.official_date,
+      team: line.team.abbreviation,
+      opponent: opponent_label(line),
+      decision: line.decision,
+      wins: raw_integer_stat(stats, "wins") || (line.decision.to_s.casecmp("W").zero? ? 1 : nil),
+      losses: raw_integer_stat(stats, "losses") || (line.decision.to_s.casecmp("L").zero? ? 1 : nil),
+      era: line.era,
+      games: 1,
+      games_started: line.starter ? 1 : 0,
+      complete_games: raw_integer_stat(stats, "completeGames"),
+      shutouts: raw_integer_stat(stats, "shutouts"),
+      saves: line.saves,
+      save_opportunities: raw_integer_stat(stats, "saveOpportunities"),
+      innings_pitched: line.innings_pitched,
+      hits: line.hits,
+      runs: line.runs,
+      earned_runs: line.earned_runs,
+      home_runs: line.home_runs,
+      hit_batters: raw_integer_stat(stats, "hitBatsmen"),
+      walks: line.walks,
+      intentional_walks: raw_integer_stat(stats, "intentionalWalks"),
+      strikeouts: line.strikeouts,
+      pitches_strikes: [line.pitches, line.strikes].compact.join("-").presence,
+      batting_average: raw_decimal_stat(stats, "avg"),
+      whip: line.whip,
+      go_ao: raw_decimal_stat(stats, "goao") || raw_decimal_stat(stats, "goA")
+    }
+  end
+
+  def opponent_label(line)
+    line.home ? "@ #{line.opponent_team.abbreviation}" : "vs #{line.opponent_team.abbreviation}"
+  end
+
+  def total_bases(line)
+    line.hits.to_i + line.doubles.to_i + (line.triples.to_i * 2) + (line.home_runs.to_i * 3) if line.hits.present?
+  end
+
+  def raw_integer_stat(stats, key)
+    value = stats[key] || stats[key.to_sym]
+    Integer(value, exception: false)
+  end
+
+  def raw_decimal_stat(stats, key)
+    value = stats[key] || stats[key.to_sym]
+    Float(value, exception: false)
   end
 
   def advanced_stats

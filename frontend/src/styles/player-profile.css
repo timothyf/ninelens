@@ -742,6 +742,88 @@
   border-radius: 0 0 20px 20px;
 }
 
+.game-logs-card {
+  border-top: 1px solid rgba(16, 38, 61, 0.13);
+  border-radius: 0 0 20px 20px;
+}
+
+.game-logs-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(16, 38, 61, 0.1);
+  border-radius: 16px;
+  background: #fffdf7;
+}
+
+.game-logs-table {
+  width: 100%;
+  min-width: 1320px;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: #243b50;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.game-logs-table th,
+.game-logs-table td {
+  padding: 0.72rem 0.7rem;
+  border-bottom: 1px solid rgba(16, 38, 61, 0.08);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.game-logs-table thead th {
+  color: #fffaf0;
+  background: #10263d;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.game-logs-table tbody tr:nth-child(even) td,
+.game-logs-table tbody tr:nth-child(even) th {
+  background: #faf5ea;
+}
+
+.game-logs-table tbody tr:last-child td,
+.game-logs-table tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.game-logs-table tfoot th,
+.game-logs-table tfoot td {
+  border-bottom: 0;
+  color: #fffaf0;
+  background: #10263d;
+  font-weight: 900;
+}
+
+.game-logs-table__date,
+.game-logs-table__team,
+.game-logs-table__opponent {
+  text-align: left !important;
+}
+
+.game-logs-table__date {
+  min-width: 112px;
+  color: #d94a31;
+}
+
+.game-logs-table__team { min-width: 72px; }
+.game-logs-table__opponent { min-width: 92px; }
+
+.game-logs-limit select {
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(16, 38, 61, 0.18);
+  border-radius: 8px;
+  color: #243b50;
+  background: #fffdf7;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
 .profile-section-heading {
   display: flex;
   justify-content: space-between;

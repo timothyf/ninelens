@@ -87,7 +87,7 @@ const summaryMetrics = computed(() => {
 
   return isPitcher.value
     ? [
-        metric(['ERA', 'era'], 'ERA'),
+        metric(['ERA', 'era'], 'ERA', { decimals: 2 }),
         metric(['strikeOuts', 'strikeouts', 'SO'], 'Strikeouts', { decimals: 0, testKey: 'strikeouts' }),
         metric(['whip', 'WHIP'], 'WHIP'),
         metric('WAR', 'WAR', { decimals: 1, testKey: 'war' }),

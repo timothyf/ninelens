@@ -6,6 +6,7 @@ import PlayerDefensiveStatsPanel from './PlayerDefensiveStatsPanel.vue'
 import PlayerSplitsPanel from './PlayerSplitsPanel.vue'
 import ContextualBenchmarksPanel from './ContextualBenchmarksPanel.vue'
 import RecentTeamHistoryCard from './RecentTeamHistoryCard.vue'
+import RecentGameLogsCard from './RecentGameLogsCard.vue'
 
 const {
   player, selectedProfileTab, profileTabs, selectAdjacentTab,
@@ -36,6 +37,7 @@ const {
 
     <div class="profile-stat-tabs">
       <PlayerCareerStatsPanel v-if="selectedProfileTab === 'overview'" />
+      <RecentGameLogsCard v-if="selectedProfileTab === 'overview'" />
       <PlayerAdvancedStatsPanel v-if="selectedProfileTab === 'advanced-stats'" />
       <PlayerDefensiveStatsPanel v-if="selectedProfileTab === 'defensive-stats'" />
       <PlayerSplitsPanel v-if="selectedProfileTab === 'splits'" />
