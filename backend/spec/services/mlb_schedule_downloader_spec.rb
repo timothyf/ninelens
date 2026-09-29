@@ -37,6 +37,7 @@ RSpec.describe MlbScheduleDownloader do
 
     expect(result[:success]).to be(true)
     expect(result.dig(:data, :game_count)).to eq(0)
+    expect(result.dig(:data, :game_types)).to eq(%w[R W D L F])
   end
 
   it "returns validation failures before making a request" do

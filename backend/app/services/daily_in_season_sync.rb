@@ -1,5 +1,6 @@
 class DailyInSeasonSync
   GAME_TYPES = "R"
+  SCHEDULE_GAME_TYPES = MlbScheduleDownloader::DEFAULT_GAME_TYPES
 
   def self.call(start_date:, end_date: start_date, season: nil)
     new(start_date: start_date, end_date: end_date, season: season).call
@@ -18,7 +19,7 @@ class DailyInSeasonSync
 
     summary = { start_date: start_date.iso8601, end_date: end_date.iso8601, season: season, stages: [] }
 
-    synchronize("schedules", summary) { MlbScheduleSync.call(start_date: start_date, end_date: end_date, game_types: GAME_TYPES, sport_id: 1) }
+    synchronize("schedules", summary) { MlbScheduleSync.call(start_date: start_date, end_date: end_date, game_types: SCHEDULE_GAME_TYPES, sport_id: 1) }
     synchronize("game details", summary) { MlbGameDetailsBatchSync.call(start_date: start_date, end_date: end_date) }
     synchronize("Statcast", summary, continue_on_failure: true) do
       PitchDataBatchSync.call(

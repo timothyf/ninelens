@@ -459,7 +459,7 @@ describe('AdminView', () => {
     await wrapper.get('[data-test="schedule-sync-form"]').trigger('submit')
     expect(runTask).toHaveBeenCalledWith(
       'mlb_schedule_sync',
-      expect.objectContaining({ game_types: 'R', sport_id: 1 }),
+      expect.objectContaining({ game_types: 'R,W,D,L,F', sport_id: 1 }),
     )
     expect(loadOverview).toHaveBeenCalledTimes(4)
 

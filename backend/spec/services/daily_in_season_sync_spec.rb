@@ -30,7 +30,9 @@ RSpec.describe DailyInSeasonSync do
       "missing player profiles",
       "contextual benchmarks"
     ])
-    expect(MlbScheduleSync).to have_received(:call).with(start_date: date, end_date: date, game_types: "R", sport_id: 1).ordered
+    expect(MlbScheduleSync).to have_received(:call).with(
+      start_date: date, end_date: date, game_types: MlbScheduleDownloader::DEFAULT_GAME_TYPES, sport_id: 1
+    ).ordered
     expect(MlbGameDetailsBatchSync).to have_received(:call).with(start_date: date, end_date: date).ordered
     expect(PitchDataBatchSync).to have_received(:call).ordered
     expect(PlayerStatsDownloader).to have_received(:call).with(category: "batting", start_year: 2026, end_year: 2026).ordered

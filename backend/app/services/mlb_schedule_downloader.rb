@@ -2,7 +2,9 @@ require "json"
 require "net/http"
 
 class MlbScheduleDownloader
-  DEFAULT_GAME_TYPES = "R"
+  # MLB schedule game types: regular season plus Wild Card, Division Series,
+  # League Championship Series, and World Series postseason games.
+  DEFAULT_GAME_TYPES = "R,W,D,L,F"
 
   attr_reader :start_date, :end_date, :game_types, :sport_id
 

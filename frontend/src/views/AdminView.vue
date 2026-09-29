@@ -61,7 +61,7 @@ const pitchOptions = reactive({
 const scheduleOptions = reactive({
   startDate: today,
   endDate: today,
-  gameTypes: 'R',
+  gameTypes: 'R,W,D,L,F',
   sportId: 1,
 })
 
