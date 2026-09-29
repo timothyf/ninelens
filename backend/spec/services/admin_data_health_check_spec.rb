@@ -101,6 +101,35 @@ RSpec.describe AdminDataHealthCheck do
     expect(check).to include(status: "healthy", affected_count: 0)
   end
 
+  it "ignores canceled past games even when stored as final with stale player lines" do
+    team = create_team
+    opponent = create_team
+    player = create_player(team: team)
+    game = create_game(
+      official_date: ApplicationCalendar.current_date - 1.day,
+      status: "final",
+      detailed_status: "Cancelled: Rain",
+      home_score: nil,
+      away_score: nil,
+      home_team: opponent,
+      away_team: team
+    )
+    GamePlayerBattingLine.create!(
+      game: game,
+      player: player,
+      team: team,
+      opponent_team: opponent,
+      home: false,
+      source_name: "MLB Stats API",
+      last_synced_at: Time.current
+    )
+
+    checks = described_class.call.fetch(:checks).index_by { |entry| entry.fetch(:id) }
+
+    expect(checks.fetch("final_games_missing_scores")).to include(status: "healthy", affected_count: 0)
+    expect(checks.fetch("past_games_with_player_lines_not_final")).to include(status: "healthy", affected_count: 0)
+  end
+
   it "does not require details or scores for future scheduled games" do
     create_game(official_date: ApplicationCalendar.current_date + 1.day, status: "scheduled")
 

@@ -20,6 +20,7 @@ class StandingsSnapshotQuery
       season: season,
       available_seasons: available_seasons,
       as_of: completed_games.maximum(:official_date),
+      season_status: season_complete? ? "final" : "in_progress",
       playoff_odds: projection.except(:teams),
       leagues: %w[american national].map do |league|
         league_divisions = divisions.select { |division| division.fetch(:league) == league }.map do |division|
@@ -89,9 +90,17 @@ class StandingsSnapshotQuery
     @remaining_games ||= Game
       .joins(:schedule)
       .where(schedules: { season: season }, game_type: "R")
-      .where.not(status: "final")
+      .where.not(status: [ "final", "canceled", "cancelled"])
+      .where.not("LOWER(COALESCE(games.detailed_status, '')) LIKE ?", "%cancel%")
       .select(:home_team_id, :away_team_id)
       .to_a
+  end
+
+  def season_complete?
+    return true if season < ApplicationCalendar.current_date.year
+    return false unless season == ApplicationCalendar.current_date.year
+
+    remaining_games.empty?
   end
 
   def playoff_projection(divisions)

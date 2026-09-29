@@ -39,6 +39,7 @@ RSpec.describe "Api::Standings", type: :request do
     expect(response).to have_http_status(:ok)
     expect(json_body.dig("data", "season")).to eq(2026)
     expect(json_body.dig("data", "as_of")).to eq("2026-07-12")
+    expect(json_body.dig("data", "season_status")).to eq("in_progress")
     expect(json_body.dig("data", "playoff_odds")).to include(
       "simulations" => NineLensConfig.fetch(:operations, :projections, :playoff_odds_simulations),
       "remaining_games" => 1

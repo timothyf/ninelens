@@ -2,7 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { API_BASE_URL } from '../config'
 
 export function useStandings(season) {
-  const standings = ref({ season: null, available_seasons: [], as_of: null, leagues: [] })
+  const standings = ref({ season: null, available_seasons: [], as_of: null, season_status: null, leagues: [] })
   const loading = ref(false)
   const error = ref('')
   let requestSequence = 0

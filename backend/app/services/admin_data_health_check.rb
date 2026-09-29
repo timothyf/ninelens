@@ -1,5 +1,6 @@
 class AdminDataHealthCheck
   CALCULATION_VERSION = DailyAnalyticsRefresh::CALCULATION_VERSION
+  NON_COMPLETED_GAME_STATUSES = %w[canceled cancelled].freeze
 
   def self.call
     new.call
@@ -44,7 +45,10 @@ class AdminDataHealthCheck
   private
 
   def completed_games
-    @completed_games ||= Game.where(status: "final").where("official_date <= ?", application_date)
+    @completed_games ||= Game
+      .where(status: "final")
+      .where("official_date <= ?", application_date)
+      .where.not("LOWER(COALESCE(detailed_status, '')) LIKE ?", "%cancel%")
   end
 
   def synchronized_games
@@ -79,7 +83,8 @@ class AdminDataHealthCheck
   def past_games_with_player_lines_not_final
     scope = Game
       .where("official_date < ?", application_date)
-      .where.not(status: "final")
+      .where.not(status: [ "final", *NON_COMPLETED_GAME_STATUSES ])
+      .where.not("LOWER(COALESCE(detailed_status, '')) LIKE ?", "%cancel%")
       .joins(:game_player_batting_lines)
       .distinct
 

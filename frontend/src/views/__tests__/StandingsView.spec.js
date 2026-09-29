@@ -9,6 +9,7 @@ const payload = {
     season: 2026,
     available_seasons: [2025, 2026],
     as_of: '2026-07-19',
+    season_status: 'final',
     playoff_odds: { simulations: 7000, remaining_games: 930, model: 'Monte Carlo' },
     leagues: [
       {
@@ -68,6 +69,7 @@ describe('StandingsView', () => {
     expect(fetch).toHaveBeenCalledWith('/api/standings', expect.objectContaining({ headers: { Accept: 'application/json' } }))
     const central = wrapper.get('[data-test="standings-al_central"]')
     expect(central.text()).toContain('Detroit Tigers')
+    expect(wrapper.get('.standings-season-status strong').text()).toBe('FINAL')
     expect(central.text()).toContain('60')
     expect(central.text()).toContain('.606')
     expect(central.text()).toContain('+105')
@@ -75,6 +77,8 @@ describe('StandingsView', () => {
     expect(central.text()).toContain('Cleveland Guardians')
     expect(central.text()).toContain('4')
     const wildCard = wrapper.get('[data-test="wild-card-standings"]')
+    expect(wildCard.text()).toContain('Postseason standings')
+    expect(wildCard.text()).not.toContain('Postseason race')
     expect(wildCard.text()).toContain('American League Wild Card')
     expect(wildCard.text()).toContain('WC1')
     expect(wildCard.text()).toContain('Cleveland Guardians')

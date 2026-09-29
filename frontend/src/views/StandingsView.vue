@@ -84,7 +84,13 @@ function formatOdds(value) {
       <p>{{ error }}</p><button type="button" @click="refresh">Try again</button>
     </div>
     <template v-else>
-      <header class="standings-heading"><div><p>{{ currentLeague.name }}</p><h2>{{ selectedSeason }} standings</h2></div><span>{{ formatDate(standings.as_of) }}</span></header>
+      <header class="standings-heading">
+        <div><p>{{ currentLeague.name }}</p><h2>{{ selectedSeason }} standings</h2></div>
+        <div class="standings-season-status" :class="{ 'is-final': standings.season_status === 'final' }">
+          <strong>{{ standings.season_status === 'final' ? 'FINAL' : 'IN PROGRESS' }}</strong>
+          <span>{{ formatDate(standings.as_of) }}</span>
+        </div>
+      </header>
       <aside v-if="standings.playoff_odds" class="projection-note" data-test="playoff-odds-note">
         <strong>NineLens playoff projections</strong>
         <span>{{ standings.playoff_odds.simulations.toLocaleString() }} simulations · {{ standings.playoff_odds.remaining_games }} scheduled games remaining</span>
@@ -115,7 +121,7 @@ function formatOdds(value) {
 
       <section class="wild-card-card" data-test="wild-card-standings">
         <header>
-          <div><p>Postseason race</p><h3>{{ currentLeague.name }} Wild Card</h3></div>
+          <div><p>{{ standings.season_status === 'final' ? 'Postseason standings' : 'Postseason race' }}</p><h3>{{ currentLeague.name }} Wild Card</h3></div>
           <span>Top 3 qualify</span>
         </header>
         <div class="standings-table-wrap">
@@ -165,6 +171,10 @@ function formatOdds(value) {
 .standings-heading p { color: #a93627; }
 .standings-heading h2 { font-family: 'Avenir Next Condensed',sans-serif; font-size: 2.5rem; line-height: 1; text-transform: uppercase; }
 .standings-heading > span { color: #697680; font-size: .75rem; }
+.standings-season-status { display: grid; gap: .2rem; justify-items: end; }
+.standings-season-status strong { color: #697680; font-size: .72rem; letter-spacing: .12em; }
+.standings-season-status.is-final strong { color: #176044; }
+.standings-season-status span { color: #697680; font-size: .75rem; }
 .standings-divisions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .9rem; }
 .standings-card { min-width: 0; overflow: hidden; border: 1px solid #d9d7ce; border-radius: 20px; background: rgba(255,255,255,.76); }
 .standings-card > header { display: flex; justify-content: space-between; padding: 1rem 1.1rem; color: #fffaf0; background: #10263d; }
