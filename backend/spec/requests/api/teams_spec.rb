@@ -190,6 +190,17 @@ RSpec.describe "Api::Teams", type: :request do
       status: "scheduled",
       venue_name: "Progressive Field"
     )
+    postseason_schedule = create_schedule(season: Date.current.year, schedule_type: "F")
+    create_game(
+      schedule: postseason_schedule,
+      home_team: @guardians,
+      away_team: @tigers,
+      official_date: Date.current - 5.days,
+      game_type: "F",
+      status: "final",
+      home_score: 7,
+      away_score: 1
+    )
     {
       "atBats" => [ "batting", 300 ],
       "avg" => [ "batting", 0.287 ],

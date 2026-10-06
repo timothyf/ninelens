@@ -293,7 +293,7 @@ class TeamProfileSnapshotQuery
 
   def completed_games
     @completed_games ||= season_games
-      .where(status: "final")
+      .where(game_type: "R", status: "final")
       .where("official_date <= ?", on)
       .where.not(home_score: nil, away_score: nil)
       .order(official_date: :desc, scheduled_at: :desc, mlb_id: :desc)
@@ -941,7 +941,7 @@ class TeamProfileSnapshotQuery
       if legacy_team_ids.any?
         stolen_bases_by_team = GamePlayerBattingLine
           .joins(:game)
-          .where(team_id: legacy_team_ids, games: { official_date: season_date_range })
+          .where(team_id: legacy_team_ids, games: { official_date: season_date_range, game_type: "R" })
           .group(:team_id)
           .sum(:stolen_bases)
         legacy_team_ids.each do |team_id|
@@ -957,7 +957,7 @@ class TeamProfileSnapshotQuery
       if legacy_pitching_team_ids.any?
         pitching_lines = GamePlayerPitchingLine
           .joins(:game)
-          .where(team_id: legacy_pitching_team_ids, games: { official_date: season_date_range })
+          .where(team_id: legacy_pitching_team_ids, games: { official_date: season_date_range, game_type: "R" })
         saves_by_team = pitching_lines.group(:team_id).sum(:saves)
         quality_starts_by_team = pitching_lines
           .where(starter: true, outs_recorded: 18..)

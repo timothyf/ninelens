@@ -5,8 +5,10 @@ import { useRoute, useRouter } from 'vue-router'
 import PlayerSearch from './components/PlayerSearch.vue'
 import nineLensLogo from './assets/ninelens_logo.png'
 import { useAuth } from './composables/useAuth'
+import { usePostseason } from './composables/usePostseason'
 
 const { user, loadCurrentUser, logout } = useAuth()
+const { postseason, load: loadPostseason } = usePostseason()
 const route = useRoute()
 const router = useRouter()
 const accountMenuOpen = ref(false)
@@ -32,6 +34,7 @@ async function signOut() {
 
 onMounted(() => {
   loadCurrentUser()
+  loadPostseason()
   document.addEventListener('click', closeAccountMenu)
 })
 onBeforeUnmount(() => document.removeEventListener('click', closeAccountMenu))
@@ -53,6 +56,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeAccountMenu))
       <RouterLink to="/">Home</RouterLink>
       <RouterLink to="/schedule">Schedule</RouterLink>
       <RouterLink to="/standings">Standings</RouterLink>
+      <RouterLink v-if="postseason.active" to="/postseason">Postseason</RouterLink>
       <RouterLink to="/explore">Stat Explorer</RouterLink>
       <RouterLink to="/compare">Compare</RouterLink>
       <RouterLink to="/teams">Teams</RouterLink>

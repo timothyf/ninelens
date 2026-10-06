@@ -8,6 +8,7 @@ import HomeView from '../views/HomeView.vue'
 import LineupScenarioView from '../views/LineupScenarioView.vue'
 import LoginView from '../views/LoginView.vue'
 import OpponentReportView from '../views/OpponentReportView.vue'
+import PostseasonView from '../views/PostseasonView.vue'
 import PlayerProfileView from '../views/PlayerProfile/PlayerProfileView.vue'
 import PlayerComparisonView from '../views/PlayerComparisonView.vue'
 import ScheduleView from '../views/ScheduleView.vue'
@@ -35,6 +36,11 @@ const router = createRouter({
       path: '/standings',
       name: 'standings',
       component: StandingsView,
+    },
+    {
+      path: '/postseason',
+      name: 'postseason',
+      component: PostseasonView,
     },
     {
       path: '/explore',

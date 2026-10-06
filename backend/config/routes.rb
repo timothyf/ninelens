@@ -77,6 +77,7 @@ Rails.application.routes.draw do
     resource :alert_digest, only: [ :show, :update ], controller: :alert_digest
     resource :home, only: [:show], controller: :home
     resource :standings, only: [:show], controller: :standings
+    resource :postseason, only: [:show], controller: :postseason
     resources :positions, only: [:index]
     resources :games, only: [:index, :show] do
       collection do

@@ -19,6 +19,7 @@ class MlbGameDetailsDownloader
     live_feed_url = "#{base_url}/api/v1.1/game/#{mlb_id}/feed/live"
     boxscore = fetch_json(boxscore_url)
     live_feed = fetch_json(live_feed_url)
+    validate_live_feed_game!(live_feed)
 
     success(
       "Downloaded MLB game details for #{mlb_id}",
@@ -53,6 +54,14 @@ class MlbGameDetailsDownloader
     raise "HTTP #{response.code}: #{response.message}" unless response.is_a?(Net::HTTPSuccess)
 
     JSON.parse(response.body)
+  end
+
+  def validate_live_feed_game!(live_feed)
+    live_game_id = Integer(live_feed["gamePk"], exception: false)
+    return if live_game_id == mlb_id
+
+    returned_id = live_game_id || "unknown"
+    raise "MLB live feed returned game #{returned_id} for requested game #{mlb_id}"
   end
 
   def service_config

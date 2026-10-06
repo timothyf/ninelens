@@ -1,5 +1,5 @@
 class DailyInSeasonSync
-  GAME_TYPES = "R"
+  GAME_TYPES = MlbScheduleDownloader::DEFAULT_GAME_TYPES
   SCHEDULE_GAME_TYPES = MlbScheduleDownloader::DEFAULT_GAME_TYPES
 
   def self.call(start_date:, end_date: start_date, season: nil)

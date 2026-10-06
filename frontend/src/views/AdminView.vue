@@ -53,7 +53,7 @@ const contractsOptions = reactive({ season: currentSeason })
 const pitchOptions = reactive({
   startDate: today,
   endDate: today,
-  gameTypes: 'R',
+  gameTypes: 'R,W,D,L,F',
   chunkDays: 7,
   replaceExisting: false,
 })

@@ -42,7 +42,9 @@ Rails.application.configure do
   # config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  config.force_ssl = true
+  # Local Docker runs terminate plain HTTP at Nginx. Keep SSL enforcement on
+  # by default for real deployments, with an explicit opt-out for that stack.
+  config.force_ssl = ENV.fetch("FORCE_SSL", "true") == "true"
 
   # Log to STDOUT by default
   config.logger = ActiveSupport::Logger.new(STDOUT)

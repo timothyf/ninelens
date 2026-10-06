@@ -37,7 +37,14 @@ class GamesIndexQuery
 
   def filtered_relation
     @filtered_relation ||= begin
-      scope = base_relation
+      # MLB publishes "if necessary" postseason placeholders before it knows
+      # whether the game will be needed. They are not real scheduled games
+      # when they remain in a scheduled/preview state.
+      scope = base_relation.where.not(
+        "games.status IN (?) AND COALESCE(games.raw_data ->> 'ifNecessary', 'N') = ?",
+        %w[scheduled preview],
+        "Y"
+      )
 
       if normalized_filters[:team_id].present?
         scope = scope.where(

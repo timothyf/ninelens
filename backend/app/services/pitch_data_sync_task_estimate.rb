@@ -1,6 +1,6 @@
 class PitchDataSyncTaskEstimate
   TASK_NAME = "pitch_data_sync"
-  def self.call(start_date:, end_date:, game_types: "R", chunk_days: nil, replace_existing: false)
+  def self.call(start_date:, end_date:, game_types: PitchDataDownloader::DEFAULT_GAME_TYPES, chunk_days: nil, replace_existing: false)
     new(start_date: start_date, end_date: end_date, game_types: game_types, chunk_days: chunk_days, replace_existing: replace_existing).call
   end
 

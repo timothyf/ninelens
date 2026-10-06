@@ -306,7 +306,7 @@ class HomeSnapshotQuery
       grouped = Hash.new { |hash, team_id| hash[team_id] = [] }
       Game
         .joins(:schedule)
-        .where(schedules: { season: season }, status: "final")
+        .where(schedules: { season: season }, game_type: "R", status: "final")
         .where("official_date <= ?", on)
         .where.not(home_score: nil, away_score: nil)
         .order(:official_date, :scheduled_at, :mlb_id)

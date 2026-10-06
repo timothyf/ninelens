@@ -497,7 +497,7 @@ class PlayerProfileSnapshotQuery
   def game_fielding_summary(season)
     lines = player.game_player_batting_lines
       .joins(:game)
-      .where(games: { status: "final" })
+      .where(games: { game_type: "R", status: "final" })
       .where(games: { official_date: Date.new(season, 1, 1)..Date.new(season, 12, 31) })
       .to_a
     grouped = lines.group_by { |line| line.position.presence || "—" }
@@ -827,7 +827,7 @@ class PlayerProfileSnapshotQuery
   def league_pitching_totals(season)
     @league_pitching_totals ||= {}
     @league_pitching_totals[season] ||= begin
-      games = GamePlayerPitchingLine.joins(:game).where(games: { official_date: Date.new(season, 1, 1)..Date.new(season, 12, 31) })
+      games = GamePlayerPitchingLine.joins(:game).where(games: { game_type: "R", official_date: Date.new(season, 1, 1)..Date.new(season, 12, 31) })
       lines = games.to_a
       if lines.any?
         outs = lines.sum { |line| line.outs_recorded.to_i }
@@ -1661,7 +1661,7 @@ class PlayerProfileSnapshotQuery
     table_name = relation.table_name
     @game_line_groups[category] = relation
       .joins(:game)
-      .where(player_id: player.id, games: { status: "final", official_date: Date.new(seasons.min, 1, 1)..Date.new(seasons.max, 12, 31) })
+      .where(player_id: player.id, games: { game_type: "R", status: "final", official_date: Date.new(seasons.min, 1, 1)..Date.new(seasons.max, 12, 31) })
       .preload(:team)
       .select("#{table_name}.*, games.official_date AS profile_official_date")
       .to_a

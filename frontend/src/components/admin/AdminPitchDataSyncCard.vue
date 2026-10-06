@@ -46,7 +46,7 @@ defineExpose({
     <div class="admin-fields admin-fields--four">
       <label><span>Start date</span><input v-model="options.startDate" type="date" required /></label>
       <label><span>End date</span><input v-model="options.endDate" type="date" required /></label>
-      <label><span>Game types</span><input v-model="options.gameTypes" type="text" placeholder="R" required /></label>
+      <label><span>Game types</span><input v-model="options.gameTypes" type="text" placeholder="R,W,D,L,F" required /></label>
       <label><span>Chunk days</span><input v-model.number="options.chunkDays" type="number" min="1" max="31" required /></label>
     </div>
     <label class="pitch-replace-existing">

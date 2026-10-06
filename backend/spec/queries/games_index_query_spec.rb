@@ -70,4 +70,18 @@ RSpec.describe GamesIndexQuery, type: :model do
     expect(query.results).to eq([ game ])
     expect(query.metadata[:filters]).to include(team_id: tigers.id)
   end
+
+  it "does not return unplayed if-necessary postseason placeholders" do
+    visible_game = create_game(official_date: Date.new(2026, 10, 1), status: "preview")
+    create_game(
+      official_date: Date.new(2026, 10, 1),
+      game_type: "F",
+      status: "preview",
+      raw_data: { "ifNecessary" => "Y", "ifNecessaryDescription" => "If Necessary Game" }
+    )
+
+    query = described_class.new(params: { start_date: "2026-10-01", end_date: "2026-10-01" })
+
+    expect(query.results).to eq([ visible_game ])
+  end
 end

@@ -1,5 +1,5 @@
 class DailyAnalyticsRefresh
-  CALCULATION_VERSION = "1.0.0"
+  CALCULATION_VERSION = "1.1.0"
   SOURCE_NAME = "NineLens daily analytics"
   SUMMARY_MODELS = [
     PlayerBattingDaily,

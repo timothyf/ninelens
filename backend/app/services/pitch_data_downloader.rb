@@ -3,6 +3,7 @@ require "net/http"
 
 class PitchDataDownloader
   VALID_GAME_TYPES = %w[R S F D L W].freeze
+  DEFAULT_GAME_TYPES = MlbScheduleDownloader::DEFAULT_GAME_TYPES
 
   METADATA_COLUMNS = %w[
     source_start_date
@@ -60,7 +61,7 @@ class PitchDataDownloader
 
   attr_reader :start_date, :end_date, :game_types, :chunk_days, :delay
 
-  def self.call(start_date:, end_date:, game_types: "R", chunk_days: nil, delay: 0.0)
+  def self.call(start_date:, end_date:, game_types: DEFAULT_GAME_TYPES, chunk_days: nil, delay: 0.0)
     new(
       start_date: start_date,
       end_date: end_date,
@@ -70,7 +71,7 @@ class PitchDataDownloader
     ).call
   end
 
-  def initialize(start_date:, end_date:, game_types: "R", chunk_days: nil, delay: 0.0)
+  def initialize(start_date:, end_date:, game_types: DEFAULT_GAME_TYPES, chunk_days: nil, delay: 0.0)
     @start_date = parse_date(start_date)
     @end_date = parse_date(end_date)
     @game_types = parse_game_types(game_types)

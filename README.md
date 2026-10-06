@@ -195,6 +195,16 @@ bin/jobs start
 
 Alternatively, set `SOLID_QUEUE_IN_PUMA=1` to run it with Puma.
 
+### Docker
+
+Docker Compose runs PostgreSQL, the Rails API, and the built Vue frontend together:
+
+```bash
+docker compose up --build
+```
+
+Open `http://localhost:8080`. The API is also available at `http://localhost:3000`, and the database data is kept in the `postgres_data` volume. Set `POSTGRES_PASSWORD`, `SECRET_KEY_BASE`, and `ADMIN_API_TOKEN` in the environment when using the stack beyond local development. Stop the stack with `docker compose down`; add `-v` only when you intentionally want to remove the database volume.
+
 ### Frontend
 
 In a second terminal:

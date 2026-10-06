@@ -37,6 +37,16 @@ RSpec.describe PitchDataDownloader, type: :service do
     expect(bad_game_type[:message]).to eq("Unsupported game type(s): X")
   end
 
+  it "includes postseason game types by default" do
+    downloader = described_class.new(start_date: "2026-10-01", end_date: "2026-10-01")
+    allow(downloader).to receive(:fetch_csv).and_return("game_date,game_pk,game_type\n2026-10-01,900001,F\n")
+
+    result = downloader.call
+
+    expect(result[:success]).to be(true)
+    expect(result.dig(:data, :game_types)).to eq(%w[R W D L F])
+  end
+
   it "normalizes binary-encoded Baseball Savant csv before parsing" do
     downloader = described_class.new(
       start_date: "2026-04-01",

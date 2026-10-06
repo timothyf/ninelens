@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ninelens_production
+      POSTGRES_USER: ninelens
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ninelens-local}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ninelens -d ninelens_production"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: postgres://ninelens:${POSTGRES_PASSWORD:-ninelens-local}@db:5432/ninelens_production
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-ninelens-local-secret-key-base-change-me}
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
+      FORCE_SSL: "false"
+      SOLID_QUEUE_IN_PUMA: "1"
+      WEB_CONCURRENCY: "1"
+      RAILS_LOG_TO_STDOUT: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:3000/up || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+
+volumes:
+  postgres_data:
