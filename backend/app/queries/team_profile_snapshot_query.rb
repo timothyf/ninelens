@@ -6,7 +6,7 @@ class TeamProfileSnapshotQuery
     id schedule_id mlb_id official_date scheduled_at game_type status detailed_status
     home_team_id away_team_id home_probable_pitcher_id away_probable_pitcher_id
     venue_name game_number doubleheader home_score away_score source_name source_url
-    last_synced_at details_last_synced_at created_at updated_at
+    last_synced_at details_last_synced_at raw_data created_at updated_at
   ].freeze
   MIN_PITCHING_OUTS_FOR_RATE = 9
   TEAM_LEADER_DEFINITIONS = {

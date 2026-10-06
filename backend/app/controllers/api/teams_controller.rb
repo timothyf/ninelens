@@ -26,6 +26,11 @@ module Api
       snapshot = TeamProfileSnapshotQuery.new(team: team, season: params[:season], user: current_user, includes: includes).result
 
       render json: { data: serialize_team(team).merge(snapshot) }
+    rescue ActiveRecord::RecordNotFound => error
+      render json: { message: error.message, error: error.class.name }, status: :not_found
+    rescue StandardError => error
+      Rails.logger.error("Team profile failed: #{error.class}: #{error.message}")
+      render json: { message: "#{error.class}: #{error.message}", error: error.class.name }, status: :internal_server_error
     end
 
     private

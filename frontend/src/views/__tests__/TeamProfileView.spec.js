@@ -712,14 +712,23 @@ describe('TeamProfileView', () => {
   })
 
   it('renders a retry state when the profile cannot load', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({
+        status: 500,
+        error: 'Internal Server Error',
+        exception: 'ActiveRecord::StatementInvalid: relation "team_daily_metrics" does not exist',
+      }),
+    }))
     const wrapper = mount(TeamProfileView, {
       props: { teamId: '1' },
       global: { stubs: { RouterLink: true } },
     })
     await flushPromises()
 
-    expect(wrapper.get('[data-test="team-error"]').text()).toContain('Unable to load this team profile')
+    expect(wrapper.get('[data-test="team-error"]').text()).toContain('ActiveRecord::StatementInvalid')
+    expect(wrapper.get('[data-test="team-error"]').text()).toContain('relation "team_daily_metrics" does not exist')
   })
 
   it('warns when completed games are missing pitching details', async () => {

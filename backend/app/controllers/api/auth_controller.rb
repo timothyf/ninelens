@@ -8,7 +8,13 @@ module Api
       end
 
       user = User.new(user_params)
-      user.role = "viewer" unless current_user&.admin?
+      user.role = if first_human_user?
+        "administrator"
+      elsif !current_user&.admin?
+        "viewer"
+      else
+        user.role.presence || "viewer"
+      end
       user.save!
       render json: { data: issue_session(user) }, status: :created
     rescue ActiveRecord::RecordInvalid => error
@@ -38,6 +44,10 @@ module Api
 
     def user_params
       params.permit(:email, :name, :password, :role)
+    end
+
+    def first_human_user?
+      !User.where(system_account: false).exists?
     end
 
     def issue_session(user)

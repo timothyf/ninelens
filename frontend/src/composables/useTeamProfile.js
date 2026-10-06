@@ -162,6 +162,19 @@ function normalizeProfile(data) {
   }
 }
 
+function apiErrorMessage(payload, status) {
+  if (!payload || typeof payload !== 'object') return `Request failed with status ${status}`
+
+  const detail = payload.exception || payload.message || payload.error
+  if (detail) return String(detail)
+
+  if (Array.isArray(payload.errors) && payload.errors.length) {
+    return payload.errors.filter(Boolean).map(String).join(' ')
+  }
+
+  return `Request failed with status ${status}`
+}
+
 export function useTeamProfile(teamIdRef, seasonRef, tabRef) {
   const team = ref(null)
   const loading = ref(false)
@@ -188,16 +201,19 @@ export function useTeamProfile(teamIdRef, seasonRef, tabRef) {
       const response = await fetch(`${API_BASE_URL}/api/teams/${encodeURIComponent(teamId)}${query}`, {
         headers: adminRequestHeaders({ Accept: 'application/json' }),
       })
-      if (!response.ok) throw new Error(`Request failed with status ${response.status}`)
-
       const payload = await response.json()
+      if (!response.ok) {
+        const requestError = new Error(apiErrorMessage(payload, response.status))
+        requestError.status = response.status
+        throw requestError
+      }
       if (requestId === requestCounter) team.value = normalizeProfile(payload.data)
     } catch (fetchError) {
       if (requestId !== requestCounter) return
       team.value = null
-      error.value = fetchError.message.includes('404')
+      error.value = fetchError.status === 404 || fetchError.message.includes('404')
         ? 'That team could not be found.'
-        : 'Unable to load this team profile. Confirm the Rails API is running and reachable.'
+        : fetchError.message || 'Unable to load this team profile. Confirm the Rails API is running and reachable.'
       console.error(fetchError)
     } finally {
       if (requestId === requestCounter) loading.value = false

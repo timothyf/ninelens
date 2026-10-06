@@ -61,6 +61,21 @@ RSpec.describe "Api::Teams", type: :request do
     )
   end
 
+  it "returns the Rails exception details when the profile cannot be built" do
+    allow(TeamProfileSnapshotQuery).to receive(:new).and_raise(
+      ActiveRecord::StatementInvalid,
+      'PG::UndefinedTable: ERROR: relation "team_daily_metrics" does not exist'
+    )
+
+    get api_team_path(@tigers), params: { include: "overview" }
+
+    expect(response).to have_http_status(:internal_server_error)
+    expect(json_body).to include(
+      "error" => "ActiveRecord::StatementInvalid",
+      "message" => 'ActiveRecord::StatementInvalid: PG::UndefinedTable: ERROR: relation "team_daily_metrics" does not exist'
+    )
+  end
+
   it "only embeds workflow summaries visible to the signed-in owner or an administrator" do
     owner = create_user(role: "coach")
     other_user = create_user(role: "scout")

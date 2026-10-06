@@ -7,6 +7,17 @@ RSpec.describe "Authentication and watchlist ownership", type: :request do
     expect(response).to have_http_status(:created)
     token = json_body.dig("data", "token")
     expect(token).to be_present
+    expect(json_body.dig("data", "role")).to eq("administrator")
+
+    get api_admin_users_path, headers: { "Authorization" => "Bearer #{token}" }
+
+    expect(response).to have_http_status(:ok)
+
+    post api_auth_register_path,
+      params: { email: "second@example.test", name: "Second User", password: "password-456" },
+      headers: { "Authorization" => "Bearer #{token}" }
+
+    expect(response).to have_http_status(:created)
     expect(json_body.dig("data", "role")).to eq("viewer")
 
     get api_auth_me_path, headers: { "Authorization" => "Bearer #{token}" }
