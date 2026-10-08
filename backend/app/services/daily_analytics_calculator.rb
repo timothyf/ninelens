@@ -1,4 +1,5 @@
 class DailyAnalyticsCalculator
+  ANALYZED_GAME_TYPES = MlbScheduleDownloader::DEFAULT_GAME_TYPES.split(",").freeze
   SWING_DESCRIPTIONS = %w[
     swinging_strike swinging_strike_blocked missed_bunt foul foul_bunt foul_tip
     hit_into_play hit_into_play_no_out hit_into_play_score
@@ -327,7 +328,7 @@ class DailyAnalyticsCalculator
 
   def batting_lines
     @batting_lines ||= GamePlayerBattingLine.joins(:game)
-      .where(games: { official_date: metric_date, game_type: "R", status: "final" }).select(*BATTING_LINE_COLUMNS).to_a
+      .where(games: { official_date: metric_date, game_type: ANALYZED_GAME_TYPES, status: "final" }).select(*BATTING_LINE_COLUMNS).to_a
   end
 
   def batting_line_official_totals(lines)
@@ -339,11 +340,11 @@ class DailyAnalyticsCalculator
 
   def pitching_lines
     @pitching_lines ||= GamePlayerPitchingLine.joins(:game)
-      .where(games: { official_date: metric_date, game_type: "R", status: "final" }).select(*PITCHING_LINE_COLUMNS).to_a
+      .where(games: { official_date: metric_date, game_type: ANALYZED_GAME_TYPES, status: "final" }).select(*PITCHING_LINE_COLUMNS).to_a
   end
 
   def games
-    @games ||= Game.where(official_date: metric_date, game_type: "R", status: "final")
+    @games ||= Game.where(official_date: metric_date, game_type: ANALYZED_GAME_TYPES, status: "final")
       .select(:id, :mlb_id, :home_team_id, :away_team_id, :home_score, :away_score, :scheduled_at, :raw_data, :boxscore_raw_data).to_a
   end
 

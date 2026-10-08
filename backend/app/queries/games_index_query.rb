@@ -40,11 +40,7 @@ class GamesIndexQuery
       # MLB publishes "if necessary" postseason placeholders before it knows
       # whether the game will be needed. They are not real scheduled games
       # when they remain in a scheduled/preview state.
-      scope = base_relation.where.not(
-        "games.status IN (?) AND COALESCE(games.raw_data ->> 'ifNecessary', 'N') = ?",
-        %w[scheduled preview],
-        "Y"
-      )
+      scope = base_relation.without_unplayed_if_necessary
 
       if normalized_filters[:team_id].present?
         scope = scope.where(

@@ -54,6 +54,7 @@ class HomeSnapshotQuery
   def games
     Game
       .where(official_date: on)
+      .without_unplayed_if_necessary
       .includes(:schedule, :home_team, :away_team, :home_probable_pitcher, :away_probable_pitcher)
       .order(:scheduled_at, :mlb_id)
       .map { |game| GameSerializer.call(game) }
@@ -196,7 +197,7 @@ class HomeSnapshotQuery
     @league_game_count ||= begin
       games = Game
         .joins(:schedule)
-        .where(schedules: { season: season })
+        .where(schedules: { season: season }, game_type: "R")
         .where("official_date <= ?", on)
         .where.not(home_score: nil, away_score: nil)
         .pluck(:home_team_id, :away_team_id)
@@ -273,10 +274,18 @@ class HomeSnapshotQuery
     return TeamDailyMetric.none if analytics_version.blank?
 
     TeamDailyMetric
-      .where(metric_date: Date.new(season, 1, 1)..on, calculation_version: analytics_version)
+      .where(metric_date: Date.new(season, 1, 1)..regular_season_end_date, calculation_version: analytics_version)
       .includes(:team)
       .order(:metric_date)
       .to_a
+  end
+
+  def regular_season_end_date
+    @regular_season_end_date ||= Game
+      .joins(:schedule)
+      .where(schedules: { season: season }, game_type: "R")
+      .where("official_date <= ?", on)
+      .maximum(:official_date) || on
   end
 
   def analytics_version

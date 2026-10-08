@@ -84,6 +84,17 @@ RSpec.describe MlbGameDetailsImporter do
     expect(PlateAppearance.first).to have_attributes(complete: false, event: nil, event_type: nil)
   end
 
+  it "replaces an earlier pitching value when a later official box score corrects it" do
+    import
+    corrected_payload = boxscore.deep_dup
+    corrected_payload.dig("teams", "home", "players", "ID669373", "stats", "pitching")["hits"] = 3
+
+    result = import(boxscore_payload: corrected_payload)
+
+    expect(result[:success]).to be(true)
+    expect(GamePlayerPitchingLine.find_by!(game:, player: Player.find_by!(mlb_id: 669_373)).hits).to eq(3)
+  end
+
   it "safely records empty feeds for postponed games" do
     game.update!(status: "postponed", detailed_status: "Postponed", home_score: 0, away_score: 0)
 

@@ -20,7 +20,14 @@ class Game < ApplicationRecord
   validate :teams_must_be_distinct
 
   scope :chronological, -> { order(:official_date, :scheduled_at, :mlb_id) }
-  scope :upcoming, -> { where(status: %w[scheduled preview]).where("official_date >= ?", Date.current).chronological }
+  scope :upcoming, -> { where(status: %w[scheduled preview]).where("official_date >= ?", Date.current).without_unplayed_if_necessary.chronological }
+  scope :without_unplayed_if_necessary, -> {
+    where.not(
+      "games.status IN (?) AND COALESCE(games.raw_data ->> 'ifNecessary', 'N') = ?",
+      %w[scheduled preview],
+      "Y"
+    )
+  }
   scope :for_team, ->(team) { where(home_team: team).or(where(away_team: team)) }
 
   private

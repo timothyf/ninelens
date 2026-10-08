@@ -139,4 +139,26 @@ RSpec.describe AdminDataHealthCheck do
     expect(checks.dig("final_games_missing_details", :affected_count)).to eq(0)
     expect(checks.dig("final_games_missing_pitch_data", :affected_count)).to eq(0)
   end
+
+  it "does not flag retained old-version analytics when current coverage exists" do
+    metric_date = ApplicationCalendar.current_date - 1.day
+    team = create_team
+    [ "1.0.0", DailyAnalyticsRefresh::CALCULATION_VERSION ].each do |version|
+      TeamDailyMetric.create!(
+        team:,
+        metric_date:,
+        source_start_date: metric_date,
+        source_end_date: metric_date,
+        sample_size: 0,
+        calculation_version: version,
+        calculated_at: Time.current,
+        source_name: DailyAnalyticsRefresh::SOURCE_NAME,
+        metrics: {}
+      )
+    end
+
+    check = described_class.call[:checks].find { |entry| entry.fetch(:id) == "analytics_on_old_versions" }
+
+    expect(check).to include(status: "healthy", affected_count: 0)
+  end
 end

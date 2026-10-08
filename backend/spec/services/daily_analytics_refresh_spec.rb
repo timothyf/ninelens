@@ -167,6 +167,15 @@ RSpec.describe DailyAnalyticsRefresh, type: :service do
     )
   end
 
+  it "includes finalized postseason games in daily analytics" do
+    game.update!(game_type: "D")
+
+    result = described_class.call(start_date: date, end_date: date, refresh_contextual_benchmarks: false)
+
+    expect(result.dig(:data, :row_counts, "team_daily_metrics")).to eq(2)
+    expect(TeamDailyMetric.where(metric_date: date).pluck(:team_id)).to contain_exactly(home_team.id, away_team.id)
+  end
+
   it "recognizes title-cased MLB live-feed swing descriptions" do
     create_pitch(pitch_number: 4, pitch_type: "FF", description: "Swinging Strike", zone: 11)
     create_pitch(pitch_number: 5, pitch_type: "FF", description: "In play, no out", zone: 12)

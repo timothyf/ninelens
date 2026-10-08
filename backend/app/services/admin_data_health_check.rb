@@ -225,7 +225,9 @@ class AdminDataHealthCheck
 
   def analytics_on_old_versions
     affected_count = DailyAnalyticsRefresh::SUMMARY_MODELS.sum do |model|
-      model.where.not(calculation_version: CALCULATION_VERSION).count
+      current_dates = model.where(calculation_version: CALCULATION_VERSION).distinct.pluck(:metric_date)
+      old_dates = model.where.not(calculation_version: CALCULATION_VERSION).distinct.pluck(:metric_date)
+      (old_dates - current_dates).length
     end
 
     build_check(
@@ -234,7 +236,7 @@ class AdminDataHealthCheck
       name: "Analytics use the current calculation version",
       severity: "warning",
       affected_count: affected_count,
-      description: "Rows calculated with older formulas can disagree with current rankings.",
+      description: "Dates without current-version analytics can disagree with current rankings. Older rows are retained for versioned history when current coverage exists.",
       recommendation: "Refresh daily analytics and contextual benchmarks using version #{CALCULATION_VERSION}."
     )
   end

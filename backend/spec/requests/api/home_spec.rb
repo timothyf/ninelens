@@ -32,6 +32,26 @@ RSpec.describe "Api::Home", type: :request do
     expect(json_body.dig("data", "games").pluck("id")).to eq([ eastern_today.id ])
   end
 
+  it "does not show an if-necessary postseason game after the series is complete" do
+    rays = create_team(mlb_id: 139, name: "Tampa Bay Rays", abbreviation: "TB")
+    yankees = create_team(mlb_id: 147, name: "New York Yankees", abbreviation: "NYY")
+    schedule = create_schedule(season: 2026, schedule_type: "D", start_date: Date.new(2026, 10, 1), end_date: Date.new(2026, 10, 15))
+    create_game(
+      schedule:,
+      official_date: ApplicationCalendar.current_date,
+      home_team: yankees,
+      away_team: rays,
+      game_type: "D",
+      status: "preview",
+      raw_data: { "ifNecessary" => "Y", "seriesGameNumber" => 4 }
+    )
+
+    get api_home_path
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.dig("data", "games")).to be_empty
+  end
+
   it "returns the daily slate, qualified leaders, team pulse, and freshness metadata" do
     tigers = create_team(
       mlb_id: 116,

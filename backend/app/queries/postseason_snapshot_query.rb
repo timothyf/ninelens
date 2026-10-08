@@ -19,8 +19,8 @@ class PostseasonSnapshotQuery
 
     payload.merge(
       playoff_teams: playoff_teams(games),
-      game_results: games.select { |game| game.status == "final" },
-      upcoming_games: games.reject { |game| %w[final canceled cancelled].include?(game.status) },
+      game_results: games.select { |game| game.status == "final" }.map { |game| GameSerializer.call(game) },
+      upcoming_games: games.reject { |game| %w[final canceled cancelled].include?(game.status) }.map { |game| GameSerializer.call(game) },
       rounds: rounds(games)
     )
   end
