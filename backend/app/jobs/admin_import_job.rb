@@ -36,8 +36,6 @@ class AdminImportJob < ApplicationJob
       PitchDataImporter.call(csv_data: upload.contents, source_name: upload.original_filename)
     when "player_season_stats_download"
       download_and_import_player_stats(parameters)
-    when "pitch_data_download"
-      download_and_import_pitch_data(parameters)
     else
       raise "Unsupported import task: #{run.task_name}"
     end
@@ -62,31 +60,6 @@ class AdminImportJob < ApplicationJob
       downloaded_count: download.dig(:data, :row_count),
       downloaded_category: download.dig(:data, :category),
       downloaded_seasons: download.dig(:data, :seasons)
-    )
-    imported
-  end
-
-  def download_and_import_pitch_data(parameters)
-    download = PitchDataDownloader.call(
-      start_date: parameters[:start_date],
-      end_date: parameters[:end_date],
-      game_types: parameters[:game_types],
-      chunk_days: parameters[:chunk_days]
-    )
-    return download unless download[:success]
-
-    imported = PitchDataImporter.call(
-      csv_data: download.dig(:data, :csv_data),
-      source_name: "Baseball Savant pitch data #{download.dig(:data, :start_date)}-#{download.dig(:data, :end_date)}"
-    )
-    return imported unless imported[:success]
-
-    imported[:data] = imported.fetch(:data).merge(
-      downloaded_count: download.dig(:data, :row_count),
-      downloaded_start_date: download.dig(:data, :start_date),
-      downloaded_end_date: download.dig(:data, :end_date),
-      downloaded_game_types: download.dig(:data, :game_types),
-      downloaded_chunk_days: download.dig(:data, :chunk_days)
     )
     imported
   end

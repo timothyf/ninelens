@@ -334,7 +334,7 @@ RSpec.describe "Api::Players", type: :request do
     expect(json_body.dig("data", "source_metadata", "last_updated_at")).to be_present
     expect(json_body.dig("data", "contextual_benchmarks")).to include(
       "available" => false,
-      "calculation_version" => "1.0.0",
+      "calculation_version" => DailyAnalyticsRefresh::CALCULATION_VERSION,
       "metrics" => []
     )
     expect(json_body.dig("data", "profile", "id")).to eq(profile.id)

@@ -160,7 +160,7 @@ RSpec.describe ContextualBenchmarkRefresh, type: :service do
       source_start_date: metric_date,
       source_end_date: metric_date,
       sample_size: 1,
-      calculation_version: "1.0.0",
+      calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION,
       calculated_at: Time.current,
       source_name: "spec"
     }

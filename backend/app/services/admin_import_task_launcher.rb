@@ -6,7 +6,6 @@ class AdminImportTaskLauncher
     player_season_stats_import
     player_season_stats_download
     pitch_data_import
-    pitch_data_download
   ].freeze
 
   def self.call(task_name:, params: {}, uploaded_file: nil, initiated_by: nil)

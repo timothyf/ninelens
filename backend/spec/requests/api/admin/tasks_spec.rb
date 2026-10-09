@@ -114,14 +114,14 @@ RSpec.describe "Api::Admin::Tasks", type: :request do
       "linked_pitch_count" => 0
     )
     expect(json_body.dig("meta", "daily_analytics")).to include(
-      "calculation_version" => "1.0.0",
+      "calculation_version" => DailyAnalyticsRefresh::CALCULATION_VERSION,
       "row_counts" => include(
         "player_batting_daily" => 0,
         "team_daily_metrics" => 0
       )
     )
     expect(json_body.dig("meta", "contextual_benchmarks")).to include(
-      "calculation_version" => "1.0.0",
+      "calculation_version" => DailyAnalyticsRefresh::CALCULATION_VERSION,
       "benchmark_count" => 0,
       "percentile_count" => 0
     )

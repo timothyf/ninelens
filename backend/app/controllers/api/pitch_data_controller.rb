@@ -1,8 +1,8 @@
 module Api
   class PitchDataController < ApplicationController
     wrap_parameters false
-    before_action :require_authenticated_user, only: [:import, :download]
-    before_action :require_admin_user, only: [:import, :download]
+    before_action :require_authenticated_user, only: :import
+    before_action :require_admin_user, only: :import
 
     DEFAULT_PER_PAGE = 20
     MAX_PER_PAGE = 500
@@ -55,30 +55,10 @@ module Api
       render json: { message: error.message, errors: [ error.message ] }, status: :service_unavailable
     end
 
-    def download
-      record_import_started("pitch_data_download_import")
-      permitted_params = download_params
-
-      run = AdminImportTaskLauncher.call(
-        task_name: "pitch_data_download",
-        initiated_by: current_user,
-        params: permitted_params.to_h
-      )
-      render_task_run(run)
-    rescue ArgumentError => error
-      render json: { message: error.message, errors: [ error.message ] }, status: :unprocessable_content
-    rescue AdminImportTaskLauncher::EnqueueFailure, SolidQueue::Job::EnqueueError => error
-      render json: { message: error.message, errors: [ error.message ] }, status: :service_unavailable
-    end
-
     private
 
     def import_params
       @import_params ||= params.permit(:file)
-    end
-
-    def download_params
-      @download_params ||= params.permit(:start_date, :end_date, :game_types, :chunk_days)
     end
 
     def record_import_started(task_name)

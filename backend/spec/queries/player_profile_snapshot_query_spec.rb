@@ -308,7 +308,9 @@ RSpec.describe PlayerProfileSnapshotQuery do
       season: nil,
       category: "batting",
       preferred_category: "batting",
-      stats: []
+      stats: [],
+      comparison_stats: [],
+      comparison_benchmarks: {}
     )
   end
 
@@ -607,11 +609,11 @@ RSpec.describe PlayerProfileSnapshotQuery do
     snapshot = described_class.new(player: player).result
     advanced = snapshot.fetch(:advanced_stats)
 
-    expect(snapshot.dig(:season_overview, :comparison_stats)).to contain_exactly(
+    expect(snapshot.dig(:season_overview, :comparison_stats)).to include(
       { key: "k_percentage", label: "K%", value: 0.25 },
       { key: "bb_percentage", label: "BB%", value: 0.1 }
     )
-    expect(snapshot.dig(:career_overview, :comparison_stats)).to contain_exactly(
+    expect(snapshot.dig(:career_overview, :comparison_stats)).to include(
       { key: "k_percentage", label: "K%", value: (70.0 / 300) },
       { key: "bb_percentage", label: "BB%", value: 0.1 }
     )

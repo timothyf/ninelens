@@ -17,7 +17,7 @@ RSpec.describe PlayerBenchmarkSnapshotQuery do
       available: true,
       source_start_date: start_date,
       source_end_date: end_date,
-      calculation_version: "1.0.0"
+      calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION
     )
     expect(result.fetch(:metrics)).to contain_exactly(
       hash_including(
@@ -38,7 +38,7 @@ RSpec.describe PlayerBenchmarkSnapshotQuery do
   it "returns a stable unavailable payload before benchmarks are calculated" do
     expect(described_class.new(player: player).result).to include(
       available: false,
-      calculation_version: "1.0.0",
+      calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION,
       metrics: []
     )
   end
@@ -67,7 +67,7 @@ RSpec.describe PlayerBenchmarkSnapshotQuery do
       cached: false,
       source_start_date: start_date,
       source_end_date: end_date,
-      calculation_version: "1.0.0",
+      calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION,
       calculated_at: Time.current,
       metrics: [ { metric_key: "batter_strikeout_percentage" } ]
     }
@@ -75,7 +75,7 @@ RSpec.describe PlayerBenchmarkSnapshotQuery do
       player_id: player.id,
       start_date: start_date,
       end_date: end_date,
-      calculation_version: "1.0.0"
+      calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION
     ).and_return(preview)
 
     result = described_class.new(player: player, start_date: start_date, end_date: end_date).result
@@ -95,7 +95,7 @@ RSpec.describe PlayerBenchmarkSnapshotQuery do
         sample_size: 10_000,
         source_start_date: start_date,
         source_end_date: end_date,
-        calculation_version: "1.0.0",
+        calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION,
         calculated_at: Time.current,
         source_name: "NineLens contextual benchmarks",
         metadata: { "unit" => "rate" }
@@ -114,7 +114,7 @@ RSpec.describe PlayerBenchmarkSnapshotQuery do
         peer_player_count: benchmark.player_count,
         source_start_date: start_date,
         source_end_date: end_date,
-        calculation_version: "1.0.0",
+        calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION,
         calculated_at: Time.current,
         source_name: "NineLens contextual benchmarks"
       }.merge(attributes)

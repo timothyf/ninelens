@@ -106,7 +106,6 @@ Rails.application.routes.draw do
     resources :pitch_data, only: [:index] do
       collection do
         post :import
-        post :download
       end
     end
   end
