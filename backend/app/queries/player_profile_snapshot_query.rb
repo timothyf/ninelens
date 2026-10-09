@@ -8,10 +8,27 @@ class PlayerProfileSnapshotQuery
     "batting" => %w[avg AVG obp OBP slg SLG ops OPS].freeze,
     "pitching" => %w[ERA era whip WHIP avg AVG].freeze
   }.freeze
-  COMPARISON_RATE_METRICS = [
-    { key: :k_percentage, label: "K%" },
-    { key: :bb_percentage, label: "BB%" }
-  ].freeze
+  COMPARISON_METRICS_BY_CATEGORY = {
+    "batting" => [
+      { key: :k_percentage, label: "K%" },
+      { key: :bb_percentage, label: "BB%" },
+      { key: :iso, label: "ISO" },
+      { key: :wrc_plus, label: "wRC+" },
+      { key: :ops_plus, label: "OPS+" },
+      { key: :baserunning_runs, label: "BsR" }
+    ],
+    "pitching" => [
+      { key: :k_percentage, label: "K%" },
+      { key: :bb_percentage, label: "BB%" },
+      { key: :k_minus_bb_percentage, label: "K-BB%" },
+      { key: :era_minus, label: "ERA-" },
+      { key: :fip, label: "FIP" },
+      { key: :fip_minus, label: "FIP-" },
+      { key: :xfip, label: "xFIP" },
+      { key: :xfip_minus, label: "xFIP-" },
+      { key: :whip, label: "WHIP" }
+    ]
+  }.freeze
   ADVANCED_BATTING_GROUPS = [
     {
       key: "plate_discipline",
@@ -215,12 +232,13 @@ class PlayerProfileSnapshotQuery
       category: category,
       preferred_category: preferred_category,
       stats: category.present? ? serialized_season_stats(category) : [],
-      comparison_stats: category.present? ? serialized_comparison_stats(category, season_rows, career: false) : []
+      comparison_stats: category.present? ? serialized_comparison_stats(category, season_rows, career: false) : [],
+      comparison_benchmarks: category.present? ? ComparisonBenchmarkSnapshotQuery.new(season: latest_season, category: category).result : {}
     }
   end
 
   def empty_season_overview
-    { season: nil, category: preferred_category, preferred_category: preferred_category, stats: [] }
+    { season: nil, category: preferred_category, preferred_category: preferred_category, stats: [], comparison_stats: [], comparison_benchmarks: {} }
   end
 
   def career_overview
@@ -239,7 +257,8 @@ class PlayerProfileSnapshotQuery
       columns: career_columns(category),
       seasons: serialized_career_seasons(category),
       stats: serialized_career_stats(category),
-      comparison_stats: serialized_comparison_stats(category, rows, career: true)
+      comparison_stats: serialized_comparison_stats(category, rows, career: true),
+      comparison_benchmarks: {}
     }
   end
 
@@ -1173,7 +1192,7 @@ class PlayerProfileSnapshotQuery
   def serialized_comparison_stats(category, rows, career:)
     values = advanced_values(category, rows, career: career)
 
-    COMPARISON_RATE_METRICS.filter_map do |metric|
+    COMPARISON_METRICS_BY_CATEGORY.fetch(category, []).filter_map do |metric|
       value = values[metric.fetch(:key)]
       next if value.nil?
 

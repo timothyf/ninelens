@@ -128,6 +128,8 @@ function normalizeProfile(data = {}) {
       preferredCategory: season.preferred_category,
       stats: season.stats || [],
       comparisonStats: season.comparison_stats || [],
+      comparisonBenchmarks: Object.fromEntries(Object.entries(season.comparison_benchmarks || {})),
+      comparisonBenchmarksAvailable: Object.keys(season.comparison_benchmarks || {}).length > 0,
     },
     careerOverview: {
       category: career.category,
@@ -151,6 +153,8 @@ function normalizeProfile(data = {}) {
       })),
       stats: career.stats || [],
       comparisonStats: career.comparison_stats || [],
+      comparisonBenchmarks: Object.fromEntries(Object.entries(career.comparison_benchmarks || {})),
+      comparisonBenchmarksAvailable: Object.keys(career.comparison_benchmarks || {}).length > 0,
       statValues: Object.fromEntries((career.stats || []).map((stat) => [stat.key, stat.value])),
     },
     gameLogs: {
@@ -383,6 +387,10 @@ function normalizeProfile(data = {}) {
         pitcherRoleAverage: metric.pitcher_role_average,
         pitcherRoleKey: metric.pitcher_role_key,
         percentile: metric.percentile,
+        p05: metric.p05,
+        median: metric.median,
+        mad: metric.mad,
+        p95: metric.p95,
         positionPercentile: metric.position_percentile,
         pitcherRolePercentile: metric.pitcher_role_percentile,
         sampleSize: metric.sample_size,

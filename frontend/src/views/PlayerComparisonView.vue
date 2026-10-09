@@ -7,6 +7,15 @@ import SavedAnalysisControls from '../components/SavedAnalysisControls.vue'
 import NotesPanel from '../components/NotesPanel.vue'
 import { usePlayerProfile } from '../composables/usePlayerProfile'
 import { formatBaseballStatValue } from '../utils/baseballStatFormatting'
+import {
+  benchmarkKeyForStat,
+  opportunityForRows,
+  percentileScore,
+  reliabilityAdjustedScore,
+  relativeComparisonScore,
+  robustBenchmarkScore,
+  weightedOverallScore,
+} from '../utils/comparisonScoring'
 
 const route = useRoute()
 const router = useRouter()
@@ -182,21 +191,62 @@ function scoreValue(row, playerIndex, scope) {
   const normalizedKey = String(row.key).trim().toLowerCase()
   const shouldNormalize = category === 'batting' && PER_AT_BAT_STAT_KEYS.has(normalizedKey)
   const comparableValue = shouldNormalize ? perAtBatValue(value, playerIndex, scope) : value
+  const overview = scope === 'season'
+    ? comparisonPlayers.value[playerIndex]?.seasonOverview
+    : comparisonPlayers.value[playerIndex]?.careerOverview
+  const comparisonBenchmark = findComparisonBenchmark(overview?.comparisonBenchmarks, row.key)
+  const contextualBenchmarkKey = benchmarkKeyForStat(normalizedKey, category)
+  const contextualBenchmark = contextualBenchmarkKey
+    ? comparisonPlayers.value[playerIndex]?.contextualBenchmarks?.metrics?.find((metric) => metric.metricKey === contextualBenchmarkKey)
+    : null
+  const benchmarkMetric = comparisonBenchmark || contextualBenchmark
+  const benchmarkScore = benchmarkMetric
+    ? robustBenchmarkScore(comparableValue, benchmarkMetric, benchmarkMetric.directionality)
+      ?? percentileScore(benchmarkMetric.percentile, benchmarkMetric.directionality)
+    : null
+  if (benchmarkScore !== null) {
+    return reliabilityAdjustedScore(
+      benchmarkScore,
+      benchmarkMetric.sampleSize ?? opportunityForRows(scope === 'season' ? seasonRows.value : careerRows.value, playerIndex, category),
+      category,
+      scope,
+    )
+  }
   const values = comparisonPlayers.value.map((_, index) => {
     const candidate = Number(row.values[index])
     return shouldNormalize ? perAtBatValue(candidate, index, scope) : candidate
   }).filter(Number.isFinite)
   if (!Number.isFinite(comparableValue) || values.length < 2) return null
 
-  const minimum = Math.min(...values)
-  const maximum = Math.max(...values)
-  if (minimum === maximum) return 100
-
   const lowerIsBetter = LOWER_IS_BETTER[category]?.has(String(row.key).toLowerCase()) === true
-  const normalized = lowerIsBetter
-    ? (maximum - comparableValue) / (maximum - minimum)
-    : (comparableValue - minimum) / (maximum - minimum)
-  return normalized * 100
+  const normalizedScore = relativeComparisonScore(
+    comparableValue,
+    values,
+    lowerIsBetter ? 'lower_better' : 'higher_better',
+  )
+  if (normalizedScore === null) return null
+  return reliabilityAdjustedScore(
+    normalizedScore,
+    opportunityForRows(scope === 'season' ? seasonRows.value : careerRows.value, playerIndex, category),
+    category,
+    scope,
+  ) ?? normalizedScore
+}
+
+function findComparisonBenchmark(benchmarks, statKey) {
+  if (!benchmarks || typeof benchmarks !== 'object') return null
+
+  const normalizedKey = normalizeComparisonKey(statKey)
+  const entry = Object.entries(benchmarks).find(([key]) => normalizeComparisonKey(key) === normalizedKey)
+  return entry?.[1] || null
+}
+
+function normalizeComparisonKey(key) {
+  return String(key || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[+%]/g, (match) => match === '+' ? 'plus' : 'percentage')
+    .replace(/[^a-z0-9]+/g, '')
 }
 
 function perAtBatValue(value, playerIndex, scope) {
@@ -210,17 +260,12 @@ function perAtBatValue(value, playerIndex, scope) {
 function overallScore(scope, playerIndex) {
   weightRevision.value
   const rows = scope === 'season' ? seasonRows.value : careerRows.value
-  let weightedTotal = 0
-  let totalWeight = 0
-  rows.forEach((row) => {
-    const weight = statWeight(row.key)
-    const score = scoreValue(row, playerIndex, scope)
-    if (weight > 0 && score !== null) {
-      weightedTotal += score * weight
-      totalWeight += weight
-    }
-  })
-  return totalWeight ? Math.round(weightedTotal / totalWeight) : null
+  const scores = rows.map((row) => ({
+    key: String(row.key).trim().toLowerCase(),
+    score: scoreValue(row, playerIndex, scope),
+  }))
+  const weights = Object.fromEntries(scores.map(({ key }) => [key, statWeight(key)]))
+  return weightedOverallScore(scores, weights).score
 }
 
 function resetWeights() {

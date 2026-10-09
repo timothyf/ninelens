@@ -71,6 +71,7 @@ class PlayerBenchmarkSnapshotQuery
       position = metric_rows.find { |row| row.league_metric_benchmark.peer_group_type == "position" }
       role = metric_rows.find { |row| row.league_metric_benchmark.peer_group_type == "pitcher_role" }
       benchmark = league.league_metric_benchmark
+      distribution = benchmark_distribution(benchmark)
 
       {
         metric_key: benchmark.metric_key,
@@ -87,6 +88,10 @@ class PlayerBenchmarkSnapshotQuery
         pitcher_role_average: number(role&.league_metric_benchmark&.average_value),
         pitcher_role_key: role&.league_metric_benchmark&.peer_group_key,
         percentile: number(league.percentile),
+        p05: distribution[:p05],
+        median: distribution[:median],
+        mad: distribution[:mad],
+        p95: distribution[:p95],
         position_percentile: number(position&.percentile),
         pitcher_role_percentile: number(role&.percentile),
         sample_size: league.sample_size,
@@ -113,6 +118,37 @@ class PlayerBenchmarkSnapshotQuery
 
   def number(value)
     value&.to_f
+  end
+
+  def benchmark_distribution(benchmark)
+    @benchmark_distributions ||= {}
+    @benchmark_distributions[benchmark.id] ||= begin
+      values = benchmark.player_metric_percentiles.pluck(:raw_value).filter_map { |value| number(value) }.sort
+      if values.empty?
+        { p05: nil, median: nil, mad: nil, p95: nil }
+      else
+        median = quantile(values, 0.5)
+        deviations = values.map { |value| (value - median).abs }.sort
+        {
+          p05: quantile(values, 0.05),
+          median: median,
+          mad: quantile(deviations, 0.5),
+          p95: quantile(values, 0.95),
+        }
+      end
+    end
+  end
+
+  def quantile(values, probability)
+    return nil if values.empty?
+    return values.first if values.length == 1
+
+    position = probability * (values.length - 1)
+    lower = position.floor
+    upper = position.ceil
+    return values[lower] if lower == upper
+
+    values[lower] + (values[upper] - values[lower]) * (position - lower)
   end
 
   def empty_result

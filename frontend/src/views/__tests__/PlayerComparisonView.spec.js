@@ -19,6 +19,7 @@ function profile(id, name, team, stats, careerStats = stats) {
       positions: { primary: { abbreviation: id === 1 ? 'CF' : 'RF', name: 'Outfielder' }, secondary: [], assignments: [] },
       season_overview: {
         season: 2026, category: 'batting', preferred_category: 'batting', stats,
+        comparison_benchmarks: {},
         comparison_stats: [
           { key: 'k_percentage', label: 'K%', value: id === 1 ? 0.22 : 0.29 },
           { key: 'bb_percentage', label: 'BB%', value: id === 1 ? 0.09 : 0.14 },
@@ -57,13 +58,13 @@ describe('PlayerComparisonView', () => {
     const responses = {
       '/api/players/1': profile(
         1, 'Riley Greene', { id: 10, name: 'Detroit Tigers', abbreviation: 'DET' },
-        [{ key: 'homeRuns', label: 'HR', value: '24.0' }, { key: 'ops', label: 'OPS', value: '0.842' }, { key: 'WAR', label: 'WAR', value: '3.2' }, { key: 'caughtStealing', label: 'CS', value: '5.0' }],
-        [{ key: 'homeRuns', label: 'HR', value: '82.0' }, { key: 'ops', label: 'OPS', value: '0.821' }, { key: 'WAR', label: 'WAR', value: '8.1' }, { key: 'caughtStealing', label: 'CS', value: '11.0' }],
+        [{ key: 'atBats', label: 'AB', value: '500' }, { key: 'homeRuns', label: 'HR', value: '24.0' }, { key: 'ops', label: 'OPS', value: '0.842' }, { key: 'WAR', label: 'WAR', value: '3.2' }, { key: 'caughtStealing', label: 'CS', value: '5.0' }],
+        [{ key: 'atBats', label: 'AB', value: '500' }, { key: 'homeRuns', label: 'HR', value: '82.0' }, { key: 'ops', label: 'OPS', value: '0.821' }, { key: 'WAR', label: 'WAR', value: '8.1' }, { key: 'caughtStealing', label: 'CS', value: '11.0' }],
       ),
       '/api/players/2': profile(
         2, 'Aaron Judge', { id: 11, name: 'New York Yankees', abbreviation: 'NYY' },
-        [{ key: 'homeRuns', label: 'HR', value: '38' }, { key: 'avg', label: 'AVG', value: '0.311' }, { key: 'WAR', label: 'WAR', value: '8.1' }, { key: 'caughtStealing', label: 'CS', value: '2' }],
-        [{ key: 'homeRuns', label: 'HR', value: '353' }, { key: 'avg', label: 'AVG', value: '0.288' }, { key: 'caughtStealing', label: 'CS', value: '7' }],
+        [{ key: 'atBats', label: 'AB', value: '500' }, { key: 'homeRuns', label: 'HR', value: '38' }, { key: 'avg', label: 'AVG', value: '0.311' }, { key: 'WAR', label: 'WAR', value: '8.1' }, { key: 'caughtStealing', label: 'CS', value: '2' }],
+        [{ key: 'atBats', label: 'AB', value: '500' }, { key: 'homeRuns', label: 'HR', value: '353' }, { key: 'avg', label: 'AVG', value: '0.288' }, { key: 'caughtStealing', label: 'CS', value: '7' }],
       ),
     }
     vi.stubGlobal('fetch', vi.fn((url) => Promise.resolve({
@@ -98,6 +99,8 @@ describe('PlayerComparisonView', () => {
     expect(playerBHeader.text()).toContain('Bats R')
     expect(playerBHeader.text()).toContain('Throws R')
     const season = wrapper.get('[data-test="season-comparison"]')
+    expect(season.get('thead').text()).toMatch(/Overall score \d+\/100/)
+    expect(season.get('thead').text()).not.toContain('Overall score —/100')
     expect(season.text()).toContain('24')
     expect(season.text()).not.toContain('24.0')
     expect(season.text()).toContain('38')
