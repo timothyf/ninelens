@@ -25,6 +25,17 @@ const BENCHMARK_KEYS = {
   },
 }
 
+const STAT_DIRECTIONS = {
+  batting: {
+    k_percentage: 'lower_better',
+    bb_percentage: 'higher_better',
+  },
+  pitching: {
+    k_percentage: 'higher_better',
+    bb_percentage: 'lower_better',
+  },
+}
+
 export function normalDistributionCdf(value) {
   // Abramowitz and Stegun approximation, accurate to roughly 7.5e-8.
   const sign = value < 0 ? -1 : 1
@@ -86,6 +97,10 @@ export function benchmarkKeyForStat(key, category) {
   return BENCHMARK_KEYS[category]?.[String(key).trim().toLowerCase()] || null
 }
 
+export function directionalityForStat(key, category, fallback = 'higher_better') {
+  return STAT_DIRECTIONS[category]?.[String(key).trim().toLowerCase()] || fallback
+}
+
 export function opportunityForRows(rows, playerIndex, category) {
   const opportunityRow = rows.find((row) => OPPORTUNITY_KEYS[category]?.has(String(row.key).trim().toLowerCase()))
   const value = Number(opportunityRow?.values?.[playerIndex])
@@ -111,4 +126,36 @@ export function weightedOverallScore(statScores, weights, { minimumCoverage = 0.
     score: availableWeight > 0 && coverage >= minimumCoverage ? Math.round(weightedTotal / availableWeight) : null,
     coverage,
   }
+}
+
+export function commonWeightedOverallScores(statScoresByPlayer, weights, { minimumCoverage = 0.5 } = {}) {
+  if (!Array.isArray(statScoresByPlayer) || statScoresByPlayer.length === 0) {
+    return { scores: [], coverage: 0, commonKeys: [] }
+  }
+
+  const positiveWeights = Object.fromEntries(
+    Object.entries(weights || {}).filter(([, weight]) => Number(weight) > 0),
+  )
+  const requestedWeight = Object.values(positiveWeights).reduce((total, weight) => total + Number(weight), 0)
+  const scoreByPlayer = statScoresByPlayer.map((statScores) => new Map(
+    statScores.map(({ key, score }) => [String(key).trim().toLowerCase(), score]),
+  ))
+  const commonKeys = Object.keys(positiveWeights).filter((key) =>
+    scoreByPlayer.every((scores) => {
+      const score = scores.get(key)
+      return score !== null && score !== undefined && Number.isFinite(Number(score))
+    }),
+  )
+  const commonWeight = commonKeys.reduce((total, key) => total + Number(positiveWeights[key]), 0)
+  const coverage = requestedWeight > 0 ? commonWeight / requestedWeight : 0
+  const commonKeySet = new Set(commonKeys)
+  const scores = coverage >= minimumCoverage
+    ? statScoresByPlayer.map((statScores) => weightedOverallScore(
+      statScores.filter(({ key }) => commonKeySet.has(String(key).trim().toLowerCase())),
+      positiveWeights,
+      { minimumCoverage: 1 },
+    ).score)
+    : statScoresByPlayer.map(() => null)
+
+  return { scores, coverage, commonKeys }
 }

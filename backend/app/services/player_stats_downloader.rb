@@ -68,6 +68,7 @@ class PlayerStatsDownloader
     "BaseRunning",
     "Defense",
     "DRS",
+    "TZR",
     "fieldingByPosition",
     "GB%",
     "FB%",

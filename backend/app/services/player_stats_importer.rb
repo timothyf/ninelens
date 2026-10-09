@@ -72,22 +72,24 @@ class PlayerStatsImporter
   UPSERT_SCOPE_INDEX = :idx_player_season_stats_unique_scope
   LEAGUE_SCOPE_KEYS = %w[AL NL MLB].freeze
 
-  def self.call(csv_data: nil, file_path: nil, source_name: nil, required_stat_columns: [], replace_season: false)
+  def self.call(csv_data: nil, file_path: nil, source_name: nil, required_stat_columns: [], replace_season: false, fielding_only: false)
     new(
       csv_data: csv_data,
       file_path: file_path,
       source_name: source_name,
       required_stat_columns: required_stat_columns,
-      replace_season: replace_season
+      replace_season: replace_season,
+      fielding_only: fielding_only
     ).call
   end
 
-  def initialize(csv_data: nil, file_path: nil, source_name: nil, required_stat_columns: [], replace_season: false)
+  def initialize(csv_data: nil, file_path: nil, source_name: nil, required_stat_columns: [], replace_season: false, fielding_only: false)
     @csv_data = csv_data
     @file_path = file_path
     @source_name = source_name
     @required_stat_columns = Array(required_stat_columns).map { |column| column.to_s.strip }.reject(&:blank?)
     @replace_season = cast_boolean(replace_season)
+    @fielding_only = cast_boolean(fielding_only)
     @errors = []
   end
 
@@ -128,6 +130,10 @@ class PlayerStatsImporter
 
   def replace_season?
     @replace_season
+  end
+
+  def fielding_only?
+    @fielding_only
   end
 
   def csv_source
@@ -184,7 +190,7 @@ class PlayerStatsImporter
     season = parse_integer(fetch_value(normalized_row, key_map, SEASON_FIELDS))
     category = normalize_category(fetch_value(normalized_row, key_map, STAT_GROUP_FIELDS))
     team_attributes = build_team_attributes(normalized_row, key_map)
-    stat_entries = build_stat_entries(normalized_row, key_map, category)
+    stat_entries = fielding_only? ? [] : build_stat_entries(normalized_row, key_map, category)
     fielding_position_rows = parse_fielding_position_rows(fetch_value(normalized_row, key_map, FIELDING_BY_POSITION_FIELDS))
 
     missing_identity_fields = []
@@ -205,7 +211,7 @@ class PlayerStatsImporter
       return nil
     end
 
-    if stat_entries.empty?
+    if stat_entries.empty? && !(fielding_only? && fielding_position_rows.any?)
       errors << row_error(source_row_number, "No importable #{category} stats found for player #{player_mlb_id}")
       return nil
     end

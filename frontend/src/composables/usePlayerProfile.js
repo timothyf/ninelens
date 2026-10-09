@@ -65,7 +65,7 @@ function normalizeTrade(trade) {
   }
 }
 
-function normalizeProfile(data = {}) {
+export function normalizeProfile(data = {}) {
   const profile = data.profile
     ? {
         ...data.profile,
@@ -150,6 +150,7 @@ function normalizeProfile(data = {}) {
         })),
         totalStats: seasonRow.total_stats || seasonRow.stats || [],
         totalStatValues: Object.fromEntries((seasonRow.total_stats || seasonRow.stats || []).map((stat) => [stat.key, stat.value])),
+        comparisonBenchmarks: Object.fromEntries(Object.entries(seasonRow.comparison_benchmarks || {})),
       })),
       stats: career.stats || [],
       comparisonStats: career.comparison_stats || [],
@@ -190,15 +191,18 @@ function normalizeProfile(data = {}) {
             games: positionRow.games,
             innings: positionRow.innings,
             fieldingPercentage: positionRow.fielding_percentage,
+            totalZoneRuns: positionRow.total_zone_runs,
             defensiveRunsSaved: positionRow.defensive_runs_saved,
             outsAboveAverage: positionRow.outs_above_average,
           })),
         fieldingPercentage: seasonRow.fielding_percentage,
+        totalZoneRuns: seasonRow.total_zone_runs,
         defensiveRunsSaved: seasonRow.defensive_runs_saved,
         outsAboveAverage: seasonRow.outs_above_average,
       })),
       positions: defensiveStats.positions || [],
       fieldingPercentage: defensiveStats.fielding_percentage,
+      totalZoneRuns: defensiveStats.total_zone_runs,
       defensiveRunsSaved: defensiveStats.defensive_runs_saved,
       outsAboveAverage: defensiveStats.outs_above_average,
     },
@@ -489,7 +493,12 @@ function normalizeTrendGroup(group = {}) {
   }
 }
 
-export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, { includeCoreSection = true } = {}) {
+export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
+  includeCoreSection = true,
+  additionalSections = [],
+  loadAnalyticsAfterInitial = true,
+  requestParams = {},
+} = {}) {
   const player = ref(null)
   const loading = ref(false)
   const error = ref('')
@@ -516,7 +525,11 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, { inclu
     loadingSections.value = {}
 
     try {
-      const query = analysisQuery(analysisOptionsRef?.value, includeCoreSection ? 'core' : null)
+      const initialSections = [
+        includeCoreSection ? 'core' : null,
+        ...additionalSections,
+      ].filter(Boolean).join(',') || null
+      const query = analysisQuery(analysisOptionsRef?.value, initialSections, requestParams)
       const response = await fetch(`${API_BASE_URL}/api/players/${encodeURIComponent(playerId)}${query}`, {
         headers: { Accept: 'application/json' },
       })
@@ -532,11 +545,13 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, { inclu
       if (requestId !== requestCounter) return
 
       player.value = normalizeProfile(payload.data)
-      window.setTimeout(() => {
-        if (requestId !== requestCounter) return
+      if (loadAnalyticsAfterInitial) {
+        window.setTimeout(() => {
+          if (requestId !== requestCounter) return
 
-        void loadSection('analytics', requestId)
-      }, 0)
+          void loadSection('analytics', requestId)
+        }, 0)
+      }
     } catch (fetchError) {
       if (requestId !== requestCounter) return
 

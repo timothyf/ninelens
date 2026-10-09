@@ -17,12 +17,42 @@ module Api
         analysis_range: analysis_range,
         similarity_options: similarity_params
       ).result(
-        sections: profile_sections
+        sections: profile_sections,
+        compact: params[:view].to_s == "comparison"
       )
 
       render json: {
         data: serialize_player(player, include_profile: true, include_positions: true, include_contract: true).merge(snapshot)
       }
+    rescue ArgumentError => error
+      render json: { message: error.message, errors: [ error.message ] }, status: :unprocessable_content
+    end
+
+    def compare
+      ids = params[:ids].to_s.split(",").map { |id| Integer(id, exception: false) }.compact.uniq.first(3)
+      return render json: { message: "At least two player ids are required." }, status: :unprocessable_content if ids.length < 2
+
+      players_by_id = Player.includes(:profile, :team, player_positions: :position).where(id: ids).index_by(&:id)
+      return render json: { message: "One or more players could not be found." }, status: :not_found if players_by_id.length != ids.length
+
+      benchmark_cache = {}
+      data = ids.map do |id|
+        player = players_by_id.fetch(id)
+        analysis_range = PlayerAnalysisRange.resolve(player: player, params: analysis_params)
+        snapshot = PlayerProfileSnapshotQuery.new(
+          player: player,
+          analysis_range: analysis_range,
+          similarity_options: similarity_params,
+          benchmark_cache: benchmark_cache
+        ).result(
+          sections: profile_sections,
+          compact: params[:view].to_s == "comparison"
+        )
+
+        serialize_player(player, include_profile: true, include_positions: true, include_contract: true).merge(snapshot)
+      end
+
+      render json: { data: data }
     rescue ArgumentError => error
       render json: { message: error.message, errors: [ error.message ] }, status: :unprocessable_content
     end

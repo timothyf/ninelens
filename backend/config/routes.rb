@@ -26,7 +26,11 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :players, only: [:index, :show]
+    resources :players, only: [:index, :show] do
+      collection do
+        get :compare
+      end
+    end
     resources :users, only: [ :index ]
     resources :teams, only: [:index, :show] do
       resources :opponent_reports, only: [ :index, :create ]

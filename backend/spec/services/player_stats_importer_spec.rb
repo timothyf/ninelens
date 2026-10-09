@@ -224,4 +224,47 @@ RSpec.describe PlayerStatsImporter, type: :service do
     )
   end
 
+  it "can import fielding rows without creating season stat records" do
+    fielding_rows = [
+      {
+        team_abbreviation: "DET", position: "SS", games: 150, innings: 1310.0,
+        putouts: 250, assists: 450, fielding_errors: 12, fielding_percentage: 0.983,
+        defensive_runs_saved: nil, outs_above_average: nil
+      }
+    ]
+    csv_data = CSV.generate do |csv|
+      csv << %w[season stat_type playerId playerFirstName playerLastName teamAbbrev teamName teamShortName teamId fieldingByPosition]
+      csv << [1984, "batter", 123456, "Alex", "Mason", "DET", "Detroit Tigers", "Tigers", 116, fielding_rows.to_json]
+    end
+
+    result = described_class.call(
+      csv_data: csv_data,
+      source_name: "MLB historical fielding 1984",
+      fielding_only: true
+    )
+
+    expect(result[:success]).to be(true)
+    expect(result.dig(:data, :imported_count)).to eq(0)
+    expect(result.dig(:data, :fielding_imported_count)).to eq(1)
+    player = Player.find_by!(mlb_id: 123456)
+    expect(player.player_season_stats.where(season: 1984)).to be_empty
+    expect(player.player_season_fielding_stats.pluck(:position, :games)).to eq([["SS", 150]])
+  end
+
+  it "imports Total Zone Runs as an explicit player season stat" do
+    StatType.find_or_create_by!(category: "batting", name: "TZR") { |stat_type| stat_type.label = "TZR" }
+    StatType.invalidate_catalog_cache!
+    csv_data = CSV.generate do |csv|
+      csv << %w[season stat_type playerId playerFirstName playerLastName teamAbbrev teamName teamShortName teamId TZR]
+      csv << [1984, "batter", 123457, "Alex", "Mason", "DET", "Detroit Tigers", "Tigers", 116, 18.4]
+    end
+
+    result = described_class.call(csv_data: csv_data, source_name: "Total Zone Runs 1984")
+
+    expect(result[:success]).to be(true)
+    player = Player.find_by!(mlb_id: 123457)
+    stat_type = StatType.find_by!(category: "batting", name: "TZR")
+    expect(player.player_season_stats.find_by!(season: 1984, stat_type: stat_type).value).to eq(BigDecimal("18.4"))
+  end
+
 end

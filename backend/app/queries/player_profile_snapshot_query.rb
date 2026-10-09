@@ -15,6 +15,8 @@ class PlayerProfileSnapshotQuery
       { key: :iso, label: "ISO" },
       { key: :wrc_plus, label: "wRC+" },
       { key: :ops_plus, label: "OPS+" },
+      { key: :offensive_runs, label: "Offensive runs" },
+      { key: :defensive_value, label: "Defensive value" },
       { key: :baserunning_runs, label: "BsR" }
     ],
     "pitching" => [
@@ -141,27 +143,32 @@ class PlayerProfileSnapshotQuery
   DEFERRED_SECTIONS = %w[advanced_stats defensive_stats splits similar_players analytics].freeze
   NON_DEFENSIVE_POSITIONS = %w[DH].freeze
 
-  def initialize(player:, on: Date.current, analysis_range: nil, similarity_options: {})
+  def initialize(player:, on: Date.current, analysis_range: nil, similarity_options: {}, benchmark_cache: nil)
     @player = player
     @on = on
     @analysis_range = analysis_range || PlayerAnalysisRange.resolve(player: player)
     @similarity_options = similarity_options.to_h.symbolize_keys
+    @benchmark_cache = benchmark_cache
   end
 
-  def result(sections: nil)
+  def result(sections: nil, compact: false)
     selected_sections = sections.nil? ? DEFERRED_SECTIONS : Array(sections) & DEFERRED_SECTIONS
     payload = {
       season_overview: season_overview,
       career_overview: career_overview,
-      game_logs: game_logs,
       display_team: serialize_team(display_team),
-      external_ids: external_ids,
-      current_membership: serialize_membership(current_membership),
-      team_history: organization_tenures,
-      trades: trade_history,
-      analysis: { range: analysis_range.to_h },
-      source_metadata: source_metadata
+      external_ids: external_ids
     }
+    unless compact
+      payload.merge!(
+        game_logs: game_logs,
+        current_membership: serialize_membership(current_membership),
+        team_history: organization_tenures,
+        trades: trade_history,
+        analysis: { range: analysis_range.to_h },
+        source_metadata: source_metadata
+      )
+    end
 
     payload[:advanced_stats] = advanced_stats if selected_sections.include?("advanced_stats")
     payload[:defensive_stats] = defensive_stats if selected_sections.include?("defensive_stats")
@@ -187,7 +194,16 @@ class PlayerProfileSnapshotQuery
 
   private
 
-  attr_reader :player, :on, :analysis_range, :similarity_options
+  attr_reader :player, :on, :analysis_range, :similarity_options, :benchmark_cache
+
+  def comparison_benchmarks_for(season, category)
+    return {} if season.blank? || category.blank?
+
+    key = [ season, category ]
+    return ComparisonBenchmarkSnapshotQuery.new(season: season, category: category).result if benchmark_cache.nil?
+
+    benchmark_cache[key] ||= ComparisonBenchmarkSnapshotQuery.new(season: season, category: category).result
+  end
 
   def display_team
     return current_membership&.team || player.team unless retired_player?
@@ -233,7 +249,7 @@ class PlayerProfileSnapshotQuery
       preferred_category: preferred_category,
       stats: category.present? ? serialized_season_stats(category) : [],
       comparison_stats: category.present? ? serialized_comparison_stats(category, season_rows, career: false) : [],
-      comparison_benchmarks: category.present? ? ComparisonBenchmarkSnapshotQuery.new(season: latest_season, category: category).result : {}
+      comparison_benchmarks: category.present? ? comparison_benchmarks_for(latest_season, category) : {}
     }
   end
 
@@ -437,6 +453,13 @@ class PlayerProfileSnapshotQuery
     fielding_percentage = stored_fielding_percentage
     fielding_percentage = stored_position_fielding_percentage(season) if fielding_percentage.nil?
     fielding_percentage ||= game_fielding[:fielding_percentage]
+    drs = advanced_count(stat_rows, %w[defensiveRunsSaved DRS drs], career: false)
+    total_zone_runs = advanced_count(stat_rows, %w[TZR totalZoneRuns total_zone_runs], career: false)
+    displayed_drs = if total_zone_runs.present? && drs.to_f.zero?
+      nil
+    else
+      drs
+    end
 
     {
       season: season,
@@ -446,8 +469,9 @@ class PlayerProfileSnapshotQuery
         { position: assignment.position.abbreviation || assignment.position.name, games: index.zero? ? games : nil, innings: nil }
       end),
       fielding_percentage: numeric_advanced_value(fielding_percentage),
+      total_zone_runs: numeric_advanced_value(total_zone_runs),
       defensive_runs_saved: numeric_advanced_value(
-        advanced_count(stat_rows, %w[defensiveRunsSaved DRS drs], career: false) || summed_position_metric(stored_positions, :defensive_runs_saved) || game_fielding[:defensive_runs_saved]
+        displayed_drs || (total_zone_runs.present? ? nil : summed_position_metric(stored_positions, :defensive_runs_saved) || game_fielding[:defensive_runs_saved])
       ),
       outs_above_average: numeric_advanced_value(
         advanced_count(stat_rows, %w[outsAboveAverage OAA oaa outs_above_average], career: false) || summed_position_metric(stored_positions, :outs_above_average) || game_fielding[:outs_above_average]
@@ -649,6 +673,14 @@ class PlayerProfileSnapshotQuery
     home_runs = advanced_count(rows, %w[homeRuns HR], career: career)
     at_bats = advanced_count(rows, %w[atBats AB], career: career)
     sacrifice_flies = advanced_count(rows, %w[sacFlies SF], career: career)
+    drs = advanced_count(rows, %w[DRS drs defensiveRunsSaved], career: career)
+    total_zone_runs = advanced_count(rows, %w[TZR totalZoneRuns total_zone_runs], career: career)
+    source_defensive_value = advanced_count(rows, %w[Defense defensiveValue], career: career)
+    defensive_value = if total_zone_runs.present? && drs.to_f.zero?
+      total_zone_runs
+    else
+      drs || total_zone_runs || source_defensive_value
+    end
     average = advanced_rate(rows, %w[avg AVG], %w[atBats AB], career: career)
     slugging = advanced_rate(rows, %w[slg SLG], %w[atBats AB], career: career)
 
@@ -673,7 +705,7 @@ class PlayerProfileSnapshotQuery
       ops_plus: numeric_advanced_value(advanced_rate(rows, [ "OPS+", "ops+", "OPSPlus", "opsPlus" ], %w[plateAppearances PA], career: career)),
       offensive_runs: numeric_advanced_value(advanced_count(rows, %w[Offense offensiveRuns], career: career)),
       baserunning_runs: numeric_advanced_value(advanced_count(rows, %w[BaseRunning baserunningRuns], career: career)),
-      defensive_value: numeric_advanced_value(advanced_count(rows, %w[Defense defensiveValue], career: career)),
+      defensive_value: numeric_advanced_value(defensive_value),
       war: numeric_advanced_value(advanced_count(rows, %w[WAR war], career: career)),
       ground_ball_percentage: numeric_advanced_value(advanced_batted_ball_rate(rows, [ "GB%", "groundBallPercentage" ], career: career)),
       fly_ball_percentage: numeric_advanced_value(advanced_batted_ball_rate(rows, [ "FB%", "flyBallPercentage" ], career: career)),
@@ -1032,7 +1064,8 @@ class PlayerProfileSnapshotQuery
         teams: rows.filter_map(&:team).uniq(&:id).map { |team| serialize_team(team) },
         stats: serialized_stats_for_season(category, rows),
         team_rows: team_rows.map { |team, team_stats| { team: serialize_team(team), stats: serialized_stats_for_season(category, team_stats) } },
-        total_stats: serialized_stats_for_season(category, rows)
+        total_stats: serialized_stats_for_season(category, rows),
+        comparison_benchmarks: comparison_benchmarks_for(season, category)
       }
     end
   end

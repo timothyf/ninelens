@@ -5,10 +5,12 @@ import { useRoute, useRouter } from 'vue-router'
 import PlayerComparisonPicker from '../components/PlayerComparisonPicker.vue'
 import SavedAnalysisControls from '../components/SavedAnalysisControls.vue'
 import NotesPanel from '../components/NotesPanel.vue'
-import { usePlayerProfile } from '../composables/usePlayerProfile'
+import { usePlayerComparisonProfiles } from '../composables/usePlayerComparisonProfiles'
 import { formatBaseballStatValue } from '../utils/baseballStatFormatting'
 import {
   benchmarkKeyForStat,
+  commonWeightedOverallScores,
+  directionalityForStat,
   opportunityForRows,
   percentileScore,
   reliabilityAdjustedScore,
@@ -30,12 +32,27 @@ const savedAnalysisUrl = computed(() => {
   if (thirdId.value) query.set('third', thirdId.value)
   return `/compare${query.size ? `?${query}` : ''}`
 })
-const { player: leftPlayer, loading: leftLoading, error: leftError } = usePlayerProfile(leftId, null, { includeCoreSection: true })
-const { player: rightPlayer, loading: rightLoading, error: rightError } = usePlayerProfile(rightId, null, { includeCoreSection: true })
-const { player: thirdPlayer, loading: thirdLoading, error: thirdError } = usePlayerProfile(thirdId, null, { includeCoreSection: true })
+const comparisonIds = computed(() => [leftId.value, rightId.value, thirdId.value].filter(Boolean))
+const { players: comparisonProfiles, loading: comparisonRequestLoading, error: comparisonRequestError } = usePlayerComparisonProfiles(comparisonIds, { requestParams: { view: 'comparison' } })
+const leftPlayer = computed(() => comparisonProfiles.value.find((player) => String(player.id) === String(leftId.value)) || null)
+const rightPlayer = computed(() => comparisonProfiles.value.find((player) => String(player.id) === String(rightId.value)) || null)
+const thirdPlayer = computed(() => comparisonProfiles.value.find((player) => String(player.id) === String(thirdId.value)) || null)
+const leftLoading = computed(() => comparisonRequestLoading.value && !leftPlayer.value)
+const rightLoading = computed(() => comparisonRequestLoading.value && !rightPlayer.value)
+const thirdLoading = computed(() => comparisonRequestLoading.value && Boolean(thirdId.value) && !thirdPlayer.value)
+const leftError = computed(() => comparisonRequestError.value)
+const rightError = computed(() => comparisonRequestError.value)
+const thirdError = computed(() => comparisonRequestError.value)
 
 const comparisonPlayers = computed(() => [leftPlayer.value, rightPlayer.value, thirdPlayer.value].filter(Boolean))
 const hasThirdPlayer = computed(() => Boolean(thirdId.value))
+const profileLoaders = computed(() => [
+  { label: 'Player A', name: leftPlayer.value?.fullName, loading: leftLoading.value, error: leftError.value },
+  { label: 'Player B', name: rightPlayer.value?.fullName, loading: rightLoading.value, error: rightError.value },
+  { label: 'Player C', name: thirdPlayer.value?.fullName, loading: thirdLoading.value, error: thirdError.value },
+].filter((profile, index) => index < 2 || Boolean(thirdId.value)))
+const loadedProfileCount = computed(() => profileLoaders.value.filter((profile) => !profile.loading && !profile.error && profile.name).length)
+const comparisonLoading = computed(() => profileLoaders.value.some((profile) => profile.loading))
 const showSeasonComparison = computed(() => comparisonPlayers.value.every((player) => player.profile?.active !== false))
 
 const ready = computed(() => Boolean(
@@ -44,6 +61,9 @@ const ready = computed(() => Boolean(
   String(leftPlayer.value.id) !== String(rightPlayer.value.id) &&
   (!thirdId.value || (thirdPlayer.value && ![leftPlayer.value.id, rightPlayer.value.id].map(String).includes(String(thirdPlayer.value.id))))
 ))
+const singleSeasonCareerComparison = computed(() =>
+  ready.value && comparisonPlayers.value.every((player) => player.careerOverview.seasonCount === 1),
+)
 const comparisonNoteKey = computed(() => {
   if (!ready.value) return ''
   return [leftId.value, rightId.value, thirdId.value].filter(Boolean).map(Number).sort((a, b) => a - b).join(':')
@@ -55,10 +75,25 @@ const seasonRows = computed(() => alignedRows('season'))
 const careerRows = computed(() => alignedRows('career'))
 const settingsOpen = ref(false)
 const DEFAULT_STAT_WEIGHTS = {
-  avg: 12, obp: 16, slg: 14, ops: 18, war: 12,
+  // Balanced Hitter preset: avoid double-counting overlapping stats and favor total value.
+  avg: 0, obp: 18, slg: 16, war: 20,
+  wrc_plus: 18, k_percentage: 8, bb_percentage: 8, iso: 6, baserunning_runs: 6,
   era: 18, whip: 14, 'k/9': 10, 'bb/9': 8, 'k/bb': 12,
-  hits: 6, runs: 6, homeruns: 9, rbi: 8, stolenbases: 4,
-  wins: 5, saves: 5, strikeouts: 8, inningspitched: 6,
+  hits: 0, runs: 0, homeruns: 0, rbi: 0, stolenbases: 0,
+  wins: 5, saves: 5, strikeouts: 0, inningspitched: 6,
+  gamesplayed: 0, g: 0, plateappearances: 0, pa: 0, atbats: 0, ab: 0,
+  h: 0, so: 0, ops: 0,
+  ops_plus: 0, offensive_runs: 0, defensive_value: 15, tzr: 0, total_zone_runs: 0,
+  k_minus_bb_percentage: 0, era_minus: 18, fip: 14, fip_minus: 14, xfip: 12, xfip_minus: 12,
+}
+const STAT_WEIGHT_LABELS = {
+  avg: 'AVG', obp: 'OBP', slg: 'SLG', ops: 'OPS', war: 'WAR', wrc_plus: 'wRC+', ops_plus: 'OPS+',
+  iso: 'ISO', tzr: 'TZR', total_zone_runs: 'TZR', k_percentage: 'K%', bb_percentage: 'BB%', k_minus_bb_percentage: 'K-BB%',
+  baserunning_runs: 'BSR', offensive_runs: 'Offensive runs', defensive_value: 'Defensive value',
+  era: 'ERA', era_minus: 'ERA-', whip: 'WHIP', fip: 'FIP', fip_minus: 'FIP-', xfip: 'xFIP', xfip_minus: 'xFIP-',
+  'k/9': 'K/9', 'bb/9': 'BB/9', 'k/bb': 'K/BB',
+  gamesplayed: 'G', plateappearances: 'PA', atbats: 'AB', hits: 'H', strikeouts: 'SO', homeruns: 'HR', runs: 'R', rbi: 'RBI',
+  stolenbases: 'SB', wins: 'W', saves: 'SV', inningspitched: 'IP',
 }
 const SAVED_WEIGHTS_STORAGE_KEY = 'ninelens.compare.stat-weights'
 const weightOverrides = ref({})
@@ -69,15 +104,33 @@ const LOWER_IS_BETTER = {
   pitching: new Set(['l', 'era', 'hits', 'runs', 'er', 'homeruns', 'hitbypitch', 'baseonballs', 'whip', 'avg', 'bb_percentage']),
 }
 const DECIMAL_STAT_KEYS = new Set([
-  'avg', 'obp', 'slg', 'ops', 'era', 'whip', 'inningspitched', 'ip',
+  'avg', 'obp', 'slg', 'ops', 'era', 'whip', 'inningspitched', 'ip', 'defensive_value', 'tzr',
   'k/9', 'bb/9', 'k/bb', 'hr/9', 'h/9', 'war',
 ])
-const PERCENTAGE_STAT_KEYS = new Set(['k_percentage', 'bb_percentage'])
+const PERCENTAGE_STAT_KEYS = new Set(['k_percentage', 'bb_percentage', 'fielding_percentage'])
 const AT_BAT_KEYS = new Set(['atbats', 'ab'])
 const PER_AT_BAT_STAT_KEYS = new Set([
   'hits', 'runs', 'homeruns', 'doubles', 'triples', 'rbi', 'runsbattedin',
   'strikeouts', 'walks', 'stolenbases', 'caughtstealing', 'totalbases',
 ])
+const MINIMUM_OVERALL_COVERAGE = 0.5
+const OFFENSIVE_SCORE_KEYS = new Set(['wrc_plus', 'obp', 'slg', 'iso', 'k_percentage', 'bb_percentage', 'baserunning_runs'])
+const VALUE_SCORE_WEIGHTS = {
+  war: 60,
+  wrc_plus: 15,
+  defensive_value: 15,
+  baserunning_runs: 10,
+}
+const CAREER_PERFORMANCE_SHARE = 0.85
+const CAREER_DURABILITY_SHARE = 0.15
+const CAREER_STAT_LABELS = {
+  wrc_plus: 'wRC+',
+  defensive_value: 'Defensive value',
+  offensive_runs: 'Offensive runs',
+  baserunning_runs: 'BsR',
+  k_percentage: 'K%',
+  bb_percentage: 'BB%',
+}
 
 function normalizeWeightOverrides(weights) {
   if (!weights || typeof weights !== 'object') return {}
@@ -141,7 +194,11 @@ function alignedRows(scope) {
   if (!ready.value) return []
   const leftOverview = scope === 'season' ? leftPlayer.value.seasonOverview : leftPlayer.value.careerOverview
   const overviews = comparisonPlayers.value.map((player) => scope === 'season' ? player.seasonOverview : player.careerOverview)
-  const statsByPlayer = overviews.map((overview) => [...overview.stats, ...overview.comparisonStats])
+  const statsByPlayer = overviews.map((overview, playerIndex) => [
+    ...overview.stats,
+    ...overview.comparisonStats,
+    ...defensiveComparisonRows(comparisonPlayers.value[playerIndex], scope),
+  ]).map(withDefensiveValueFallback)
   const definitions = new Map()
   for (const stat of statsByPlayer.flat()) {
     if (!definitions.has(stat.key)) definitions.set(stat.key, stat.label)
@@ -152,17 +209,90 @@ function alignedRows(scope) {
 
 const settingRows = computed(() => {
   const rows = [...seasonRows.value, ...careerRows.value]
+  const catalogRows = Object.entries(STAT_WEIGHT_LABELS).map(([key, label]) => ({ key, label, values: [] }))
   const seen = new Set()
-  return rows.filter((row) => {
-    if (seen.has(row.key)) return false
-    seen.add(row.key)
+  return [...rows, ...catalogRows].filter((row) => {
+    const normalizedKey = String(row.key).trim().toLowerCase()
+    if (seen.has(normalizedKey)) return false
+    seen.add(normalizedKey)
     return true
   })
 })
 
 function statWeight(key) {
   const normalizedKey = String(key).trim().toLowerCase()
-  return Number(weightOverrides.value[normalizedKey] ?? DEFAULT_STAT_WEIGHTS[normalizedKey] ?? 5)
+  return Number(weightOverrides.value[normalizedKey] ?? DEFAULT_STAT_WEIGHTS[normalizedKey] ?? 0)
+}
+
+function defensiveComparisonRows(player, scope) {
+  if (scope === 'season') {
+    return defensiveRowsForSeason(player, player.seasonOverview.season)
+  }
+
+  const defensiveSeasons = player?.defensiveStats?.seasons || []
+  const rows = defensiveSeasons.filter((candidate) => candidate.season !== null && candidate.season !== undefined)
+  if (rows.length === 0) return []
+  const games = rows.reduce((total, row) => total + (Number(row.games) || 0), 0)
+  const fieldingRows = rows.filter((row) => Number.isFinite(Number(row.fieldingPercentage)))
+  const fieldingPercentage = fieldingRows.length > 0
+    ? fieldingRows.reduce((total, row) => total + (Number(row.fieldingPercentage) * (Number(row.games) || 1)), 0) /
+      fieldingRows.reduce((total, row) => total + (Number(row.games) || 1), 0)
+    : null
+  const defensiveRunsSaved = sumAvailable(rows.map((row) => row.defensiveRunsSaved))
+  const outsAboveAverage = sumAvailable(rows.map((row) => row.outsAboveAverage))
+  const totalZoneRuns = sumAvailable(rows.map((row) => row.totalZoneRuns))
+  return defensiveRowsFromSeason({ games, fieldingPercentage, defensiveRunsSaved, totalZoneRuns, outsAboveAverage })
+}
+
+function defensiveRowsForSeason(player, season) {
+  const row = (player?.defensiveStats?.seasons || []).find((candidate) => Number(candidate.season) === Number(season))
+  return defensiveRowsFromSeason(row)
+}
+
+function defensiveRowsFromSeason(row) {
+  if (!row) return []
+  const hasTotalZoneRuns = Number.isFinite(Number(row.totalZoneRuns))
+  const hasMeaningfulDrs = Number.isFinite(Number(row.defensiveRunsSaved)) &&
+    (!hasTotalZoneRuns || Number(row.defensiveRunsSaved) !== 0)
+  const defensiveValue = hasMeaningfulDrs
+    ? row.defensiveRunsSaved
+    : hasTotalZoneRuns
+      ? row.totalZoneRuns
+      : row.outsAboveAverage
+  const displayedDrs = hasTotalZoneRuns && Number(row.defensiveRunsSaved) === 0
+    ? null
+    : row.defensiveRunsSaved
+  return [
+    { key: 'defensive_value', label: 'Defensive value', value: defensiveValue },
+    { key: 'defensive_runs_saved', label: 'DRS', value: displayedDrs },
+    { key: 'total_zone_runs', label: 'TZR', value: row.totalZoneRuns },
+    { key: 'outs_above_average', label: 'OAA', value: row.outsAboveAverage },
+    { key: 'fielding_percentage', label: 'Fielding %', value: row.fieldingPercentage },
+    { key: 'defensive_games', label: 'Defensive G', value: row.games },
+  ].filter((stat) => stat.value !== null && stat.value !== undefined)
+}
+
+function sumAvailable(values) {
+  const numericValues = values.map(Number).filter(Number.isFinite)
+  return numericValues.length > 0 ? numericValues.reduce((total, value) => total + value, 0) : null
+}
+
+function withDefensiveValueFallback(stats) {
+  const tzr = stats.find((stat) => ['tzr', 'total_zone_runs'].includes(String(stat.key).trim().toLowerCase()))
+  const tzrValue = Number(tzr?.value)
+  if (!Number.isFinite(tzrValue)) return stats
+
+  const defensiveIndex = stats.findIndex((stat) => String(stat.key).trim().toLowerCase() === 'defensive_value')
+  const drs = stats.find((stat) => String(stat.key).trim().toLowerCase() === 'defensive_runs_saved')
+  const drsValue = Number(drs?.value)
+  const defensiveValue = Number(stats[defensiveIndex]?.value)
+  const drsUnavailable = !Number.isFinite(drsValue) || drsValue === 0
+  const defensiveValueUnavailable = !Number.isFinite(defensiveValue) || defensiveValue === 0
+
+  if (!drsUnavailable || !defensiveValueUnavailable) return stats
+  if (defensiveIndex === -1) return [...stats, { key: 'defensive_value', label: 'Defensive value', value: tzrValue }]
+
+  return stats.map((stat, index) => index === defensiveIndex ? { ...stat, value: tzrValue } : stat)
 }
 
 function setWeight(key, value) {
@@ -170,7 +300,7 @@ function setWeight(key, value) {
   const normalizedValue = Number(value)
   if (!Number.isFinite(normalizedValue)) return
 
-  if (normalizedValue === Number(DEFAULT_STAT_WEIGHTS[normalizedKey] ?? 5)) {
+  if (normalizedValue === Number(DEFAULT_STAT_WEIGHTS[normalizedKey] ?? 0)) {
     const nextOverrides = { ...weightOverrides.value }
     delete nextOverrides[normalizedKey]
     weightOverrides.value = nextOverrides
@@ -184,14 +314,18 @@ function setWeight(key, value) {
 }
 
 function scoreValue(row, playerIndex, scope) {
-  const value = Number(row.values[playerIndex])
-  const category = scope === 'season'
+  const rawValue = row.values[playerIndex]
+  if (rawValue === null || rawValue === undefined || rawValue === '') return null
+  const value = Number(rawValue)
+  const useSeasonScoring = scope === 'career' && singleSeasonCareerComparison.value
+  const scoringScope = useSeasonScoring ? 'season' : scope
+  const category = scoringScope === 'season'
     ? comparisonPlayers.value[playerIndex]?.seasonOverview.category
     : comparisonPlayers.value[playerIndex]?.careerOverview.category
   const normalizedKey = String(row.key).trim().toLowerCase()
   const shouldNormalize = category === 'batting' && PER_AT_BAT_STAT_KEYS.has(normalizedKey)
-  const comparableValue = shouldNormalize ? perAtBatValue(value, playerIndex, scope) : value
-  const overview = scope === 'season'
+  const comparableValue = shouldNormalize ? perAtBatValue(value, playerIndex, scoringScope) : value
+  const overview = scoringScope === 'season'
     ? comparisonPlayers.value[playerIndex]?.seasonOverview
     : comparisonPlayers.value[playerIndex]?.careerOverview
   const comparisonBenchmark = findComparisonBenchmark(overview?.comparisonBenchmarks, row.key)
@@ -200,21 +334,25 @@ function scoreValue(row, playerIndex, scope) {
     ? comparisonPlayers.value[playerIndex]?.contextualBenchmarks?.metrics?.find((metric) => metric.metricKey === contextualBenchmarkKey)
     : null
   const benchmarkMetric = comparisonBenchmark || contextualBenchmark
+  const benchmarkDirection = directionalityForStat(normalizedKey, category, benchmarkMetric?.directionality)
+  const benchmarkValue = benchmarkMetric?.unit === 'percent' && Math.abs(comparableValue) <= 1
+    ? comparableValue * 100
+    : comparableValue
   const benchmarkScore = benchmarkMetric
-    ? robustBenchmarkScore(comparableValue, benchmarkMetric, benchmarkMetric.directionality)
-      ?? percentileScore(benchmarkMetric.percentile, benchmarkMetric.directionality)
+    ? robustBenchmarkScore(benchmarkValue, benchmarkMetric, benchmarkDirection)
+      ?? percentileScore(benchmarkMetric.percentile, benchmarkDirection)
     : null
   if (benchmarkScore !== null) {
     return reliabilityAdjustedScore(
       benchmarkScore,
-      benchmarkMetric.sampleSize ?? opportunityForRows(scope === 'season' ? seasonRows.value : careerRows.value, playerIndex, category),
+      benchmarkMetric.sampleSize ?? opportunityForRows(scoringScope === 'season' ? seasonRows.value : careerRows.value, playerIndex, category),
       category,
-      scope,
+      scoringScope,
     )
   }
   const values = comparisonPlayers.value.map((_, index) => {
     const candidate = Number(row.values[index])
-    return shouldNormalize ? perAtBatValue(candidate, index, scope) : candidate
+    return shouldNormalize ? perAtBatValue(candidate, index, scoringScope) : candidate
   }).filter(Number.isFinite)
   if (!Number.isFinite(comparableValue) || values.length < 2) return null
 
@@ -227,9 +365,9 @@ function scoreValue(row, playerIndex, scope) {
   if (normalizedScore === null) return null
   return reliabilityAdjustedScore(
     normalizedScore,
-    opportunityForRows(scope === 'season' ? seasonRows.value : careerRows.value, playerIndex, category),
+    opportunityForRows(scoringScope === 'season' ? seasonRows.value : careerRows.value, playerIndex, category),
     category,
-    scope,
+    scoringScope,
   ) ?? normalizedScore
 }
 
@@ -257,15 +395,163 @@ function perAtBatValue(value, playerIndex, scope) {
   return Number.isFinite(atBats) && atBats > 0 ? value / atBats : null
 }
 
-function overallScore(scope, playerIndex) {
+function headlineScore(scope, playerIndex, model) {
+  return headlineSummary(scope, model).scores[playerIndex]
+}
+
+function headlineCoverage(scope, model) {
+  return headlineSummary(scope, model).coverage
+}
+
+function headlineSummary(scope, model) {
+  if (scope === 'career') {
+    const careerSummary = careerHeadlineSummary(model)
+    if (careerSummary) return careerSummary
+  }
   weightRevision.value
   const rows = scope === 'season' ? seasonRows.value : careerRows.value
-  const scores = rows.map((row) => ({
+  const statScoresByPlayer = comparisonPlayers.value.map((_, playerIndex) => rows.map((row) => ({
     key: String(row.key).trim().toLowerCase(),
     score: scoreValue(row, playerIndex, scope),
+  })))
+  const weights = Object.fromEntries(rows.map((row) => {
+    const key = String(row.key).trim().toLowerCase()
+    if (model === 'offense') return [key, OFFENSIVE_SCORE_KEYS.has(key) ? statWeight(key) : 0]
+    if (model === 'value') {
+      const baseWeight = VALUE_SCORE_WEIGHTS[key] || 0
+      const override = weightOverrides.value[key]
+      return [key, override === undefined ? baseWeight : Number(override)]
+    }
+    return [key, statWeight(key)]
   }))
-  const weights = Object.fromEntries(scores.map(({ key }) => [key, statWeight(key)]))
-  return weightedOverallScore(scores, weights).score
+  return commonWeightedOverallScores(statScoresByPlayer, weights, { minimumCoverage: MINIMUM_OVERALL_COVERAGE })
+}
+
+function careerHeadlineSummary(model) {
+  const hasSeasonData = comparisonPlayers.value.every((player) => player.careerOverview.seasons?.length > 0)
+  if (!hasSeasonData) return null
+
+  const playerSeasonResults = comparisonPlayers.value.map((player) => {
+    const results = player.careerOverview.seasons.map((season) => careerSeasonScore(player, season, model)).filter(Boolean)
+    const weightedResults = results.filter((result) => result.score !== null && result.opportunity > 0)
+    const totalOpportunity = weightedResults.reduce((total, result) => total + result.opportunity, 0)
+    const performance = totalOpportunity > 0
+      ? weightedResults.reduce((total, result) => total + (result.score * result.opportunity), 0) / totalOpportunity
+      : null
+    const coverage = totalOpportunity > 0
+      ? weightedResults.reduce((total, result) => total + (result.coverage * result.opportunity), 0) / totalOpportunity
+      : 0
+    return { performance, coverage }
+  })
+
+  const opportunities = comparisonPlayers.value.map((player) => careerOpportunity(player))
+  const seasons = comparisonPlayers.value.map((player) => Number(player.careerOverview.seasonCount) || 0)
+  const opportunityScores = opportunities.map((value) => relativeComparisonScore(value, opportunities) ?? 50)
+  const seasonScores = seasons.map((value) => relativeComparisonScore(value, seasons) ?? 50)
+  const durabilityScores = opportunityScores.map((score, index) => (score * 0.75) + (seasonScores[index] * 0.25))
+  const scores = playerSeasonResults.map(({ performance }, index) => {
+    if (performance === null) return null
+    return Math.round((performance * CAREER_PERFORMANCE_SHARE) + (durabilityScores[index] * CAREER_DURABILITY_SHARE))
+  })
+  const coverage = playerSeasonResults.reduce((total, result) => total + result.coverage, 0) / playerSeasonResults.length
+  return { scores, coverage, durabilityScores }
+}
+
+function careerSeasonScore(player, season, model) {
+  const rows = careerSeasonRows(player, season)
+  const category = player.careerOverview.category
+  const statScores = rows.map((row) => {
+    const key = String(row.key).trim().toLowerCase()
+    const benchmark = findComparisonBenchmark(season.comparisonBenchmarks, row.key)
+    const value = Number(row.value)
+    if (!Number.isFinite(value) || !benchmark) return { key, score: null }
+    const direction = directionalityForStat(key, category, benchmark.directionality)
+    const score = robustBenchmarkScore(value, benchmark, direction) ?? percentileScore(benchmark.percentile, direction)
+    return {
+      key,
+      score: score === null ? null : reliabilityAdjustedScore(score, opportunityForSeason(rows, category), category, 'season'),
+    }
+  })
+  const weights = Object.fromEntries(rows.map((row) => {
+    const key = String(row.key).trim().toLowerCase()
+    if (model === 'offense') return [key, OFFENSIVE_SCORE_KEYS.has(key) ? statWeight(key) : 0]
+    const baseWeight = VALUE_SCORE_WEIGHTS[key] || 0
+    const override = weightOverrides.value[key]
+    return [key, override === undefined ? baseWeight : Number(override)]
+  }))
+  const result = weightedOverallScore(statScores, weights, { minimumCoverage: MINIMUM_OVERALL_COVERAGE })
+  return { score: result.score, coverage: result.coverage, opportunity: opportunityForSeason(rows, category) }
+}
+
+function careerSeasonRows(player, season) {
+  const rows = [...(season.totalStats || season.stats || [])]
+  const advancedSeason = player.advancedStats.seasons.find((candidate) => Number(candidate.season) === Number(season.season))
+  Object.entries(advancedSeason?.totalValues || {}).forEach(([key, value]) => {
+    if (!rows.some((row) => row.key === key)) rows.push({ key, label: CAREER_STAT_LABELS[key] || key, value })
+  })
+  defensiveRowsForSeason(player, season.season)
+    .filter((row) => row.key === 'defensive_value')
+    .forEach((row) => {
+      const existing = rows.find((candidate) => candidate.key === row.key)
+      if (existing) existing.value = row.value
+      else rows.push(row)
+    })
+  return rows
+}
+
+function opportunityForSeason(rows, category) {
+  const keys = category === 'pitching'
+    ? new Set(['inningspitched', 'ip', 'battersfaced', 'bf'])
+    : new Set(['plateappearances', 'pa', 'atbats', 'ab'])
+  const row = rows.find((candidate) => keys.has(String(candidate.key).trim().toLowerCase()))
+  const value = Number(row?.value)
+  return Number.isFinite(value) && value > 0 ? value : 0
+}
+
+function careerOpportunity(player) {
+  return player.careerOverview.seasons.reduce((total, season) => {
+    const rows = careerSeasonRows(player, season)
+    return total + opportunityForSeason(rows, player.careerOverview.category)
+  }, 0)
+}
+
+function headlineLabel(scope, playerIndex, model) {
+  const score = headlineScore(scope, playerIndex, model)
+  return score === null ? 'Insufficient data' : `${score}/100`
+}
+
+function headlineCoverageLabel(scope, model) {
+  return `Data coverage ${Math.round(headlineCoverage(scope, model) * 100)}%`
+}
+
+function primaryScoreTitle(scope) {
+  const category = comparisonPlayers.value[0]?.[scope === 'season' ? 'seasonOverview' : 'careerOverview']?.category
+  return category === 'pitching' ? 'Pitching score' : 'Offensive score'
+}
+
+function primaryScoreModel(scope) {
+  const category = comparisonPlayers.value[0]?.[scope === 'season' ? 'seasonOverview' : 'careerOverview']?.category
+  return category === 'pitching' ? 'pitching' : 'offense'
+}
+
+function valueBreakdownLabel(scope, playerIndex) {
+  const parts = [
+    ['Offense', 'wrc_plus'],
+    ['Defense', 'defensive_value'],
+    ['Baserunning', 'baserunning_runs'],
+  ].map(([label, key]) => {
+    const rows = scope === 'season' ? seasonRows.value : careerRows.value
+    const row = rows.find((candidate) => String(candidate.key).trim().toLowerCase() === key)
+    if (!row) return `${label} —`
+    const score = scoreValue(row, playerIndex, scope)
+    return `${label} ${score === null ? '—' : Math.round(score)}`
+  })
+  return `Breakdown: ${parts.join(' · ')}`
+}
+
+function careerDurabilityLabel(playerIndex) {
+  const durability = careerHeadlineSummary('value')?.durabilityScores?.[playerIndex]
+  return durability === undefined ? '' : `Durability ${Math.round(durability)}/100 · 85% performance / 15% durability`
 }
 
 function resetWeights() {
@@ -373,7 +659,16 @@ function comparisonClass(row, playerIndex, scope) {
       </div>
     </section>
 
-    <div v-if="leftLoading || rightLoading || thirdLoading" class="comparison-state">Loading player profiles…</div>
+    <div v-if="comparisonLoading" class="comparison-state comparison-progress" data-test="comparison-loading" role="status" aria-live="polite">
+      <strong>Loading comparison data…</strong>
+      <span>{{ loadedProfileCount }} of {{ profileLoaders.length }} player profiles ready</span>
+      <div class="comparison-progress__track" aria-hidden="true"><span :style="{ width: `${(loadedProfileCount / profileLoaders.length) * 100}%` }"></span></div>
+      <div class="comparison-progress__players">
+        <span v-for="profile in profileLoaders" :key="profile.label" :class="{ 'is-ready': !profile.loading && !profile.error && profile.name }">
+          {{ profile.name || profile.label }} {{ profile.loading ? 'Loading…' : profile.error ? 'Unavailable' : 'Ready' }}
+        </span>
+      </div>
+    </div>
     <div v-else-if="(leftError && leftId) || (rightError && rightId) || (thirdError && thirdId)" class="comparison-state comparison-state--error">{{ leftError || rightError || thirdError }}</div>
     <section v-else-if="!ready" class="comparison-state">Choose at least two different players to begin the comparison.</section>
 
@@ -395,7 +690,7 @@ function comparisonClass(row, playerIndex, scope) {
       <section v-if="showSeasonComparison" class="comparison-table-panel" data-test="season-comparison">
         <header><div><p>Current production</p><h2>Season comparison</h2></div><span>{{ comparisonPlayers.map((player) => player.seasonOverview.season || '—').join(' / ') }}</span></header>
         <table>
-          <thead><tr><th>{{ leftPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('season', 0) ?? '—' }}/100</strong></small></th><th>Statistic</th><th>{{ rightPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('season', 1) ?? '—' }}/100</strong></small></th><th v-if="hasThirdPlayer">{{ thirdPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('season', 2) ?? '—' }}/100</strong></small></th></tr></thead>
+          <thead><tr><th>{{ leftPlayer.fullName }}<small class="comparison-score">{{ primaryScoreTitle('season') }} <strong>{{ headlineLabel('season', 0, primaryScoreModel('season')) }}</strong><span>{{ headlineCoverageLabel('season', primaryScoreModel('season')) }}</span><strong class="comparison-score__value">Overall value {{ headlineLabel('season', 0, 'value') }}</strong><span>{{ valueBreakdownLabel('season', 0) }}</span></small></th><th>Statistic</th><th>{{ rightPlayer.fullName }}<small class="comparison-score">{{ primaryScoreTitle('season') }} <strong>{{ headlineLabel('season', 1, primaryScoreModel('season')) }}</strong><span>{{ headlineCoverageLabel('season', primaryScoreModel('season')) }}</span><strong class="comparison-score__value">Overall value {{ headlineLabel('season', 1, 'value') }}</strong><span>{{ valueBreakdownLabel('season', 1) }}</span></small></th><th v-if="hasThirdPlayer">{{ thirdPlayer.fullName }}<small class="comparison-score">{{ primaryScoreTitle('season') }} <strong>{{ headlineLabel('season', 2, primaryScoreModel('season')) }}</strong><span>{{ headlineCoverageLabel('season', primaryScoreModel('season')) }}</span><strong class="comparison-score__value">Overall value {{ headlineLabel('season', 2, 'value') }}</strong><span>{{ valueBreakdownLabel('season', 2) }}</span></small></th></tr></thead>
           <tbody>
             <tr v-for="row in seasonRows" :key="row.key" :data-test="`season-stat-${row.key}`">
               <td :class="comparisonClass(row, 0, 'season')">{{ statValue(row.key, row.values[0]) }}</td>
@@ -410,7 +705,7 @@ function comparisonClass(row, playerIndex, scope) {
       <section class="comparison-table-panel" data-test="career-comparison">
         <header><div><p>Career ledger</p><h2>Career comparison</h2></div><span>{{ comparisonPlayers.map((player) => `${player.careerOverview.seasonCount} seasons`).join(' / ') }}</span></header>
         <table>
-          <thead><tr><th>{{ leftPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('career', 0) ?? '—' }}/100</strong></small></th><th>Statistic</th><th>{{ rightPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('career', 1) ?? '—' }}/100</strong></small></th><th v-if="hasThirdPlayer">{{ thirdPlayer.fullName }}<small class="comparison-score">Overall score <strong>{{ overallScore('career', 2) ?? '—' }}/100</strong></small></th></tr></thead>
+          <thead><tr><th>{{ leftPlayer.fullName }}<small class="comparison-score">{{ primaryScoreTitle('career') }} <strong>{{ headlineLabel('career', 0, primaryScoreModel('career')) }}</strong><span>{{ headlineCoverageLabel('career', primaryScoreModel('career')) }}</span><strong class="comparison-score__value">Overall value {{ headlineLabel('career', 0, 'value') }}</strong><span>{{ valueBreakdownLabel('career', 0) }}</span><span>{{ careerDurabilityLabel(0) }}</span></small></th><th>Statistic</th><th>{{ rightPlayer.fullName }}<small class="comparison-score">{{ primaryScoreTitle('career') }} <strong>{{ headlineLabel('career', 1, primaryScoreModel('career')) }}</strong><span>{{ headlineCoverageLabel('career', primaryScoreModel('career')) }}</span><strong class="comparison-score__value">Overall value {{ headlineLabel('career', 1, 'value') }}</strong><span>{{ valueBreakdownLabel('career', 1) }}</span><span>{{ careerDurabilityLabel(1) }}</span></small></th><th v-if="hasThirdPlayer">{{ thirdPlayer.fullName }}<small class="comparison-score">{{ primaryScoreTitle('career') }} <strong>{{ headlineLabel('career', 2, primaryScoreModel('career')) }}</strong><span>{{ headlineCoverageLabel('career', primaryScoreModel('career')) }}</span><strong class="comparison-score__value">Overall value {{ headlineLabel('career', 2, 'value') }}</strong><span>{{ valueBreakdownLabel('career', 2) }}</span><span>{{ careerDurabilityLabel(2) }}</span></small></th></tr></thead>
           <tbody>
             <tr v-for="row in careerRows" :key="row.key" :data-test="`career-stat-${row.key}`">
               <td :class="comparisonClass(row, 0, 'career')">{{ statValue(row.key, row.values[0]) }}</td>
@@ -436,6 +731,13 @@ function comparisonClass(row, playerIndex, scope) {
 .comparison-versus { display: grid; width: 48px; height: 48px; place-items: center; border-radius: 50%; color: #fff; background: #a93627; font-weight: 900; }
 .comparison-state { margin-top: 1rem; padding: 2rem; border: 1px dashed rgba(16,38,61,.2); border-radius: 18px; color: #687781; background: rgba(255,252,245,.75); text-align: center; }
 .comparison-state--error { color: #8f2d24; }
+.comparison-progress { display: grid; gap: .45rem; justify-items: center; }
+.comparison-progress strong { color: #10263d; }
+.comparison-progress__track { width: min(420px, 100%); height: 7px; overflow: hidden; border-radius: 999px; background: rgba(16,38,61,.12); }
+.comparison-progress__track span { display: block; height: 100%; border-radius: inherit; background: #20543c; transition: width .25s ease; }
+.comparison-progress__players { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem .8rem; font-size: .7rem; }
+.comparison-progress__players span { color: #8a5b2b; }
+.comparison-progress__players span.is-ready { color: #17613d; }
 .comparison-identities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; margin-top: 1rem; }
 .comparison-identities:has(article:nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .comparison-identities article { padding: 1rem; border-radius: 16px; color: #fffaf0; background: #10263d; }
@@ -455,6 +757,8 @@ function comparisonClass(row, playerIndex, scope) {
 .comparison-table-panel thead th { color: #6d7a83; font-size: .7rem; text-transform: uppercase; }
 .comparison-score { display: block; margin-top: .35rem; color: #a93627; font-size: .66rem; font-weight: 800; letter-spacing: .03em; text-transform: none; }
 .comparison-score strong { color: #17613d; font-size: .9rem; }
+.comparison-score__value { display: block; margin-top: .3rem; color: #10263d !important; font-size: .78rem !important; }
+.comparison-score span { display: block; margin-top: .15rem; color: #687781; font-size: .58rem; font-weight: 700; letter-spacing: 0; text-transform: none; }
 .comparison-table-panel tbody td { font-family: 'Avenir Next Condensed',sans-serif; font-size: 1.2rem; font-weight: 900; }
 .comparison-table-panel tbody td.is-better { color: #17613d; background: rgba(42,145,91,.12); }
 .comparison-table-panel tbody td.is-lesser { color: #982f27; background: rgba(181,61,48,.1); }
