@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import { vi } from 'vitest'
+import { beforeEach, vi } from 'vitest'
 
 import PlayerComparisonView from '../PlayerComparisonView.vue'
 
@@ -44,6 +44,15 @@ function profile(id, name, team, stats, careerStats = stats) {
 }
 
 describe('PlayerComparisonView', () => {
+  beforeEach(() => {
+    const values = {}
+    vi.stubGlobal('localStorage', {
+      getItem: (key) => values[key] || null,
+      setItem: (key, value) => { values[key] = String(value) },
+      removeItem: (key) => { delete values[key] },
+    })
+  })
+
   it('loads URL-selected players and aligns season and career statistics', async () => {
     const responses = {
       '/api/players/1': profile(
@@ -121,6 +130,25 @@ describe('PlayerComparisonView', () => {
     await settings.get('button').trigger('click')
     expect(settings.get('input[aria-label="OPS weight"]').element.value).toBe('18')
     expect(settings.get('input[aria-label="HR weight"]').element.value).toBe('9')
+
+    const scoreBeforeWeightChange = wrapper.get('[data-test="season-comparison"] thead').text()
+    await settings.get('input[aria-label="WAR weight"]').setValue('100')
+    await flushPromises()
+    const scoreAfterWeightChange = wrapper.get('[data-test="season-comparison"] thead').text()
+    expect(scoreAfterWeightChange).not.toBe(scoreBeforeWeightChange)
+    await settings.get('input[aria-label="WAR weight"]').setValue('12')
+    await settings.get('input[aria-label="OPS weight"]').setValue('33')
+    expect(settings.get('.comparison-settings__save').text()).toBe('Save weights')
+    await settings.get('.comparison-settings__save').trigger('click')
+    expect(JSON.parse(localStorage.getItem('ninelens.compare.stat-weights'))).toMatchObject({ ops: 33 })
+
+    wrapper.unmount()
+    const reloadedWrapper = mount(PlayerComparisonView, { global: { plugins: [router] } })
+    await flushPromises()
+    const reloadedSettings = reloadedWrapper.get('[data-test="comparison-settings"]')
+    await reloadedSettings.get('button').trigger('click')
+    expect(reloadedSettings.get('input[aria-label="OPS weight"]').element.value).toBe('33')
+    reloadedWrapper.unmount()
   })
 
   it('adds an optional third player to the comparison', async () => {

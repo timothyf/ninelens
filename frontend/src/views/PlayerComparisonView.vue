@@ -51,7 +51,10 @@ const DEFAULT_STAT_WEIGHTS = {
   hits: 6, runs: 6, homeruns: 9, rbi: 8, stolenbases: 4,
   wins: 5, saves: 5, strikeouts: 8, inningspitched: 6,
 }
+const SAVED_WEIGHTS_STORAGE_KEY = 'ninelens.compare.stat-weights'
 const weightOverrides = ref({})
+const savedWeightOverrides = ref({})
+const weightRevision = ref(0)
 const LOWER_IS_BETTER = {
   batting: new Set(['strikeouts', 'caughtstealing', 'k_percentage']),
   pitching: new Set(['l', 'era', 'hits', 'runs', 'er', 'homeruns', 'hitbypitch', 'baseonballs', 'whip', 'avg', 'bb_percentage']),
@@ -66,6 +69,47 @@ const PER_AT_BAT_STAT_KEYS = new Set([
   'hits', 'runs', 'homeruns', 'doubles', 'triples', 'rbi', 'runsbattedin',
   'strikeouts', 'walks', 'stolenbases', 'caughtstealing', 'totalbases',
 ])
+
+function normalizeWeightOverrides(weights) {
+  if (!weights || typeof weights !== 'object') return {}
+
+  return Object.fromEntries(Object.entries(weights).flatMap(([key, value]) => {
+    const normalizedKey = String(key).trim().toLowerCase()
+    const normalizedValue = Number(value)
+    if (!normalizedKey || !Number.isFinite(normalizedValue) || normalizedValue < 0 || normalizedValue > 100) return []
+    return [[normalizedKey, normalizedValue]]
+  }))
+}
+
+function loadSavedWeights() {
+  if (typeof localStorage === 'undefined' || typeof localStorage.getItem !== 'function') return
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(SAVED_WEIGHTS_STORAGE_KEY) || '{}')
+    const normalized = normalizeWeightOverrides(saved)
+    weightOverrides.value = { ...normalized }
+    savedWeightOverrides.value = { ...normalized }
+  } catch {
+    weightOverrides.value = {}
+    savedWeightOverrides.value = {}
+  }
+}
+
+const weightsDirty = computed(() => JSON.stringify(weightOverrides.value) !== JSON.stringify(savedWeightOverrides.value))
+
+function saveWeights() {
+  const normalized = normalizeWeightOverrides(weightOverrides.value)
+  if (typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
+    try {
+      localStorage.setItem(SAVED_WEIGHTS_STORAGE_KEY, JSON.stringify(normalized))
+    } catch {
+      return
+    }
+  }
+
+  weightOverrides.value = { ...normalized }
+  savedWeightOverrides.value = { ...normalized }
+}
 
 watch([leftId, rightId, thirdId], () => {
   const query = {}
@@ -113,7 +157,21 @@ function statWeight(key) {
 }
 
 function setWeight(key, value) {
-  weightOverrides.value[String(key).trim().toLowerCase()] = Number(value)
+  const normalizedKey = String(key).trim().toLowerCase()
+  const normalizedValue = Number(value)
+  if (!Number.isFinite(normalizedValue)) return
+
+  if (normalizedValue === Number(DEFAULT_STAT_WEIGHTS[normalizedKey] ?? 5)) {
+    const nextOverrides = { ...weightOverrides.value }
+    delete nextOverrides[normalizedKey]
+    weightOverrides.value = nextOverrides
+  } else {
+    weightOverrides.value = {
+      ...weightOverrides.value,
+      [normalizedKey]: Math.min(100, Math.max(0, normalizedValue)),
+    }
+  }
+  weightRevision.value += 1
 }
 
 function scoreValue(row, playerIndex, scope) {
@@ -150,6 +208,7 @@ function perAtBatValue(value, playerIndex, scope) {
 }
 
 function overallScore(scope, playerIndex) {
+  weightRevision.value
   const rows = scope === 'season' ? seasonRows.value : careerRows.value
   let weightedTotal = 0
   let totalWeight = 0
@@ -167,6 +226,8 @@ function overallScore(scope, playerIndex) {
 function resetWeights() {
   weightOverrides.value = {}
 }
+
+loadSavedWeights()
 
 function selectPlayer(side, player) {
   if (side === 'left') leftId.value = String(player.id)
@@ -260,7 +321,10 @@ function comparisonClass(row, playerIndex, scope) {
             <input :value="statWeight(row.key)" type="number" min="0" max="100" step="1" :aria-label="`${row.label} weight`" @input="setWeight(row.key, $event.target.value)" />
           </label>
         </div>
-        <button type="button" class="comparison-settings__reset" @click="resetWeights">Reset defaults</button>
+        <div class="comparison-settings__actions">
+          <button type="button" class="comparison-settings__save" :disabled="!weightsDirty" @click="saveWeights">{{ weightsDirty ? 'Save weights' : 'Weights saved' }}</button>
+          <button type="button" class="comparison-settings__reset" @click="resetWeights">Reset defaults</button>
+        </div>
       </div>
     </section>
 
@@ -358,6 +422,10 @@ function comparisonClass(row, playerIndex, scope) {
 .comparison-settings__weights { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .8rem; }
 .comparison-settings__weights label { display: grid; gap: .25rem; min-width: 105px; color: #61717d; font-size: .68rem; font-weight: 800; }
 .comparison-settings__weights input { width: 100%; padding: .45rem .5rem; border: 1px solid rgba(16,38,61,.16); border-radius: 8px; color: #10263d; background: #fff; font: inherit; }
-.comparison-settings__reset { margin-top: .8rem; padding: .45rem .7rem; border: 1px solid rgba(169,54,39,.25); border-radius: 8px; color: #a93627; background: transparent; font: inherit; font-size: .7rem; font-weight: 800; cursor: pointer; }
+.comparison-settings__actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .8rem; }
+.comparison-settings__save,.comparison-settings__reset { padding: .45rem .7rem; border-radius: 8px; font: inherit; font-size: .7rem; font-weight: 800; cursor: pointer; }
+.comparison-settings__save { border: 1px solid #20543c; color: #fffaf0; background: #20543c; }
+.comparison-settings__save:disabled { opacity: .65; cursor: default; }
+.comparison-settings__reset { border: 1px solid rgba(169,54,39,.25); color: #a93627; background: transparent; }
 @media (max-width: 650px) { .comparison-selectors,.comparison-selectors--three { grid-template-columns: 1fr; } .comparison-versus { margin: 0 auto; } .comparison-table-panel { overflow-x: auto; } .comparison-table-panel table { min-width: 560px; } }
 </style>
