@@ -38,7 +38,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
     t.index ["created_at"], name: "index_admin_task_runs_on_created_at"
     t.index ["initiated_by_id"], name: "index_admin_task_runs_on_initiated_by_id"
     t.index ["task_name", "status", "created_at"], name: "idx_admin_task_runs_active_lookup"
-    t.index ["task_name"], name: "idx_admin_task_runs_one_active_per_task", unique: true, where: "((status)::text = ANY (ARRAY[('queued'::character varying)::text, ('running'::character varying)::text]))"
+    t.index ["task_name"], name: "idx_admin_task_runs_one_active_per_task", unique: true, where: "((status)::text = ANY ((ARRAY['queued'::character varying, 'running'::character varying])::text[]))"
   end
 
   create_table "admin_task_uploads", force: :cascade do |t|
@@ -69,7 +69,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
     t.index ["user_id"], name: "index_alert_subscriptions_on_user_id"
     t.index ["watchlist_id"], name: "index_alert_subscriptions_on_watchlist_id"
     t.check_constraint "(player_id IS NOT NULL) <> (watchlist_id IS NOT NULL)", name: "alert_subscriptions_one_target"
-    t.check_constraint "minimum_severity::text = ANY (ARRAY['warning'::character varying::text, 'critical'::character varying::text])", name: "alert_subscriptions_valid_severity"
+    t.check_constraint "minimum_severity::text = ANY (ARRAY['warning'::character varying, 'critical'::character varying]::text[])", name: "alert_subscriptions_valid_severity"
   end
 
   create_table "alerts", force: :cascade do |t|
@@ -92,7 +92,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
     t.index ["user_id", "player_trend_event_id"], name: "idx_alerts_user_event_unique", unique: true
     t.index ["user_id", "status", "created_at"], name: "idx_alerts_user_inbox"
     t.index ["user_id"], name: "index_alerts_on_user_id"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'acknowledged'::character varying::text, 'snoozed'::character varying::text, 'resolved'::character varying::text])", name: "alerts_valid_status"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'acknowledged'::character varying, 'snoozed'::character varying, 'resolved'::character varying]::text[])", name: "alerts_valid_status"
   end
 
   create_table "audit_logs", force: :cascade do |t|
@@ -784,9 +784,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["player_id"], name: "index_player_profiles_on_player_id", unique: true
-    t.check_constraint "bats IS NULL OR (bats::text = ANY (ARRAY['L'::character varying::text, 'R'::character varying::text, 'S'::character varying::text]))", name: "player_profiles_valid_bats"
+    t.check_constraint "bats IS NULL OR (bats::text = ANY (ARRAY['L'::character varying, 'R'::character varying, 'S'::character varying]::text[]))", name: "player_profiles_valid_bats"
     t.check_constraint "height_inches IS NULL OR height_inches > 0", name: "player_profiles_positive_height"
-    t.check_constraint "throws IS NULL OR (throws::text = ANY (ARRAY['L'::character varying::text, 'R'::character varying::text]))", name: "player_profiles_valid_throws"
+    t.check_constraint "throws IS NULL OR (throws::text = ANY (ARRAY['L'::character varying, 'R'::character varying]::text[]))", name: "player_profiles_valid_throws"
     t.check_constraint "weight_pounds IS NULL OR weight_pounds > 0", name: "player_profiles_positive_weight"
   end
 
@@ -831,7 +831,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
     t.index ["stat_type_id"], name: "index_player_season_stats_on_stat_type_id"
     t.index ["team_id"], name: "index_player_season_stats_on_team_id"
     t.index ["updated_at"], name: "idx_player_season_stats_updated_at"
-    t.check_constraint "scope_type::text = ANY (ARRAY['team'::character varying::text, 'combined'::character varying::text, 'league'::character varying::text])", name: "player_season_stats_valid_scope_type"
+    t.check_constraint "scope_type::text = ANY (ARRAY['team'::character varying, 'combined'::character varying, 'league'::character varying]::text[])", name: "player_season_stats_valid_scope_type"
   end
 
   create_table "player_trend_events", force: :cascade do |t|
@@ -868,11 +868,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
     t.index ["player_id", "identity_key"], name: "idx_player_trend_events_one_active", unique: true, where: "((status)::text = 'active'::text)"
     t.index ["player_id", "status", "severity", "onset_date"], name: "idx_player_trend_events_feed"
     t.index ["player_id"], name: "index_player_trend_events_on_player_id"
-    t.check_constraint "direction::text = ANY (ARRAY['increase'::character varying::text, 'decrease'::character varying::text])", name: "player_trend_events_direction"
-    t.check_constraint "role::text = ANY (ARRAY['batter'::character varying::text, 'pitcher'::character varying::text])", name: "player_trend_events_role"
+    t.check_constraint "direction::text = ANY (ARRAY['increase'::character varying, 'decrease'::character varying]::text[])", name: "player_trend_events_direction"
+    t.check_constraint "role::text = ANY (ARRAY['batter'::character varying, 'pitcher'::character varying]::text[])", name: "player_trend_events_role"
     t.check_constraint "sample_size > 0 AND baseline_sample_size > 0", name: "player_trend_events_sample_sizes"
-    t.check_constraint "severity::text = ANY (ARRAY['warning'::character varying::text, 'critical'::character varying::text])", name: "player_trend_events_severity"
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'resolved'::character varying::text])", name: "player_trend_events_status"
+    t.check_constraint "severity::text = ANY (ARRAY['warning'::character varying, 'critical'::character varying]::text[])", name: "player_trend_events_severity"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'resolved'::character varying]::text[])", name: "player_trend_events_status"
   end
 
   create_table "players", force: :cascade do |t|
@@ -897,7 +897,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
     t.index ["abbreviation"], name: "index_positions_on_abbreviation", unique: true
     t.index ["mlb_code"], name: "index_positions_on_mlb_code", unique: true
     t.index ["sort_order"], name: "index_positions_on_sort_order"
-    t.check_constraint "position_type::text = ANY (ARRAY['pitcher'::character varying::text, 'catcher'::character varying::text, 'infielder'::character varying::text, 'outfielder'::character varying::text, 'designated_hitter'::character varying::text, 'two_way'::character varying::text, 'other'::character varying::text])", name: "positions_valid_position_type"
+    t.check_constraint "position_type::text = ANY (ARRAY['pitcher'::character varying, 'catcher'::character varying, 'infielder'::character varying, 'outfielder'::character varying, 'designated_hitter'::character varying, 'two_way'::character varying, 'other'::character varying]::text[])", name: "positions_valid_position_type"
     t.check_constraint "sort_order > 0", name: "positions_positive_sort_order"
   end
 
@@ -1247,7 +1247,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
     t.index "lower((email)::text)", name: "idx_users_lower_email", unique: true
     t.index ["auth_token_digest"], name: "index_users_on_auth_token_digest", unique: true
     t.check_constraint "alert_digest_day IS NULL OR alert_digest_day >= 0 AND alert_digest_day <= 6", name: "users_valid_alert_digest_day"
-    t.check_constraint "alert_digest_frequency::text = ANY (ARRAY['off'::character varying::text, 'daily'::character varying::text, 'weekly'::character varying::text])", name: "users_valid_alert_digest_frequency"
+    t.check_constraint "alert_digest_frequency::text = ANY (ARRAY['off'::character varying, 'daily'::character varying, 'weekly'::character varying]::text[])", name: "users_valid_alert_digest_frequency"
     t.check_constraint "alert_digest_hour >= 0 AND alert_digest_hour <= 23", name: "users_valid_alert_digest_hour"
     t.check_constraint "role::text = ANY (ARRAY['admin'::character varying::text, 'administrator'::character varying::text, 'analyst'::character varying::text, 'coach'::character varying::text, 'scout'::character varying::text, 'editor'::character varying::text, 'viewer'::character varying::text])", name: "users_valid_role"
   end
@@ -1285,11 +1285,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
     t.check_constraint "estimated_cost IS NULL OR estimated_cost >= 0::numeric", name: "watchlist_entries_estimated_cost_nonnegative"
     t.check_constraint "fit_score IS NULL OR fit_score >= 1 AND fit_score <= 5", name: "watchlist_entries_fit_score_range"
     t.check_constraint "need_score IS NULL OR need_score >= 1 AND need_score <= 5", name: "watchlist_entries_need_score_range"
-    t.check_constraint "priority::text = ANY (ARRAY['low'::character varying::text, 'medium'::character varying::text, 'high'::character varying::text])", name: "watchlist_entries_valid_priority"
-    t.check_constraint "recommendation::text = ANY (ARRAY['pursue'::character varying::text, 'monitor'::character varying::text, 'pass'::character varying::text])", name: "watchlist_entries_valid_recommendation"
-    t.check_constraint "review_status::text = ANY (ARRAY['initial_review'::character varying::text, 'analyst_review'::character varying::text, 'scout_review'::character varying::text, 'medical_review'::character varying::text, 'discuss_internally'::character varying::text, 'contact_club_or_agent'::character varying::text, 'no_longer_pursuing'::character varying::text])", name: "watchlist_entries_valid_review_status"
+    t.check_constraint "priority::text = ANY (ARRAY['low'::character varying, 'medium'::character varying, 'high'::character varying]::text[])", name: "watchlist_entries_valid_priority"
+    t.check_constraint "recommendation::text = ANY (ARRAY['pursue'::character varying, 'monitor'::character varying, 'pass'::character varying]::text[])", name: "watchlist_entries_valid_recommendation"
+    t.check_constraint "review_status::text = ANY (ARRAY['initial_review'::character varying, 'analyst_review'::character varying, 'scout_review'::character varying, 'medical_review'::character varying, 'discuss_internally'::character varying, 'contact_club_or_agent'::character varying, 'no_longer_pursuing'::character varying]::text[])", name: "watchlist_entries_valid_review_status"
     t.check_constraint "risk_score IS NULL OR risk_score >= 1 AND risk_score <= 5", name: "watchlist_entries_risk_score_range"
-    t.check_constraint "status::text = ANY (ARRAY['scouting'::character varying::text, 'active'::character varying::text, 'paused'::character varying::text, 'closed'::character varying::text])", name: "watchlist_entries_valid_status"
+    t.check_constraint "status::text = ANY (ARRAY['scouting'::character varying, 'active'::character varying, 'paused'::character varying, 'closed'::character varying]::text[])", name: "watchlist_entries_valid_status"
   end
 
   create_table "watchlists", force: :cascade do |t|

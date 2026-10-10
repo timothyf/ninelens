@@ -26,6 +26,16 @@ function gameLabel(game) {
   return game.detailed_status || (game.status === 'final' ? 'Final' : 'Upcoming')
 }
 
+function formatRate(value) {
+  if (value === null || value === undefined) return '—'
+  return Number(value).toFixed(3).replace(/^0/, '')
+}
+
+function formatPitchingRate(value) {
+  if (value === null || value === undefined) return '—'
+  return Number(value).toFixed(2)
+}
+
 function teamLogo(team) {
   return team?.logo_url || (team?.mlb_id ? teamLogoUrl(team.mlb_id) : null)
 }
@@ -86,7 +96,7 @@ function roundsFor(league) {
                     <span><b>{{ team.abbreviation }}</b><small>{{ team.name }}</small></span>
                     <strong>{{ seriesRecord(series, team) }}</strong>
                   </RouterLink>
-                  <div class="postseason-series__games"><RouterLink v-for="game in series.games" :key="game.id" :to="{ name: 'game-summary', params: { id: game.id } }">G{{ game.series_game_number || game.official_date }} · {{ game.away_score ?? '—' }}–{{ game.home_score ?? '—' }}</RouterLink></div>
+                  <div class="postseason-series__games"><RouterLink v-for="game in series.games" :key="game.id" :to="{ name: 'game-summary', params: { id: game.id } }">G{{ game.series_game_number || game.official_date }} · {{ teamName(game, 'away') }} {{ score(game, 'away') }}–{{ teamName(game, 'home') }} {{ score(game, 'home') }}</RouterLink></div>
                 </article>
               </div>
             </div>
@@ -109,11 +119,49 @@ function roundsFor(league) {
                   <RouterLink v-for="team in series.teams" :key="team.id" :to="{ name: 'team-profile', params: { id: team.id } }" class="postseason-series__team">
                     <img v-if="teamLogo(team)" :src="teamLogo(team)" :alt="team.name + ' logo'" /><span><b>{{ team.abbreviation }}</b><small>{{ team.name }}</small></span><strong>{{ seriesRecord(series, team) }}</strong>
                   </RouterLink>
-                  <div class="postseason-series__games"><RouterLink v-for="game in series.games" :key="game.id" :to="{ name: 'game-summary', params: { id: game.id } }">G{{ game.series_game_number || game.official_date }} · {{ game.away_score ?? '—' }}–{{ game.home_score ?? '—' }}</RouterLink></div>
+                  <div class="postseason-series__games"><RouterLink v-for="game in series.games" :key="game.id" :to="{ name: 'game-summary', params: { id: game.id } }">G{{ game.series_game_number || game.official_date }} · {{ teamName(game, 'away') }} {{ score(game, 'away') }}–{{ teamName(game, 'home') }} {{ score(game, 'home') }}</RouterLink></div>
                 </article>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="postseason-panel" data-test="postseason-leaders">
+        <header><div><p>Best of October</p><h2>Postseason leaders</h2></div><span>Minimum 3.1 AB or 1 IP per team game</span></header>
+        <div class="postseason-leaders-grid">
+          <article class="postseason-leader-card">
+            <div class="postseason-leader-card__heading"><h3>Batting</h3><span>Ranked by OPS</span></div>
+            <div v-if="postseason.leaders?.batting?.length" class="postseason-leader-table-wrap">
+              <table>
+                <thead><tr><th>Player</th><th>Team</th><th>G</th><th>AB</th><th>R</th><th>H</th><th>HR</th><th>RBI</th><th>AVG</th><th>OPS</th></tr></thead>
+                <tbody>
+                  <tr v-for="(entry, index) in postseason.leaders.batting" :key="entry.player.id">
+                    <td><span class="postseason-leader-rank">{{ index + 1 }}</span><RouterLink :to="{ name: 'player-profile', params: { id: entry.player.id } }">{{ entry.player.full_name }}</RouterLink></td>
+                    <td><RouterLink :to="{ name: 'team-profile', params: { id: entry.team.id } }">{{ entry.team.abbreviation }}</RouterLink></td>
+                    <td>{{ entry.games }}</td><td>{{ entry.at_bats }}</td><td>{{ entry.runs }}</td><td>{{ entry.hits }}</td><td>{{ entry.home_runs }}</td><td>{{ entry.runs_batted_in }}</td><td>{{ formatRate(entry.batting_average) }}</td><td><strong>{{ formatRate(entry.ops) }}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p v-else class="postseason-empty">No batters have reached the minimum at-bat requirement yet.</p>
+          </article>
+          <article class="postseason-leader-card">
+            <div class="postseason-leader-card__heading"><h3>Pitching</h3><span>Ranked by ERA</span></div>
+            <div v-if="postseason.leaders?.pitching?.length" class="postseason-leader-table-wrap">
+              <table>
+                <thead><tr><th>Player</th><th>Team</th><th>G</th><th>IP</th><th>W</th><th>L</th><th>SV</th><th>SO</th><th>ERA</th><th>WHIP</th></tr></thead>
+                <tbody>
+                  <tr v-for="(entry, index) in postseason.leaders.pitching" :key="entry.player.id">
+                    <td><span class="postseason-leader-rank">{{ index + 1 }}</span><RouterLink :to="{ name: 'player-profile', params: { id: entry.player.id } }">{{ entry.player.full_name }}</RouterLink></td>
+                    <td><RouterLink :to="{ name: 'team-profile', params: { id: entry.team.id } }">{{ entry.team.abbreviation }}</RouterLink></td>
+                    <td>{{ entry.games }}</td><td>{{ entry.innings_pitched }}</td><td>{{ entry.wins }}</td><td>{{ entry.losses }}</td><td>{{ entry.saves }}</td><td>{{ entry.strikeouts }}</td><td><strong>{{ formatPitchingRate(entry.era) }}</strong></td><td>{{ formatPitchingRate(entry.whip) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p v-else class="postseason-empty">No pitchers have reached the minimum innings requirement yet.</p>
+          </article>
         </div>
       </section>
 
@@ -172,5 +220,23 @@ function roundsFor(league) {
 .postseason-bracket__side--nl .postseason-round:not(:last-child)::after { right:auto; left:-.7rem; }
 .postseason-bracket__side--nl .postseason-round { order:initial; }
 .postseason-bracket__championship { align-self:stretch; }
+.postseason-leaders-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.postseason-leader-card { min-width:0; overflow:hidden; border:1px solid rgba(16,38,61,.1); border-radius:16px; background:#fff; box-shadow:0 8px 20px rgba(16,38,61,.05); }
+.postseason-leader-card__heading { display:flex; justify-content:space-between; align-items:baseline; gap:1rem; padding:.85rem 1rem .7rem; border-bottom:1px solid rgba(16,38,61,.09); }
+.postseason-leader-card__heading h3 { margin:0; color:#10263d; font-family:'Avenir Next Condensed',sans-serif; font-size:1.25rem; text-transform:uppercase; }
+.postseason-leader-card__heading span { color:#77858d; font-size:.62rem; font-weight:800; text-transform:uppercase; }
+.postseason-leader-table-wrap { overflow-x:auto; }
+.postseason-leader-card table { width:100%; min-width:570px; border-collapse:collapse; font-size:.7rem; font-variant-numeric:tabular-nums; }
+.postseason-leader-card th { padding:.55rem .45rem; color:#77858d; background:#f5f7f7; font-size:.56rem; letter-spacing:.06em; text-align:right; text-transform:uppercase; }
+.postseason-leader-card th:first-child,.postseason-leader-card td:first-child { position:sticky; left:0; text-align:left; }
+.postseason-leader-card th:first-child { z-index:2; background:#f5f7f7; }
+.postseason-leader-card td { padding:.58rem .45rem; border-top:1px solid rgba(16,38,61,.07); color:#344b5c; text-align:right; white-space:nowrap; }
+.postseason-leader-card td:first-child { z-index:1; min-width:145px; background:#fff; font-weight:850; }
+.postseason-leader-card td a { color:inherit; text-decoration:none; }
+.postseason-leader-card td a:hover { color:#a93627; }
+.postseason-leader-card td strong { color:#a93627; }
+.postseason-leader-rank { display:inline-grid; width:19px; height:19px; margin-right:.4rem; place-items:center; border-radius:50%; color:#fff; background:#183e5b; font-size:.55rem; }
+.postseason-leader-card .postseason-empty { margin:0; padding:1.25rem 1rem; }
 @media (max-width:760px) { .postseason-shell { width:calc(100% - 1.4rem); padding-top:1rem; }.postseason-hero { align-items:stretch; flex-direction:column; }.postseason-game { grid-template-columns:1fr 1fr; }.postseason-game time,.postseason-game small { grid-column:1 / -1; }.postseason-bracket-panel { padding-right:.7rem; padding-left:.7rem; }.postseason-bracket { min-width:930px; } }
+@media (max-width:1050px) { .postseason-leaders-grid { grid-template-columns:1fr; } }
 </style>

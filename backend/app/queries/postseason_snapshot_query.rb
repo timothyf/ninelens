@@ -1,5 +1,7 @@
 class PostseasonSnapshotQuery
   POSTSEASON_GAME_TYPES = %w[F D L W].freeze
+  BATTING_AT_BATS_PER_TEAM_GAME = 3.1
+  PITCHING_INNINGS_PER_TEAM_GAME = 1.0
   ROUND_NAMES = {
     "F" => "Wild Card",
     "D" => "Division Series",
@@ -15,13 +17,14 @@ class PostseasonSnapshotQuery
   def result
     games = postseason_games.to_a
     payload = { season: season, active: active?(games), available_seasons: available_seasons }
-    return payload.merge(playoff_teams: [], game_results: [], upcoming_games: [], rounds: []) unless payload[:active]
+    return payload.merge(playoff_teams: [], game_results: [], upcoming_games: [], rounds: [], leaders: empty_leaders) unless payload[:active]
 
     payload.merge(
       playoff_teams: playoff_teams(games),
       game_results: games.select { |game| game.status == "final" }.map { |game| GameSerializer.call(game) },
       upcoming_games: games.reject { |game| %w[final canceled cancelled].include?(game.status) }.map { |game| GameSerializer.call(game) },
-      rounds: rounds(games)
+      rounds: rounds(games),
+      leaders: postseason_leaders(games)
     )
   end
 
@@ -113,5 +116,113 @@ class PostseasonSnapshotQuery
 
   def team_payload(team)
     { id: team.id, mlb_id: team.mlb_id, name: team.name, abbreviation: team.abbreviation, logo_url: team.logo_url }
+  end
+
+  def postseason_leaders(games)
+    completed_games = games.select { |game| game.status == "final" }
+    return empty_leaders if completed_games.empty?
+
+    team_game_counts = completed_games.each_with_object(Hash.new(0)) do |game, counts|
+      counts[game.home_team_id] += 1
+      counts[game.away_team_id] += 1
+    end
+
+    {
+      batting: batting_leaders(completed_games.map(&:id), team_game_counts),
+      pitching: pitching_leaders(completed_games.map(&:id), team_game_counts)
+    }
+  end
+
+  def empty_leaders
+    { batting: [], pitching: [] }
+  end
+
+  def batting_leaders(game_ids, team_game_counts)
+    GamePlayerBattingLine.includes(:game, :player, :team).where(game_id: game_ids).group_by(&:player_id).values.filter_map do |lines|
+      at_bats = lines.sum { |line| line.at_bats.to_i }
+      hits = lines.sum { |line| line.hits.to_i }
+      doubles = lines.sum { |line| line.doubles.to_i }
+      triples = lines.sum { |line| line.triples.to_i }
+      home_runs = lines.sum { |line| line.home_runs.to_i }
+      walks = lines.sum { |line| line.walks.to_i }
+      plate_appearances = lines.sum { |line| line.plate_appearances.to_i }
+      plate_appearances = at_bats + walks if plate_appearances.zero?
+      next if plate_appearances.zero?
+
+      last_line = lines.max_by { |line| [line.game.official_date, line.game.id] }
+      minimum_at_bats = (team_game_counts[last_line.team_id] * BATTING_AT_BATS_PER_TEAM_GAME).ceil
+      next if at_bats < minimum_at_bats
+
+      batting_average = rate(hits, at_bats)
+      on_base_percentage = rate(hits + walks, at_bats + walks)
+      slugging_percentage = rate(hits + doubles + (2 * triples) + (3 * home_runs), at_bats)
+
+      {
+        player: player_payload(last_line.player),
+        team: team_payload(last_line.team),
+        games: lines.map(&:game_id).uniq.length,
+        plate_appearances: plate_appearances,
+        at_bats: at_bats,
+        runs: lines.sum { |line| line.runs.to_i },
+        hits: hits,
+        home_runs: home_runs,
+        runs_batted_in: lines.sum { |line| line.runs_batted_in.to_i },
+        batting_average: batting_average,
+        ops: rounded_rate(on_base_percentage && slugging_percentage ? on_base_percentage + slugging_percentage : nil)
+      }
+    end.sort_by { |row| [-(row[:ops] || -1), -row[:home_runs], -row[:hits], row.dig(:player, :full_name)] }.first(10)
+  end
+
+  def pitching_leaders(game_ids, team_game_counts)
+    GamePlayerPitchingLine.includes(:game, :player, :team).where(game_id: game_ids).group_by(&:player_id).values.filter_map do |lines|
+      outs = lines.sum { |line| line.outs_recorded.to_i }
+      next if outs.zero?
+
+      last_line = lines.max_by { |line| [line.game.official_date, line.game.id] }
+      minimum_outs = (team_game_counts[last_line.team_id] * PITCHING_INNINGS_PER_TEAM_GAME * 3).ceil
+      next if outs < minimum_outs
+
+      hits = lines.sum { |line| line.hits.to_i }
+      walks = lines.sum { |line| line.walks.to_i }
+      earned_runs = lines.sum { |line| line.earned_runs.to_i }
+
+      {
+        player: player_payload(last_line.player),
+        team: team_payload(last_line.team),
+        games: lines.map(&:game_id).uniq.length,
+        innings_pitched: innings_pitched(outs),
+        wins: lines.count { |line| pitching_decision?(line, "W") },
+        losses: lines.count { |line| pitching_decision?(line, "L") },
+        saves: lines.sum { |line| line.saves.to_i },
+        hits: hits,
+        earned_runs: earned_runs,
+        walks: walks,
+        strikeouts: lines.sum { |line| line.strikeouts.to_i },
+        era: rounded_rate((earned_runs * 27.0) / outs),
+        whip: rounded_rate(((hits + walks) * 3.0) / outs)
+      }
+    end.sort_by { |row| [row[:era], -row[:strikeouts], -row[:innings_pitched].to_f, row.dig(:player, :full_name)] }.first(10)
+  end
+
+  def player_payload(player)
+    { id: player.id, mlb_id: player.mlb_id, full_name: player.full_name }
+  end
+
+  def rate(numerator, denominator)
+    return if denominator.zero?
+
+    rounded_rate(numerator.to_f / denominator)
+  end
+
+  def rounded_rate(value)
+    value&.round(3)
+  end
+
+  def innings_pitched(outs)
+    "#{outs / 3}.#{outs % 3}"
+  end
+
+  def pitching_decision?(line, decision)
+    line.decision.to_s.match?(/\A\(?#{decision}(?:,|\)?\z)/)
   end
 end

@@ -4,6 +4,27 @@ class PlayerProfileSnapshotQuery
   SEASON_CATEGORIES = %w[batting pitching].freeze
   BATTING_RATE_KEYS = %w[avg obp slg ops].freeze
   PITCHING_RATE_KEYS = %w[ERA whip avg].freeze
+  POSTSEASON_GAME_TYPES = %w[F D L W].freeze
+  POSTSEASON_COLUMNS = {
+    "batting" => [
+      { key: "gamesPlayed", label: "G" }, { key: "atBats", label: "AB" },
+      { key: "runs", label: "R" }, { key: "hits", label: "H" },
+      { key: "doubles", label: "2B" }, { key: "triples", label: "3B" },
+      { key: "homeRuns", label: "HR" }, { key: "rbi", label: "RBI" },
+      { key: "baseOnBalls", label: "BB" }, { key: "strikeOuts", label: "SO" },
+      { key: "avg", label: "AVG" }, { key: "obp", label: "OBP" },
+      { key: "slg", label: "SLG" }, { key: "ops", label: "OPS" }
+    ].freeze,
+    "pitching" => [
+      { key: "G", label: "G" }, { key: "GS", label: "GS" },
+      { key: "W", label: "W" }, { key: "L", label: "L" },
+      { key: "SV", label: "SV" }, { key: "inningsPitched", label: "IP" },
+      { key: "hits", label: "H" }, { key: "runs", label: "R" },
+      { key: "ER", label: "ER" }, { key: "homeRuns", label: "HR" },
+      { key: "baseOnBalls", label: "BB" }, { key: "strikeOuts", label: "SO" },
+      { key: "ERA", label: "ERA" }, { key: "whip", label: "WHIP" }
+    ].freeze
+  }.freeze
   AUTHORITATIVE_RATE_STAT_NAMES = {
     "batting" => %w[avg AVG obp OBP slg SLG ops OPS].freeze,
     "pitching" => %w[ERA era whip WHIP avg AVG].freeze
@@ -140,7 +161,7 @@ class PlayerProfileSnapshotQuery
     }
   ].freeze
   TRANSACTION_HISTORY_SOURCE_NAME = "MLB Stats API transactions"
-  DEFERRED_SECTIONS = %w[advanced_stats defensive_stats splits similar_players analytics].freeze
+  DEFERRED_SECTIONS = %w[advanced_stats defensive_stats splits postseason similar_players analytics].freeze
   NON_DEFENSIVE_POSITIONS = %w[DH].freeze
 
   def initialize(player:, on: Date.current, analysis_range: nil, similarity_options: {}, benchmark_cache: nil)
@@ -176,6 +197,7 @@ class PlayerProfileSnapshotQuery
       payload[:batter_splits] = batter_splits_payload
       payload[:pitcher_splits] = pitcher_splits_payload
     end
+    payload[:postseason_stats] = postseason_stats if selected_sections.include?("postseason")
     if selected_sections.include?("similar_players")
       payload[:similar_players] = SimilarPlayersQuery.new(
         player: player,
@@ -297,6 +319,74 @@ class PlayerProfileSnapshotQuery
       batting: recent_batting_game_logs,
       pitching: recent_pitching_game_logs
     }
+  end
+
+  def postseason_stats
+    {
+      batting: postseason_category_stats("batting"),
+      pitching: postseason_category_stats("pitching")
+    }
+  end
+
+  def postseason_category_stats(category)
+    lines = postseason_game_lines(category)
+    grouped_seasons = lines.group_by { |line| line.profile_official_date.year }.sort_by(&:first)
+
+    {
+      available: lines.any?,
+      columns: POSTSEASON_COLUMNS.fetch(category),
+      seasons: grouped_seasons.map do |season, season_lines|
+        {
+          season: season,
+          teams: season_lines.map(&:team).uniq(&:id).map { |team| serialize_team(team) },
+          values: postseason_values(category, season_lines)
+        }
+      end,
+      career: { values: postseason_values(category, lines) }
+    }
+  end
+
+  def postseason_game_lines(category)
+    relation = category == "batting" ? GamePlayerBattingLine : GamePlayerPitchingLine
+    table_name = relation.table_name
+
+    relation
+      .joins(:game)
+      .includes(:team)
+      .where(player_id: player.id, games: { game_type: POSTSEASON_GAME_TYPES, status: "final" })
+      .select("#{table_name}.*, games.official_date AS profile_official_date")
+      .to_a
+  end
+
+  def postseason_values(category, lines)
+    return {} if lines.empty?
+
+    values = if category == "batting"
+      batting_values_from_game_lines(lines)
+    else
+      pitching_values_from_game_lines(lines).merge(
+        W: lines.count { |line| postseason_pitching_decision?(line, "W") },
+        L: lines.count { |line| postseason_pitching_decision?(line, "L") },
+        inningsPitched: format_innings(lines.sum { |line| line.outs_recorded.to_i })
+      )
+    end
+
+    POSTSEASON_COLUMNS.fetch(category).to_h do |column|
+      key = column.fetch(:key)
+      [key, format_postseason_value(category, key, values[key.to_sym])]
+    end
+  end
+
+  def format_postseason_value(category, key, value)
+    return if value.nil?
+    return format("%.3f", value) if category == "batting" && BATTING_RATE_KEYS.include?(key)
+    return format("%.2f", value) if category == "pitching" && %w[ERA whip].include?(key)
+
+    value
+  end
+
+  def postseason_pitching_decision?(line, decision)
+    line.decision.to_s.match?(/\A\(?#{decision}(?:,|\)?\z)/)
   end
 
   def recent_batting_game_logs

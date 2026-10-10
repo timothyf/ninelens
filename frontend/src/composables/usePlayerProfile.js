@@ -36,6 +36,19 @@ function normalizeMembership(membership) {
   }
 }
 
+function normalizePostseasonCategory(category = {}) {
+  return {
+    available: category.available === true,
+    columns: category.columns || [],
+    seasons: (category.seasons || []).map((season) => ({
+      season: season.season,
+      teams: (season.teams || []).map(normalizeTeam),
+      values: season.values || {},
+    })),
+    career: { values: category.career?.values || {} },
+  }
+}
+
 function normalizeTrade(trade) {
   const participants = (trade.participants || []).map((participant) => ({
     player: {
@@ -369,6 +382,10 @@ export function normalizeProfile(data = {}) {
         })),
       })),
     },
+    postseasonStats: {
+      batting: normalizePostseasonCategory(data.postseason_stats?.batting),
+      pitching: normalizePostseasonCategory(data.postseason_stats?.pitching),
+    },
     contextualBenchmarks: {
       available: benchmarks.available === true,
       unavailableReason: benchmarks.unavailable_reason,
@@ -623,6 +640,7 @@ function normalizedSection(data, section) {
   if (section === 'advanced_stats') return { advancedStats: normalized.advancedStats }
   if (section === 'defensive_stats') return { defensiveStats: normalized.defensiveStats }
   if (section === 'splits') return { batterSplits: normalized.batterSplits, pitcherSplits: normalized.pitcherSplits }
+  if (section === 'postseason') return { postseasonStats: normalized.postseasonStats }
   if (section === 'similar_players') return { similarPlayers: normalized.similarPlayers }
   if (section === 'analytics') {
     return {

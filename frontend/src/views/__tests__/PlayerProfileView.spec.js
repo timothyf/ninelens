@@ -939,6 +939,51 @@ describe('PlayerProfileView', () => {
     expect(panel.findAll('.split-role')).toHaveLength(2)
   })
 
+  it('loads and renders postseason stats in a tab immediately after Splits', async () => {
+    const payload = apiPayloadWith((response) => {
+      response.data.postseason_stats = {
+        batting: {
+          available: true,
+          columns: [
+            { key: 'gamesPlayed', label: 'G' },
+            { key: 'homeRuns', label: 'HR' },
+            { key: 'avg', label: 'AVG' },
+            { key: 'ops', label: 'OPS' },
+          ],
+          seasons: [{
+            season: 2026,
+            teams: [{ id: 1, mlb_id: 116, name: 'Detroit Tigers', abbreviation: 'DET' }],
+            values: { gamesPlayed: 8, homeRuns: 3, avg: '0.321', ops: '0.998' },
+          }],
+          career: { values: { gamesPlayed: 12, homeRuns: 4, avg: '0.300', ops: '0.925' } },
+        },
+        pitching: { available: false, columns: [], seasons: [], career: { values: {} } },
+      }
+    })
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }))
+
+    const wrapper = mount(PlayerProfileView, {
+      props: { playerId: '42' },
+      global: { stubs: { RouterLink: true } },
+    })
+    await flushPromises()
+
+    const tabs = wrapper.findAll('.profile-tabs [role="tab"]')
+    expect(tabs.map((tab) => tab.text())).toEqual(['Basic Stats', 'Advanced Stats', 'Defensive Stats', 'Splits', 'Postseason'])
+
+    await wrapper.get('[data-test="player-profile-tab-postseason"]').trigger('click')
+    await flushPromises()
+
+    expect(fetch.mock.calls.some(([url]) => url.includes('sections=postseason'))).toBe(true)
+    const panel = wrapper.get('[data-test="postseason-stats-panel"]')
+    expect(panel.text()).toContain('Postseason Stats')
+    expect(panel.text()).toContain('2026')
+    expect(panel.text()).toContain('DET')
+    expect(panel.text()).toContain('0.998')
+    expect(panel.text()).toContain('Career')
+    expect(panel.text()).toContain('0.925')
+  })
+
   it('shows grouped rate and run-creation tables on the Advanced Stats tab', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => apiPayload() }))
 

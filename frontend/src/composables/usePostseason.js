@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { API_BASE_URL } from '../config'
 
-const emptySnapshot = () => ({ active: false, season: null, available_seasons: [], playoff_teams: [], game_results: [], upcoming_games: [], rounds: [] })
+const emptySnapshot = () => ({ active: false, season: null, available_seasons: [], playoff_teams: [], game_results: [], upcoming_games: [], rounds: [], leaders: { batting: [], pitching: [] } })
 
 export function usePostseason() {
   const postseason = ref(emptySnapshot())

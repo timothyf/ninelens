@@ -38,6 +38,7 @@ const profileTabs = [
   { id: 'advanced-stats', label: 'Advanced Stats' },
   { id: 'defensive-stats', label: 'Defensive Stats' },
   { id: 'splits', label: 'Splits' },
+  { id: 'postseason', label: 'Postseason' },
 ]
 const basePageTabIds = ['overview', 'performance-trends', 'batted-ball-profile', 'similar-players', 'pitch-arsenal']
 const pageTabIds = computed(() => canAccessNotes.value ? [...basePageTabIds, 'notes'] : basePageTabIds)
@@ -93,6 +94,7 @@ watch(
     if (tab === 'advanced-stats') void loadSection('advanced_stats')
     if (tab === 'defensive-stats') void loadSection('defensive_stats')
     if (tab === 'splits') void loadSection('splits')
+    if (tab === 'postseason') void loadSection('postseason')
   },
   { immediate: true },
 )

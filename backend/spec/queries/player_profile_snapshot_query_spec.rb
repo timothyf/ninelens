@@ -67,6 +67,48 @@ RSpec.describe PlayerProfileSnapshotQuery do
       .to eq(%w[last_7_games last_15_games last_30_games])
   end
 
+  it "returns postseason batting and pitching totals by year and for the player's career" do
+    team = create_team(attributes: { abbreviation: "DET" })
+    opponent = create_team(attributes: { abbreviation: "CLE" })
+    player = create_player(team: team, attributes: { first_name: "October", last_name: "Star" })
+
+    [2025, 2026].each_with_index do |season, index|
+      schedule = create_schedule(season: season)
+      game = create_game(
+        schedule: schedule, home_team: team, away_team: opponent, game_type: index.zero? ? "D" : "L",
+        status: "final", official_date: Date.new(season, 10, 10)
+      )
+      GamePlayerBattingLine.create!(
+        game: game, player: player, team: team, opponent_team: opponent, home: true,
+        at_bats: 4, runs: 1, hits: 2, doubles: 1, home_runs: index, runs_batted_in: 2,
+        walks: 1, strikeouts: 1, source_name: "spec", last_synced_at: Time.current
+      )
+      GamePlayerPitchingLine.create!(
+        game: game, player: player, team: team, opponent_team: opponent, home: true, starter: true,
+        outs_recorded: 18, hits: 4, runs: 2, earned_runs: 2, home_runs: 1, walks: 1,
+        strikeouts: 7, decision: index.zero? ? "W" : "(L, 0-1)", source_name: "spec", last_synced_at: Time.current
+      )
+    end
+
+    regular_game = create_game(home_team: team, away_team: opponent, game_type: "R", status: "final", official_date: Date.new(2026, 9, 20))
+    GamePlayerBattingLine.create!(
+      game: regular_game, player: player, team: team, opponent_team: opponent, home: true,
+      at_bats: 4, hits: 4, home_runs: 4, source_name: "spec", last_synced_at: Time.current
+    )
+
+    stats = described_class.new(player: player).result(sections: ["postseason"]).fetch(:postseason_stats)
+
+    expect(stats.dig(:batting, :columns).map { |column| column[:label] }).to include("G", "HR", "AVG", "OPS")
+    expect(stats.dig(:batting, :seasons).map { |row| row[:season] }).to eq([2025, 2026])
+    expect(stats.dig(:batting, :career, :values)).to include(
+      "gamesPlayed" => 2, "atBats" => 8, "hits" => 4, "homeRuns" => 1, "avg" => "0.500", "ops" => "1.725"
+    )
+    expect(stats.dig(:pitching, :career, :values)).to include(
+      "G" => 2, "GS" => 2, "W" => 1, "L" => 1, "inningsPitched" => "12.0",
+      "strikeOuts" => 14, "ERA" => "3.00", "whip" => "0.83"
+    )
+  end
+
   it "returns enough recent batting and pitching game logs for the profile selector" do
     team = create_team(attributes: { abbreviation: "TST" })
     opponent = create_team(attributes: { abbreviation: "OPP" })
