@@ -1,5 +1,4 @@
 require "json"
-require "net/http"
 
 class MlbTradeDetailsDownloader
   def self.call(mlb_transaction_id:)
@@ -47,20 +46,10 @@ class MlbTradeDetailsDownloader
   end
 
   def fetch_json(url)
-    uri = URI(url)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = uri.scheme == "https"
-    http.open_timeout = service_config.fetch(:timeout_seconds).to_i
-    http.read_timeout = service_config.fetch(:timeout_seconds).to_i
-
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request["User-Agent"] = service_config.fetch(:user_agents).fetch(:transactions)
-    request["Accept"] = "application/json"
-
-    response = http.request(request)
-    raise "HTTP #{response.code}: #{response.message}" unless response.is_a?(Net::HTTPSuccess)
-
-    JSON.parse(response.body)
+    MlbStatsApiClient.get_json(
+      url,
+      user_agent: service_config.fetch(:user_agents).fetch(:transactions)
+    )
   end
 
   def service_config
