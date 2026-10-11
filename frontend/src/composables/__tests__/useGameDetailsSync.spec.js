@@ -96,7 +96,7 @@ describe('useGameDetailsSync', () => {
 
     expect(estimate).toMatchObject({ gameCount: 25, estimatedSeconds: 1326, estimateSource: 'historical' })
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/admin/task_runs/estimate?start_date=2026-07-01&end_date=2026-07-02',
+      '/api/admin/task_runs/estimate?task_name=mlb_game_details_sync&start_date=2026-07-01&end_date=2026-07-02',
       expect.any(Object),
     )
     wrapper.unmount()

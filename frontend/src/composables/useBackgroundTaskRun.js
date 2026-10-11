@@ -6,7 +6,15 @@ import { API_BASE_URL, frontendConfig } from '../config'
 const ACTIVE_STATUSES = ['queued', 'running']
 const POLL_INTERVAL_MS = frontendConfig.pollingIntervalMs
 
+function numericOrNull(value) {
+  return value === null || value === undefined ? null : Number(value)
+}
+
 export function normalizeAdminTaskRun(data = {}) {
+  const totalItems = Number(data.total_items || 0)
+  const processedRaw = Number(data.processed_items || 0)
+  const progressRaw = Number(data.progress_percentage || 0)
+
   return {
     id: data.id,
     taskName: data.task_name || '',
@@ -20,20 +28,21 @@ export function normalizeAdminTaskRun(data = {}) {
           role: data.initiated_by.role,
         }
       : null,
-    totalItems: Number(data.total_items || 0),
+    totalItems,
     completedItems: Number(data.completed_items || 0),
     failedItems: Number(data.failed_items || 0),
-    processedItems: Number(data.processed_items || 0),
-    progressPercentage: Number(data.progress_percentage || 0),
+    processedItems: totalItems > 0 ? Math.min(processedRaw, totalItems) : processedRaw,
+    progressPercentage: Math.min(Math.max(progressRaw, 0), 100),
+    currentItemMlbId: data.current_item_mlb_id ?? null,
     currentItemLabel: data.current_item_label || '',
     cancelRequested: Boolean(data.cancel_requested),
     errorMessage: data.error_message || '',
     resultData: data.result_data || {},
-    elapsedSeconds: data.elapsed_seconds === null ? null : Number(data.elapsed_seconds || 0),
-    estimatedRemainingSeconds:
-      data.estimated_remaining_seconds === null ? null : Number(data.estimated_remaining_seconds || 0),
+    elapsedSeconds: numericOrNull(data.elapsed_seconds),
+    estimatedRemainingSeconds: numericOrNull(data.estimated_remaining_seconds),
     startedAt: data.started_at || null,
     finishedAt: data.finished_at || null,
+    lastHeartbeatAt: data.last_heartbeat_at || null,
     createdAt: data.created_at || null,
   }
 }

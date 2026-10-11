@@ -1,177 +1,35 @@
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { useAdminSyncTask } from './useAdminSyncTask'
 
-import { adminRequestHeaders } from './apiAuth'
-import { API_BASE_URL, frontendConfig } from '../config'
-
-const POLL_INTERVAL_MS = frontendConfig.pollingIntervalMs
-const ACTIVE_STATUSES = ['queued', 'running']
 const TASK_NAME = 'pitch_data_sync'
 
-export function usePitchDataSync() {
-  const task = ref(null)
-  const starting = ref(false)
-  const estimating = ref(false)
-  const error = ref('')
-  let pollTimer = null
-
-  function normalizeTask(data) {
-    if (!data) return null
-    return {
-      id: data.id,
-      taskName: data.task_name,
-      status: data.status,
-      taskParameters: data.task_parameters || {},
-      totalItems: Number(data.total_items || 0),
-      completedItems: Number(data.completed_items || 0),
-      failedItems: Number(data.failed_items || 0),
-      processedItems: Number(data.processed_items || 0),
-      progressPercentage: Number(data.progress_percentage || 0),
-      currentItemLabel: data.current_item_label,
-      cancelRequested: data.cancel_requested === true,
-      errorMessage: data.error_message,
-      resultData: data.result_data || {},
-      elapsedSeconds: numericOrNull(data.elapsed_seconds),
-      estimatedRemainingSeconds: numericOrNull(data.estimated_remaining_seconds),
-    }
-  }
-
-  function numericOrNull(value) {
-    return value === null || value === undefined ? null : Number(value)
-  }
-
-  function replaceTask(data) {
-    task.value = normalizeTask(data)
-    schedulePoll()
-    return task.value
-  }
-
-  function clearPoll() {
-    if (pollTimer) window.clearTimeout(pollTimer)
-    pollTimer = null
-  }
-
-  function schedulePoll() {
-    clearPoll()
-    if (task.value && ACTIVE_STATUSES.includes(task.value.status)) {
-      pollTimer = window.setTimeout(poll, POLL_INTERVAL_MS)
-    }
-  }
-
-  async function start(parameters) {
-    starting.value = true
-    error.value = ''
-    clearPoll()
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/task_runs`, {
-        method: 'POST',
-        headers: adminRequestHeaders({ Accept: 'application/json', 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ task_name: TASK_NAME, ...parameters }),
-      })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload?.message || `Unable to start pitch synchronization (${response.status}).`)
-      return replaceTask(payload.data)
-    } catch (startError) {
-      error.value = startError.message || 'Unable to start pitch synchronization.'
-      return null
-    } finally {
-      starting.value = false
-    }
-  }
-
-  async function estimate(parameters) {
-    estimating.value = true
-    error.value = ''
-    try {
-      const query = new URLSearchParams(
-        Object.entries({ task_name: TASK_NAME, ...parameters }).filter(([, value]) => value !== null && value !== undefined && value !== ''),
-      )
-      const response = await fetch(`${API_BASE_URL}/api/admin/task_runs/estimate?${query}`, { headers: adminRequestHeaders({ Accept: 'application/json' }) })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload?.message || `Unable to estimate pitch synchronization (${response.status}).`)
-      return normalizeEstimate(payload.data)
-    } catch (estimateError) {
-      error.value = estimateError.message || 'Unable to estimate pitch synchronization.'
-      return null
-    } finally {
-      estimating.value = false
-    }
-  }
-
-  function normalizeEstimate(data) {
-    if (!data) return null
-    return {
-      taskParameters: data.task_parameters || {},
-      gameCount: Number(data.game_count || 0),
-      estimatedSeconds: Number(data.estimated_seconds || 0),
-      lowEstimatedSeconds: Number(data.low_estimated_seconds || 0),
-      highEstimatedSeconds: Number(data.high_estimated_seconds || 0),
-      secondsPerGame: Number(data.seconds_per_game || 0),
-      timingSampleGameCount: Number(data.timing_sample_game_count || 0),
-      timingSampleRunCount: Number(data.timing_sample_run_count || 0),
-      estimateSource: data.estimate_source,
-    }
-  }
-
-  async function poll() {
-    if (!task.value?.id) return
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/task_runs/${encodeURIComponent(task.value.id)}`, { headers: adminRequestHeaders({ Accept: 'application/json' }) })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload?.message || `Unable to load pitch synchronization progress (${response.status}).`)
-      error.value = ''
-      replaceTask(payload.data)
-    } catch (pollError) {
-      error.value = pollError.message || 'Unable to refresh pitch synchronization progress.'
-      schedulePoll()
-    }
-  }
-
-  async function loadActiveTask() {
-    error.value = ''
-    try {
-      const query = new URLSearchParams({ task_name: TASK_NAME, active: 'true' })
-      const response = await fetch(`${API_BASE_URL}/api/admin/task_runs?${query}`, { headers: adminRequestHeaders({ Accept: 'application/json' }) })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload?.message || `Unable to recover pitch synchronization progress (${response.status}).`)
-      const activeTask = payload?.data?.[0]
-      return activeTask ? replaceTask(activeTask) : null
-    } catch (loadError) {
-      error.value = loadError.message || 'Unable to recover pitch synchronization progress.'
-      return null
-    }
-  }
-
-  async function cancel() {
-    if (!task.value?.id || !ACTIVE_STATUSES.includes(task.value.status)) return null
-    error.value = ''
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/task_runs/${encodeURIComponent(task.value.id)}/cancel`, {
-        method: 'POST',
-        headers: adminRequestHeaders({ Accept: 'application/json' }),
-      })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload?.message || `Unable to cancel pitch synchronization (${response.status}).`)
-      return replaceTask(payload.data)
-    } catch (cancelError) {
-      error.value = cancelError.message || 'Unable to request pitch synchronization cancellation.'
-      return null
-    } finally {
-      schedulePoll()
-    }
-  }
-
-  onBeforeUnmount(clearPoll)
-
+function normalizeEstimate(data) {
+  if (!data) return null
   return {
-    task: computed(() => task.value),
-    active: computed(() => Boolean(task.value && ACTIVE_STATUSES.includes(task.value.status))),
-    starting: computed(() => starting.value),
-    estimating: computed(() => estimating.value),
-    error: computed(() => error.value),
-    start,
-    estimate,
-    cancel,
-    poll,
-    loadActiveTask,
+    taskParameters: data.task_parameters || {},
+    gameCount: Number(data.game_count || 0),
+    estimatedSeconds: Number(data.estimated_seconds || 0),
+    lowEstimatedSeconds: Number(data.low_estimated_seconds || 0),
+    highEstimatedSeconds: Number(data.high_estimated_seconds || 0),
+    secondsPerGame: Number(data.seconds_per_game || 0),
+    timingSampleGameCount: Number(data.timing_sample_game_count || 0),
+    timingSampleRunCount: Number(data.timing_sample_run_count || 0),
+    estimateSource: data.estimate_source,
   }
+}
+
+const messages = {
+  startRequest: (status) => `Unable to start pitch synchronization (${status}).`,
+  start: 'Unable to start pitch synchronization.',
+  estimateRequest: (status) => `Unable to estimate pitch synchronization (${status}).`,
+  estimate: 'Unable to estimate pitch synchronization.',
+  pollRequest: (status) => `Unable to load pitch synchronization progress (${status}).`,
+  poll: 'Unable to refresh pitch synchronization progress.',
+  loadRequest: (status) => `Unable to recover pitch synchronization progress (${status}).`,
+  load: 'Unable to recover pitch synchronization progress.',
+  cancelRequest: (status) => `Unable to cancel pitch synchronization (${status}).`,
+  cancel: 'Unable to request pitch synchronization cancellation.',
+}
+
+export function usePitchDataSync() {
+  return useAdminSyncTask({ taskName: TASK_NAME, normalizeEstimate, messages })
 }
