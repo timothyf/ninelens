@@ -1089,6 +1089,49 @@ async function closeDatabaseDetails() {
   text-align: center;
 }
 
+.data-health-options {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(16, 38, 61, 0.12);
+  border-radius: 12px;
+  background: rgba(231, 237, 241, 0.42);
+}
+
+.data-health-options label {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  color: #344b5c;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.data-health-options input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #173652;
+}
+
+.data-health-options button {
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(16, 38, 61, 0.16);
+  border-radius: 10px;
+  color: #fff;
+  background: #173652;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.data-health-options button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .data-health-text--healthy {
   color: #2d7047 !important;
 }

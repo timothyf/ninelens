@@ -1,9 +1,14 @@
 class AdminDataHealthCheck
   CALCULATION_VERSION = DailyAnalyticsRefresh::CALCULATION_VERSION
   NON_COMPLETED_GAME_STATUSES = %w[canceled cancelled].freeze
+  POSTSEASON_GAME_TYPES = %w[F D L W].freeze
 
-  def self.call
-    new.call
+  def self.call(include_postseason: true)
+    new(include_postseason:).call
+  end
+
+  def initialize(include_postseason: true)
+    @include_postseason = include_postseason
   end
 
   def call
@@ -31,6 +36,7 @@ class AdminDataHealthCheck
       status: critical_count.positive? ? "critical" : warning_count.positive? ? "warning" : "healthy",
       checked_at: Time.current,
       calculation_version: CALCULATION_VERSION,
+      include_postseason: include_postseason,
       summary: {
         check_count: checks.length,
         healthy_count: checks.count { |check| check[:status] == "healthy" },
@@ -44,8 +50,14 @@ class AdminDataHealthCheck
 
   private
 
+  attr_reader :include_postseason
+
+  def games_scope
+    @games_scope ||= include_postseason ? Game.all : Game.where.not(game_type: POSTSEASON_GAME_TYPES)
+  end
+
   def completed_games
-    @completed_games ||= Game
+    @completed_games ||= games_scope
       .where(status: "final")
       .where("official_date <= ?", application_date)
       .where.not("LOWER(COALESCE(detailed_status, '')) LIKE ?", "%cancel%")
@@ -81,7 +93,7 @@ class AdminDataHealthCheck
   end
 
   def past_games_with_player_lines_not_final
-    scope = Game
+    scope = games_scope
       .where("official_date < ?", application_date)
       .where.not(status: [ "final", *NON_COMPLETED_GAME_STATUSES ])
       .where.not("LOWER(COALESCE(detailed_status, '')) LIKE ?", "%cancel%")
@@ -166,6 +178,9 @@ class AdminDataHealthCheck
 
   def pitches_missing_games
     scope = PitchDatum.where(game_id: nil)
+    unless include_postseason
+      scope = scope.where(game_type: nil).or(scope.where.not(game_type: POSTSEASON_GAME_TYPES))
+    end
     pitch_check(
       id: "pitches_missing_games",
       name: "Pitches are linked to games",
@@ -177,6 +192,7 @@ class AdminDataHealthCheck
 
   def pitches_missing_plate_appearances
     scope = PitchDatum.where.not(game_id: nil).where(plate_appearance_id: nil)
+    scope = scope.joins(:game).merge(games_scope) unless include_postseason
     pitch_check(
       id: "pitches_missing_plate_appearances",
       name: "Game pitches are linked to plate appearances",
@@ -227,6 +243,7 @@ class AdminDataHealthCheck
     affected_count = DailyAnalyticsRefresh::SUMMARY_MODELS.sum do |model|
       current_dates = model.where(calculation_version: CALCULATION_VERSION).distinct.pluck(:metric_date)
       old_dates = model.where.not(calculation_version: CALCULATION_VERSION).distinct.pluck(:metric_date)
+      old_dates &= regular_season_game_dates unless include_postseason
       (old_dates - current_dates).length
     end
 
@@ -239,6 +256,10 @@ class AdminDataHealthCheck
       description: "Dates without current-version analytics can disagree with current rankings. Older rows are retained for versioned history when current coverage exists.",
       recommendation: "Refresh daily analytics and contextual benchmarks using version #{CALCULATION_VERSION}."
     )
+  end
+
+  def regular_season_game_dates
+    @regular_season_game_dates ||= games_scope.where(status: "final").distinct.pluck(:official_date)
   end
 
   def game_check(id:, category:, name:, severity:, scope:, description:, recommendation:)

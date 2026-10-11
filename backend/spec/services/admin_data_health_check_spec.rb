@@ -19,7 +19,6 @@ RSpec.describe AdminDataHealthCheck do
       pitch_number: 1,
       raw_data: { "pitch" => 1 }
     )
-
     result = described_class.call
 
     expect(result).to include(status: "critical", calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION)
@@ -138,6 +137,50 @@ RSpec.describe AdminDataHealthCheck do
     expect(checks.dig("final_games_missing_scores", :affected_count)).to eq(0)
     expect(checks.dig("final_games_missing_details", :affected_count)).to eq(0)
     expect(checks.dig("final_games_missing_pitch_data", :affected_count)).to eq(0)
+  end
+
+  it "can exclude postseason games and their associated pitch data" do
+    postseason_game = create_game(
+      official_date: ApplicationCalendar.current_date - 1.day,
+      game_type: "D",
+      status: "final",
+      home_score: nil,
+      away_score: nil,
+      details_last_synced_at: Time.current
+    )
+    PitchDatum.create!(
+      game_pk: postseason_game.mlb_id,
+      game_date: postseason_game.official_date,
+      game_type: "D",
+      at_bat_number: 1,
+      pitch_number: 1,
+      raw_data: { "pitch" => 1 }
+    )
+    TeamDailyMetric.create!(
+      team: postseason_game.home_team,
+      metric_date: postseason_game.official_date,
+      source_start_date: postseason_game.official_date,
+      source_end_date: postseason_game.official_date,
+      sample_size: 1,
+      calculation_version: "old-version",
+      calculated_at: Time.current,
+      source_name: DailyAnalyticsRefresh::SOURCE_NAME,
+      metrics: {}
+    )
+
+    included = described_class.call(include_postseason: true)
+    excluded = described_class.call(include_postseason: false)
+    included_checks = included.fetch(:checks).index_by { |check| check.fetch(:id) }
+    excluded_checks = excluded.fetch(:checks).index_by { |check| check.fetch(:id) }
+
+    expect(included).to include(include_postseason: true)
+    expect(included_checks.dig("final_games_missing_scores", :affected_count)).to eq(1)
+    expect(included_checks.dig("pitches_missing_games", :affected_count)).to eq(1)
+    expect(included_checks.dig("analytics_on_old_versions", :affected_count)).to eq(1)
+    expect(excluded).to include(include_postseason: false)
+    expect(excluded_checks.dig("final_games_missing_scores", :affected_count)).to eq(0)
+    expect(excluded_checks.dig("pitches_missing_games", :affected_count)).to eq(0)
+    expect(excluded_checks.dig("analytics_on_old_versions", :affected_count)).to eq(0)
   end
 
   it "does not flag retained old-version analytics when current coverage exists" do

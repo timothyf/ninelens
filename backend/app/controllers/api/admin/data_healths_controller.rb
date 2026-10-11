@@ -5,7 +5,8 @@ module Api
       before_action :require_admin_user
 
       def show
-        render json: { data: AdminDataHealthCheck.call }
+        include_postseason = params.key?(:include_postseason) ? ActiveModel::Type::Boolean.new.cast(params[:include_postseason]) : true
+        render json: { data: AdminDataHealthCheck.call(include_postseason:) }
       end
     end
   end

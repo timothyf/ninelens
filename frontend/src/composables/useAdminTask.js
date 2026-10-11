@@ -187,12 +187,13 @@ export function useAdminTask() {
       })
   }
 
-  async function loadDataHealth() {
+  async function loadDataHealth(includePostseason = true) {
     dataHealthLoading.value = true
     dataHealthError.value = ''
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/data_health`, {
+      const query = new URLSearchParams({ include_postseason: String(includePostseason) })
+      const response = await fetch(`${API_BASE_URL}/api/admin/data_health?${query}`, {
         headers: adminRequestHeaders({ Accept: 'application/json' }),
       })
       const payload = await response.json()
@@ -207,6 +208,7 @@ export function useAdminTask() {
         status: report.status || 'healthy',
         checkedAt: report.checked_at || null,
         calculationVersion: report.calculation_version || '',
+        includePostseason: report.include_postseason !== false,
         summary: {
           checkCount: Number(summary.check_count || 0),
           healthyCount: Number(summary.healthy_count || 0),

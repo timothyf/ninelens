@@ -256,6 +256,7 @@ describe('useAdminTask', () => {
             status: 'warning',
             checked_at: '2026-07-17T18:00:00Z',
             calculation_version: '1.0.0',
+            include_postseason: false,
             summary: {
               check_count: 11,
               healthy_count: 9,
@@ -281,12 +282,13 @@ describe('useAdminTask', () => {
     )
     const { loadDataHealth, dataHealth, dataHealthLoading, dataHealthError } = useAdminTask()
 
-    await loadDataHealth()
+    await loadDataHealth(false)
 
     expect(dataHealth.value).toEqual({
       status: 'warning',
       checkedAt: '2026-07-17T18:00:00Z',
       calculationVersion: '1.0.0',
+      includePostseason: false,
       summary: {
         checkCount: 11,
         healthyCount: 9,
@@ -309,6 +311,10 @@ describe('useAdminTask', () => {
     })
     expect(dataHealthLoading.value).toBe(false)
     expect(dataHealthError.value).toBe('')
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/admin/data_health?include_postseason=false',
+      expect.objectContaining({ headers: expect.any(Object) }),
+    )
   })
 
   it('exposes backend validation errors', async () => {

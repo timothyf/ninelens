@@ -39,6 +39,7 @@ vi.mock('../../composables/useAdminTask', () => ({
       status: 'critical',
       checkedAt: '2026-07-17T18:00:00Z',
       calculationVersion: '1.0.0',
+      includePostseason: true,
       summary: {
         checkCount: 11,
         healthyCount: 8,
@@ -332,8 +333,11 @@ describe('AdminView', () => {
     expect(healthDetails.text()).toContain('Final games have detailed data')
     expect(healthDetails.text()).toContain('MLB game 700001')
     expect(healthDetails.text()).toContain('Suggested action')
+    const postseasonCheckbox = wrapper.get('[data-test="data-health-include-postseason"]')
+    expect(postseasonCheckbox.element.checked).toBe(true)
+    await postseasonCheckbox.setValue(false)
     await wrapper.get('[data-test="data-health-refresh"]').trigger('click')
-    expect(loadDataHealth).toHaveBeenCalledTimes(1)
+    expect(loadDataHealth).toHaveBeenCalledWith(false)
     await wrapper.get('[data-test="data-health-close"]').trigger('click')
     expect(wrapper.find('[data-test="data-health-details"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="database-details"]').exists()).toBe(false)

@@ -14,6 +14,7 @@ RSpec.describe "Api::Admin::DataHealth", type: :request do
       "summary",
       "checks"
     )
+    expect(json_body.dig("data", "include_postseason")).to be(true)
     expect(json_body.dig("data", "summary")).to include(
       "check_count" => 13,
       "healthy_count" => be_a(Integer),
@@ -31,5 +32,12 @@ RSpec.describe "Api::Admin::DataHealth", type: :request do
       "recommendation",
       "examples"
     )
+  end
+
+  it "passes the postseason selection to the health check" do
+    get api_admin_data_health_path, params: { include_postseason: false }, headers: admin_headers
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.dig("data", "include_postseason")).to be(false)
   end
 end
