@@ -70,12 +70,12 @@ module Api
       require_read_access!(watchlist)
       return if performed?
 
-      ids = [ watchlist.id, *watchlist.entries.pluck(:id) ]
-      logs = AuditLog.includes(:user)
-        .where("(auditable_type = 'Watchlist' AND auditable_id = ?) OR (auditable_type = 'WatchlistEntry' AND auditable_id IN (?))", watchlist.id, ids)
-        .order(created_at: :desc)
-        .limit(100)
-      render json: { data: logs.map { |log| serialize_audit_log(log) } }
+      render json: {
+        data: AuditHistoryQuery.call(
+          auditable: watchlist,
+          related: { WatchlistEntry => watchlist.entries.pluck(:id) }
+        )
+      }
     end
 
     private
@@ -109,46 +109,13 @@ module Api
     def serialize_watchlist(watchlist)
       {
         id: watchlist.id,
-        owner: serialize_user(watchlist.owner),
+        owner: UserSummarySerializer.call(watchlist.owner),
         name: watchlist.name,
         description: watchlist.description,
         need_profile: serialize_need_profile(watchlist.need_profile),
         created_at: watchlist.created_at,
         updated_at: watchlist.updated_at,
-        entries: watchlist.entries.sort_by { |entry| [ { "high" => 0, "medium" => 1, "low" => 2 }.fetch(entry.priority), entry.player.last_name ] }.map { |entry| serialize_entry(entry) }
-      }
-    end
-
-    def serialize_entry(entry)
-      {
-        id: entry.id,
-        priority: entry.priority,
-        status: entry.status,
-        recommendation: entry.recommendation,
-        fit_score: entry.fit_score,
-        calculated_fit_score: entry.calculated_fit_score&.to_f,
-        fit_breakdown: entry.fit_breakdown,
-        fit_calculated_at: entry.fit_calculated_at,
-        need_score: entry.need_score,
-        cost_score: entry.cost_score,
-        risk_score: entry.risk_score,
-        review_status: entry.review_status,
-        review_statuses: WatchlistEntry::REVIEW_STATUSES,
-        candidate_owner: serialize_user(entry.candidate_owner),
-        acquisition_rationale: entry.acquisition_rationale,
-        estimated_cost: entry.estimated_cost&.to_f,
-        availability: entry.availability,
-        concerns: entry.concerns,
-        tags: entry.tags,
-        notes: entry.notes,
-        updated_at: entry.updated_at,
-        player: {
-          id: entry.player.id,
-          mlb_id: entry.player.mlb_id,
-          full_name: entry.player.full_name,
-          headshot_url: entry.player.profile&.headshot_url,
-          team: entry.player.display_team && { id: entry.player.display_team.id, name: entry.player.display_team.name, abbreviation: entry.player.display_team.abbreviation }
-        }
+        entries: watchlist.entries.sort_by { |entry| [ { "high" => 0, "medium" => 1, "low" => 2 }.fetch(entry.priority), entry.player.last_name ] }.map { |entry| WatchlistEntrySerializer.call(entry) }
       }
     end
 
@@ -166,25 +133,6 @@ module Api
           name: profile.team.name,
           abbreviation: profile.team.abbreviation
         }
-      }
-    end
-
-    def serialize_user(user)
-      return nil unless user
-
-      { id: user.id, name: user.name, email: user.email, role: user.role }
-    end
-
-    def serialize_audit_log(log)
-      {
-        id: log.id,
-        action: log.action,
-        auditable_type: log.auditable_type,
-        auditable_id: log.auditable_id,
-        changes: log.change_set,
-        metadata: log.metadata,
-        created_at: log.created_at,
-        user: serialize_user(log.user)
       }
     end
   end

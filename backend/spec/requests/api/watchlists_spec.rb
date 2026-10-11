@@ -54,8 +54,17 @@ RSpec.describe "Api::Watchlists", type: :request do
     expect(response).to have_http_status(:created)
     entry_id = json_body.dig("data", "id")
     expect(json_body.dig("data", "candidate_owner", "id")).to eq(candidate_owner.id)
+    expect(json_body.dig("data", "candidate_owner")).to include(
+      "name" => candidate_owner.name,
+      "email" => candidate_owner.email,
+      "role" => candidate_owner.role
+    )
     expect(json_body.dig("data", "review_status")).to eq("initial_review")
     expect(json_body.dig("data", "estimated_cost")).to eq(12_500_000.0)
+
+    created_entry = json_body.fetch("data")
+    get api_watchlist_path(watchlist), headers: auth_headers
+    expect(json_body.dig("data", "entries", 0)).to eq(created_entry)
 
     post transition_api_watchlist_entry_path(entry_id), params: { review_status: "analyst_review" }, headers: auth_headers
     expect(response).to have_http_status(:ok)

@@ -62,11 +62,7 @@ module Api
       report = OpponentReport.find(params[:id])
       return unless authorize!(report, :read?)
 
-      logs = AuditLog.includes(:user)
-        .where(auditable_type: "OpponentReport", auditable_id: report.id)
-        .order(created_at: :desc)
-        .limit(100)
-      render json: { data: logs.map { |log| AuditLogSerializer.call(log) } }
+      render json: { data: AuditHistoryQuery.call(auditable: report) }
     end
 
     private
@@ -106,7 +102,7 @@ module Api
     def serialize_summary(report)
       {
         id: report.id,
-        owner: serialize_user(report.owner),
+        owner: UserSummarySerializer.call(report.owner),
         title: report.title,
         season: report.season,
         series_starts_on: report.series_starts_on,
@@ -124,12 +120,6 @@ module Api
 
     def serialize_team(team)
       { id: team.id, mlb_id: team.mlb_id, name: team.name, abbreviation: team.abbreviation }
-    end
-
-    def serialize_user(user)
-      return nil unless user
-
-      { id: user.id, name: user.name, email: user.email, role: user.role }
     end
   end
 end

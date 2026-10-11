@@ -116,11 +116,7 @@ module Api
       scenario = LineupScenario.find(params[:id])
       return unless authorize!(scenario, :read?)
 
-      logs = AuditLog.includes(:user)
-        .where(auditable_type: "LineupScenario", auditable_id: scenario.id)
-        .order(created_at: :desc)
-        .limit(100)
-      render json: { data: logs.map { |log| AuditLogSerializer.call(log) } }
+      render json: { data: AuditHistoryQuery.call(auditable: scenario) }
     end
 
     private
@@ -211,7 +207,7 @@ module Api
     def serialize_scenario(scenario)
       {
         id: scenario.id,
-        owner: serialize_user(scenario.owner),
+        owner: UserSummarySerializer.call(scenario.owner),
         team_id: scenario.team_id,
         season: scenario.season,
         scenario_date: scenario.scenario_date,
@@ -238,12 +234,6 @@ module Api
           }
         end
       }
-    end
-
-    def serialize_user(user)
-      return nil unless user
-
-      { id: user.id, name: user.name, email: user.email, role: user.role }
     end
   end
 end

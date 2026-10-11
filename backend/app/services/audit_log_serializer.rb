@@ -8,12 +8,7 @@ class AuditLogSerializer
       changes: log.change_set,
       metadata: log.metadata,
       created_at: log.created_at,
-      user: log.user && {
-        id: log.user.id,
-        name: log.user.name,
-        email: log.user.email,
-        role: log.user.role
-      }
+      user: UserSummarySerializer.call(log.user)
     }
   end
 end

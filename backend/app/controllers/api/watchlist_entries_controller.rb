@@ -10,7 +10,7 @@ module Api
       attributes["candidate_owner_id"] ||= current_user.id
       entry = watchlist.entries.create!(attributes)
       AuditLog.record!(user: current_user, action: "created", record: entry, changes: entry.saved_changes)
-      render json: { data: serialize_entry(entry) }, status: :created
+      render json: { data: WatchlistEntrySerializer.call(entry) }, status: :created
     rescue ActiveRecord::RecordInvalid => error
       render json: { message: error.record.errors.full_messages.to_sentence }, status: :unprocessable_content
     end
@@ -21,7 +21,7 @@ module Api
       return if performed?
       entry.update!(entry_params)
       AuditLog.record!(user: current_user, action: "updated", record: entry, changes: entry.saved_changes)
-      render json: { data: serialize_entry(entry) }
+      render json: { data: WatchlistEntrySerializer.call(entry) }
     rescue ActiveRecord::RecordInvalid => error
       render json: { message: error.record.errors.full_messages.to_sentence }, status: :unprocessable_content
     end
@@ -35,7 +35,7 @@ module Api
       entry.update!(review_status: params.require(:review_status))
       AuditLog.record!(user: current_user, action: "review_status_changed", record: entry,
         changes: { "review_status" => [ before, entry.review_status ] })
-      render json: { data: serialize_entry(entry) }
+      render json: { data: WatchlistEntrySerializer.call(entry) }
     rescue ActionController::ParameterMissing, ActiveRecord::RecordInvalid => error
       message = error.respond_to?(:record) ? error.record.errors.full_messages.to_sentence : error.message
       render json: { message: message }, status: :unprocessable_content
@@ -43,10 +43,7 @@ module Api
 
     def audit_history
       entry = accessible_entries.find(params[:id])
-      logs = AuditLog.includes(:user)
-        .where(auditable_type: "WatchlistEntry", auditable_id: entry.id)
-        .order(created_at: :desc).limit(100)
-      render json: { data: logs.map { |log| serialize_audit_log(log) } }
+      render json: { data: AuditHistoryQuery.call(auditable: entry) }
     end
 
     def destroy
@@ -67,7 +64,7 @@ module Api
 
       entry.recalculate_fit!
       AuditLog.record!(user: current_user, action: "recalculated", record: entry, changes: entry.saved_changes)
-      render json: { data: serialize_entry(entry.reload) }
+      render json: { data: WatchlistEntrySerializer.call(entry.reload) }
     end
 
     def alternatives
@@ -94,55 +91,6 @@ module Api
 
     def accessible_entries
       current_user.admin? ? WatchlistEntry.all : WatchlistEntry.joins(:watchlist).where(watchlists: { owner_id: current_user.id })
-    end
-
-    def serialize_entry(entry)
-      {
-        id: entry.id,
-        priority: entry.priority,
-        status: entry.status,
-        recommendation: entry.recommendation,
-        fit_score: entry.fit_score,
-        calculated_fit_score: entry.calculated_fit_score&.to_f,
-        fit_breakdown: entry.fit_breakdown,
-        fit_calculated_at: entry.fit_calculated_at,
-        need_score: entry.need_score,
-        cost_score: entry.cost_score,
-        risk_score: entry.risk_score,
-        review_status: entry.review_status,
-        review_statuses: WatchlistEntry::REVIEW_STATUSES,
-        candidate_owner: serialize_user(entry.candidate_owner),
-        acquisition_rationale: entry.acquisition_rationale,
-        estimated_cost: entry.estimated_cost&.to_f,
-        availability: entry.availability,
-        concerns: entry.concerns,
-        tags: entry.tags,
-        notes: entry.notes,
-        updated_at: entry.updated_at,
-        player: {
-          id: entry.player.id,
-          mlb_id: entry.player.mlb_id,
-          full_name: entry.player.full_name,
-          headshot_url: entry.player.profile&.headshot_url,
-          team: entry.player.display_team && { id: entry.player.display_team.id, name: entry.player.display_team.name, abbreviation: entry.player.display_team.abbreviation }
-        }
-      }
-    end
-
-    def serialize_user(user)
-      return nil unless user
-
-      { id: user.id, name: user.name, email: user.email, role: user.role }
-    end
-
-    def serialize_audit_log(log)
-      {
-        id: log.id,
-        action: log.action,
-        changes: log.change_set,
-        created_at: log.created_at,
-        user: serialize_user(log.user)
-      }
     end
   end
 end
