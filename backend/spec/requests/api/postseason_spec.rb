@@ -1,6 +1,12 @@
 require "rails_helper"
 
 RSpec.describe "Api::Postseason", type: :request do
+  include ActiveSupport::Testing::TimeHelpers
+
+  around do |example|
+    travel_to(Time.zone.local(2026, 10, 5, 12), &example)
+  end
+
   it "returns playoff teams, results, upcoming games, and series rounds during an active postseason" do
     schedule = create_schedule(season: 2026)
     braves = create_team(name: "Atlanta Braves", abbreviation: "ATL")
