@@ -74,4 +74,35 @@ RSpec.describe "selective Statcast pitch synchronization" do
     expect(PitchDatum.where(game_id: game.id).pluck(:game_pk, :pitch_type)).to eq([[ game.mlb_id, "FF" ]])
     expect(MlbLivePitchDataDownloader).to have_received(:call).with(game: game)
   end
+
+  it "excludes cancelled games from estimates and replacement syncs" do
+    cancelled = game_for(date: Date.new(2026, 7, 4), mlb_id: 700_004)
+    canceled = game_for(date: Date.new(2026, 7, 4), mlb_id: 700_005)
+    cancelled.update!(status: "final", detailed_status: "Cancelled: Rain")
+    canceled.update!(status: "canceled", detailed_status: "Game Canceled")
+
+    estimate = PitchDataSyncTaskEstimate.call(
+      start_date: "2026-07-04",
+      end_date: "2026-07-04",
+      game_types: "R",
+      chunk_days: 1,
+      replace_existing: true
+    )
+
+    expect(estimate).to include(game_count: 0, already_complete_game_count: 0)
+    expect(PitchDataDownloader).not_to receive(:call)
+    expect(MlbLivePitchDataDownloader).not_to receive(:call)
+
+    result = PitchDataBatchSync.call(
+      start_date: "2026-07-04",
+      end_date: "2026-07-04",
+      game_types: "R",
+      chunk_days: 1,
+      replace_existing: true
+    )
+
+    expect(result).to include(success: true)
+    expect(result.dig(:data, :game_count)).to eq(0)
+    expect(result.dig(:data, :errors)).to be_empty
+  end
 end

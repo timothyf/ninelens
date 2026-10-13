@@ -76,6 +76,7 @@ class MlbLivePitchDataDownloader
       "source_end_date" => game.official_date.iso8601,
       "fetched_at_utc" => fetched_at,
       "game_date" => game.official_date.iso8601,
+      "game_year" => game.official_date.year,
       "game_pk" => game.mlb_id.to_s,
       "game_type" => game.game_type,
       "home_team" => game.home_team&.abbreviation,

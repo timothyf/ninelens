@@ -56,6 +56,7 @@ RSpec.describe MlbLivePitchDataDownloader do
     expect(result[:success]).to be(true)
     expect(row).to include(
       "game_pk" => "823443",
+      "game_year" => 2026,
       "at_bat_number" => 5,
       "pitch_number" => 1,
       "pitcher" => 9001,

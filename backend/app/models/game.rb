@@ -28,6 +28,10 @@ class Game < ApplicationRecord
       "Y"
     )
   }
+  scope :without_cancelled, -> {
+    where.not(status: %w[canceled cancelled])
+      .where("LOWER(COALESCE(games.detailed_status, '')) NOT LIKE ?", "%cancel%ed%")
+  }
   scope :for_team, ->(team) { where(home_team: team).or(where(away_team: team)) }
 
   private
