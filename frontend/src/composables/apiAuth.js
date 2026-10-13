@@ -1,8 +1,6 @@
-import { frontendConfig } from '../config'
-
 export const USER_TOKEN_STORAGE_KEY = 'ninelens_user_token'
 
-export function adminRequestHeaders(headers = {}) {
+export function authRequestHeaders(headers = {}) {
   let userToken = ''
   try {
     if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
@@ -11,15 +9,9 @@ export function adminRequestHeaders(headers = {}) {
   } catch {
     userToken = ''
   }
-  if (userToken) return { ...headers, Authorization: `Bearer ${userToken}` }
-  if (!frontendConfig.adminApiToken) return headers
-
-  return {
-    ...headers,
-    Authorization: `Bearer ${frontendConfig.adminApiToken}`,
-  }
+  return userToken ? { ...headers, Authorization: `Bearer ${userToken}` } : headers
 }
 
-export function authRequestHeaders(headers = {}) {
-  return adminRequestHeaders(headers)
+export function adminRequestHeaders(headers = {}) {
+  return authRequestHeaders(headers)
 }

@@ -84,11 +84,10 @@ Set `E2E_BASE_URL` to run the tests against already-running servers; that mode d
 `src/config.js` centralizes defaults. Vite environment variables can override:
 
 - `VITE_API_BASE_URL` and `VITE_DEV_API_TARGET`
-- `VITE_ADMIN_API_TOKEN`
 - polling, debounce, page-size, and search-limit settings
 - MLB, FanGraphs, Baseball Reference, and Baseball Savant URL bases used for outbound links and assets
 
-`VITE_ADMIN_API_TOKEN` must match the backend `ADMIN_API_TOKEN` when using admin imports or task controls with system-token authentication. Signed-in administrator sessions can also authorize those controls.
+Administrator controls use the signed-in administrator's session token. Never place the backend `ADMIN_API_TOKEN` in a `VITE_` variable or other frontend configuration because Vite embeds those values in downloadable browser assets.
 
 ## Project structure
 

@@ -215,7 +215,7 @@ Docker Compose runs PostgreSQL, the Rails API, and the built Vue frontend togeth
 docker compose up --build
 ```
 
-Open `http://localhost:8080`. The API is also available at `http://localhost:3000`, and the database data is kept in the `postgres_data` volume. Set `POSTGRES_PASSWORD`, `SECRET_KEY_BASE`, and `ADMIN_API_TOKEN` in the environment when using the stack beyond local development. Stop the stack with `docker compose down`; add `-v` only when you intentionally want to remove the database volume.
+Open `http://localhost:8080`. The API is also available at `http://localhost:3000`, and the database data is kept in the `postgres_data` volume. Set `POSTGRES_PASSWORD` and `SECRET_KEY_BASE` in the environment when using the stack beyond local development. Stop the stack with `docker compose down`; add `-v` only when you intentionally want to remove the database volume.
 
 The local Compose file is not intended to be exposed to the internet. For a single-server production deployment, use the hardened stack in `docker-compose.production.yml`. It places Caddy in front of the application for automatic HTTPS, publishes only ports 80 and 443, keeps Rails and PostgreSQL private, and runs the Solid Queue worker separately.
 
@@ -514,7 +514,7 @@ All Admin endpoints require an authenticated administrator or the configured sys
 
 ## Admin API Token
 
-Unsafe API requests are protected when `ADMIN_API_TOKEN` is set. In production, unsafe requests fail closed unless this token is configured.
+`ADMIN_API_TOKEN` optionally authorizes trusted server-to-server operational automation. Browser requests use signed-in user sessions, and production rejects unsafe requests that lack valid authorization.
 
 Accepted request headers:
 
@@ -523,11 +523,10 @@ Authorization: Bearer <token>
 X-Admin-Token: <token>
 ```
 
-Set the matching frontend value as `VITE_ADMIN_API_TOKEN` so Admin page imports, downloads, and tasks can authenticate:
+This token is for trusted server-to-server operational automation only. Browser Admin controls require a signed-in administrator session. Never expose this value through a `VITE_` environment variable or any other frontend build configuration because it would be embedded in downloadable JavaScript.
 
 ```bash
-ADMIN_API_TOKEN=your-local-token bin/rails server
-VITE_ADMIN_API_TOKEN=your-local-token npm run dev
+ADMIN_API_TOKEN=your-automation-token bin/rails server
 ```
 
 ## Tests

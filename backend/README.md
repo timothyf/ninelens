@@ -43,7 +43,7 @@ Operational defaults and external-service endpoints are in `config/ninelens.yml`
 
 Database credentials use standard Rails configuration. `DATABASE_URL` takes precedence when supplied; production also supports `BACKEND_DATABASE_PASSWORD` through `config/database.yml`.
 
-`ADMIN_API_TOKEN` protects unsafe operational API requests when configured. In production, unsafe requests fail closed unless the token is set. Send it as either `Authorization: Bearer <token>` or `X-Admin-Token: <token>`.
+`ADMIN_API_TOKEN` protects unsafe operational API requests when configured. In production, unsafe requests fail closed unless the token is set or a signed-in administrator authorizes the request. Send it as either `Authorization: Bearer <token>` or `X-Admin-Token: <token>` from trusted server-to-server automation only. Never expose it through a `VITE_` variable or other browser configuration.
 
 ## Common data workflows
 
