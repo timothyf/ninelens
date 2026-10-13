@@ -26,6 +26,17 @@ bin/jobs start
 
 Alternatively, set `SOLID_QUEUE_IN_PUMA=1` to run the worker in Puma.
 
+Before exposing a new production database to network traffic, bootstrap the first human administrator from a private deployment shell:
+
+```sh
+ADMIN_EMAIL=owner@example.com \
+ADMIN_NAME="Workspace Owner" \
+ADMIN_PASSWORD='use-a-secret-password' \
+bin/rails users:bootstrap_admin
+```
+
+The task is idempotent for the requested administrator and never changes an existing password. It refuses to create another administrator after a human account exists. Supply the values through the deployment platform's secret mechanism rather than source control or shared shell history.
+
 ## Configuration
 
 Operational defaults and external-service endpoints are in `config/ninelens.yml` and are available through `Rails.application.config.x.ninelens`. Every configured external URL, timeout, sync-worker limit, retry setting, and task estimate can be overridden with an environment variable.

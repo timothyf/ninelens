@@ -195,6 +195,18 @@ bin/jobs start
 
 Alternatively, set `SOLID_QUEUE_IN_PUMA=1` to run it with Puma.
 
+Before allowing traffic to a new production database, create the first human administrator from a private deployment shell:
+
+```bash
+cd backend
+ADMIN_EMAIL=owner@example.com \
+ADMIN_NAME="Workspace Owner" \
+ADMIN_PASSWORD='use-a-secret-password' \
+bin/rails users:bootstrap_admin
+```
+
+The task is safe to rerun: it leaves an existing administrator with that email unchanged, including their password. It refuses to create a different administrator after any human account exists. Do not place the password in source control or shared shell history; inject these values through the deployment platform's secret mechanism.
+
 ### Docker
 
 Docker Compose runs PostgreSQL, the Rails API, and the built Vue frontend together:
