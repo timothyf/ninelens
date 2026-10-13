@@ -124,31 +124,8 @@ class PlayerBenchmarkSnapshotQuery
     @benchmark_distributions ||= {}
     @benchmark_distributions[benchmark.id] ||= begin
       values = benchmark.player_metric_percentiles.pluck(:raw_value).filter_map { |value| number(value) }.sort
-      if values.empty?
-        { p05: nil, median: nil, mad: nil, p95: nil }
-      else
-        median = quantile(values, 0.5)
-        deviations = values.map { |value| (value - median).abs }.sort
-        {
-          p05: quantile(values, 0.05),
-          median: median,
-          mad: quantile(deviations, 0.5),
-          p95: quantile(values, 0.95),
-        }
-      end
+      Statistics.distribution(values)
     end
-  end
-
-  def quantile(values, probability)
-    return nil if values.empty?
-    return values.first if values.length == 1
-
-    position = probability * (values.length - 1)
-    lower = position.floor
-    upper = position.ceil
-    return values[lower] if lower == upper
-
-    values[lower] + (values[upper] - values[lower]) * (position - lower)
   end
 
   def empty_result

@@ -233,7 +233,7 @@ class MlbGameDetailsImporter
       starter: pitcher_ids.first == player.mlb_id,
       appearance_order: pitcher_ids.index(player.mlb_id)&.+(1),
       innings_pitched: innings,
-      outs_recorded: innings_to_outs(innings),
+      outs_recorded: BaseballInnings.to_outs(innings),
       batters_faced: integer_stat(stats, "battersFaced"),
       hits: integer_stat(stats, "hits"),
       runs: integer_stat(stats, "runs"),
@@ -376,13 +376,6 @@ class MlbGameDetailsImporter
 
   def decimal_stat(stats, key)
     BigDecimal(stats[key].to_s, exception: false)
-  end
-
-  def innings_to_outs(value)
-    return if value.blank?
-
-    whole, partial = value.to_s.split(".", 2)
-    (whole.to_i * 3) + partial.to_i
   end
 
   def parse_integer(value)

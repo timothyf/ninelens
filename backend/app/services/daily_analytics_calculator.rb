@@ -475,7 +475,7 @@ class DailyAnalyticsCalculator
 
   def official_pitching_totals(stats, fallback)
     {
-      outs_recorded: innings_to_outs(stats["inningsPitched"]) || fallback.fetch(:outs_recorded),
+      outs_recorded: BaseballInnings.to_outs(stats["inningsPitched"]) || fallback.fetch(:outs_recorded),
       batters_faced: integer_or_fallback(stats["battersFaced"], fallback.fetch(:batters_faced)),
       hits: integer_or_fallback(stats["hits"], fallback.fetch(:hits)),
       earned_runs: integer_or_fallback(stats["earnedRuns"], fallback.fetch(:earned_runs)),
@@ -484,13 +484,6 @@ class DailyAnalyticsCalculator
       saves: integer_or_fallback(stats["saves"], fallback.fetch(:saves)),
       quality_starts: fallback.fetch(:quality_starts)
     }
-  end
-
-  def innings_to_outs(value)
-    match = /\A(\d+)\.(\d)\z/.match(value.to_s)
-    return if match.nil?
-
-    (match[1].to_i * 3) + match[2].to_i.clamp(0, 2)
   end
 
   def integer_or_fallback(value, fallback)

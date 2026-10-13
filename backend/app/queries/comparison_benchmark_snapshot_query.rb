@@ -63,7 +63,7 @@ class ComparisonBenchmarkSnapshotQuery
       end
       next if values.length < 5
 
-      benchmarks[key] = distribution(values).merge(
+      benchmarks[key] = Statistics.distribution(values).merge(
         directionality: LOWER_IS_BETTER.fetch(category, []).include?(key) ? "lower_better" : "higher_better",
         player_count: values.length,
         season: season,
@@ -157,26 +157,5 @@ class ComparisonBenchmarkSnapshotQuery
     return if strikeout_rate.zero? && walk_rate.zero?
 
     strikeout_rate - walk_rate
-  end
-
-  def distribution(values)
-    sorted = values.sort
-    median = quantile(sorted, 0.5)
-    deviations = sorted.map { |value| (value - median).abs }.sort
-    {
-      p05: quantile(sorted, 0.05),
-      median: median,
-      mad: quantile(deviations, 0.5),
-      p95: quantile(sorted, 0.95)
-    }
-  end
-
-  def quantile(values, probability)
-    position = probability * (values.length - 1)
-    lower = position.floor
-    upper = position.ceil
-    return values[lower] if lower == upper
-
-    values[lower] + (values[upper] - values[lower]) * (position - lower)
   end
 end

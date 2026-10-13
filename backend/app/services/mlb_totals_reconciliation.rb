@@ -184,31 +184,21 @@ class MlbTotalsReconciliation
     matching = matching.select { |row| row.scope_type == "combined" } if prefer_combined && matching.any? { |row| row.scope_type == "combined" }
     return 0 if matching.empty?
 
-    return matching.sum { |row| innings_to_outs(row.value) } if definition[:innings]
+    return matching.sum { |row| BaseballInnings.to_outs(row.value) } if definition[:innings]
 
     matching.sum { |row| row.value.to_d }
   end
 
   def equal_stat_values?(local_value, official_value, definition)
-    return local_value == innings_to_outs(official_value) if definition[:innings]
+    return local_value == BaseballInnings.to_outs(official_value) if definition[:innings]
 
     local_value.to_d == official_value.to_d
   end
 
   def display_value(value, definition)
-    return outs_to_innings(value) if definition[:innings]
+    return BaseballInnings.format(value) if definition[:innings]
 
     value.to_d.to_s("F")
-  end
-
-  def innings_to_outs(value)
-    innings = value.to_d
-    whole = innings.floor
-    (whole * 3) + ((innings - whole) * 10).round
-  end
-
-  def outs_to_innings(outs)
-    "#{outs / 3}.#{outs % 3}"
   end
 
   def local_record(team)

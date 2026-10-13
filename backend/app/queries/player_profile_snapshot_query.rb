@@ -367,7 +367,7 @@ class PlayerProfileSnapshotQuery
       pitching_values_from_game_lines(lines).merge(
         W: lines.count { |line| postseason_pitching_decision?(line, "W") },
         L: lines.count { |line| postseason_pitching_decision?(line, "L") },
-        inningsPitched: format_innings(lines.sum { |line| line.outs_recorded.to_i })
+        inningsPitched: BaseballInnings.format(lines.sum { |line| line.outs_recorded.to_i })
       )
     end
 
@@ -577,12 +577,12 @@ class PlayerProfileSnapshotQuery
         assists = rows.filter_map(&:assists).sum
         fielding_errors = rows.filter_map(&:fielding_errors).sum
         chances = putouts + assists + fielding_errors
-        innings_outs = rows.filter_map(&:innings).sum { |innings| innings_to_outs(innings) }
+        innings_outs = rows.filter_map(&:innings).sum { |innings| BaseballInnings.to_outs(innings) }
 
         {
           position: position,
           games: rows.filter_map(&:games).sum,
-          innings: innings_outs.positive? ? format_innings(innings_outs) : nil,
+          innings: innings_outs.positive? ? BaseballInnings.format(innings_outs) : nil,
           fielding_percentage: numeric_advanced_value(
             chances.positive? ? (putouts + assists).to_d / chances : rows.filter_map(&:fielding_percentage).first
           ),
@@ -697,8 +697,8 @@ class PlayerProfileSnapshotQuery
     season_innings = season_additive_value(season_rows, %w[inningsPitched IP])
     innings_share = if team_innings && season_innings
       safe_divide(
-        innings_as_decimal(innings_to_outs(team_innings)),
-        innings_as_decimal(innings_to_outs(season_innings))
+        innings_as_decimal(BaseballInnings.to_outs(team_innings)),
+        innings_as_decimal(BaseballInnings.to_outs(season_innings))
       )
     end
     fip = team_fip(team_rows, season_rows)
@@ -721,7 +721,7 @@ class PlayerProfileSnapshotQuery
   end
 
   def team_fip(team_rows, season_rows)
-    innings = innings_as_decimal(innings_to_outs(season_additive_value(team_rows, %w[inningsPitched IP])))
+    innings = innings_as_decimal(BaseballInnings.to_outs(season_additive_value(team_rows, %w[inningsPitched IP])))
     return if innings.nil? || innings.zero?
 
     home_runs = season_additive_value(team_rows, %w[homeRuns HR])
@@ -730,7 +730,7 @@ class PlayerProfileSnapshotQuery
     strikeouts = season_additive_value(team_rows, %w[strikeOuts SO])
     return if [ home_runs, walks, strikeouts ].any?(&:nil?)
 
-    total_innings = innings_as_decimal(innings_to_outs(season_additive_value(season_rows, %w[inningsPitched IP])))
+    total_innings = innings_as_decimal(BaseballInnings.to_outs(season_additive_value(season_rows, %w[inningsPitched IP])))
     total_home_runs = season_additive_value(season_rows, %w[homeRuns HR])
     total_walks = season_additive_value(season_rows, %w[baseOnBalls BB])
     total_hit_batters = season_additive_value(season_rows, %w[hitByPitch hitBatsmen HBP]) || 0
@@ -916,7 +916,7 @@ class PlayerProfileSnapshotQuery
   def pitching_formula_totals(rows)
     innings = rows.filter_map do |row|
       value = row.stat_type.name.in?(%w[inningsPitched IP]) ? row.value : nil
-      innings_to_outs(value) if value
+      BaseballInnings.to_outs(value) if value
     end.sum
     return if innings.zero?
 
@@ -997,7 +997,7 @@ class PlayerProfileSnapshotQuery
       name = aliases.find { |alias_name| totals.key?(alias_name) }
       name ? totals[name] : 0.0
     end
-    innings = stat_rows.filter_map { |name, value| innings_to_outs(value) if name.in?(%w[inningsPitched IP]) }.sum
+    innings = stat_rows.filter_map { |name, value| BaseballInnings.to_outs(value) if name.in?(%w[inningsPitched IP]) }.sum
     {
       innings: innings.zero? ? nil : innings_as_decimal(innings),
       earned_runs: pick_total.call(%w[earnedRuns ER]),
@@ -1058,7 +1058,7 @@ class PlayerProfileSnapshotQuery
   def advanced_pitching_innings(rows)
     outs = rows.group_by(&:season).values.filter_map do |season_rows|
       innings = season_additive_value(season_rows, %w[inningsPitched IP])
-      innings_to_outs(innings) if innings
+      BaseballInnings.to_outs(innings) if innings
     end.sum
     return if outs.zero?
 
@@ -1115,7 +1115,7 @@ class PlayerProfileSnapshotQuery
       weight ||= derived_plate_appearances(season_rows, career: false) if (weight_aliases & %w[plateAppearances PA]).any?
       next if value.nil? || weight.nil? || !weight.positive?
 
-      normalized_weight = innings_weight ? innings_as_decimal(innings_to_outs(weight)) : weight
+      normalized_weight = innings_weight ? innings_as_decimal(BaseballInnings.to_outs(weight)) : weight
       [ value, normalized_weight ]
     end
     return if weighted_values.empty?
@@ -1186,7 +1186,7 @@ class PlayerProfileSnapshotQuery
 
     if category == "pitching" && key == "inningsPitched"
       innings = season_additive_value(rows, aliases)
-      return innings.nil? ? nil : format_innings(innings_to_outs(innings))
+      return innings.nil? ? nil : BaseballInnings.format(BaseballInnings.to_outs(innings))
     end
     return season_batting_average(rows) if category == "batting" && key == "avg"
     return season_batting_obp(rows) if category == "batting" && key == "obp"
@@ -1240,7 +1240,7 @@ class PlayerProfileSnapshotQuery
   def season_pitching_era(rows)
     earned_runs = season_additive_value(rows, %w[ER earnedRuns])
     innings_value = season_additive_value(rows, %w[inningsPitched IP])
-    innings = innings_as_decimal(innings_to_outs(innings_value)) if innings_value.present?
+    innings = innings_as_decimal(BaseballInnings.to_outs(innings_value)) if innings_value.present?
     return season_weighted_rate(rows, %w[ERA era], %w[inningsPitched IP], innings_weight: true) if earned_runs.nil?
 
     divide(earned_runs * 9, innings)
@@ -1250,7 +1250,7 @@ class PlayerProfileSnapshotQuery
     hits = season_additive_value(rows, %w[hits H])
     walks = season_additive_value(rows, %w[baseOnBalls BB])
     innings_value = season_additive_value(rows, %w[inningsPitched IP])
-    innings = innings_as_decimal(innings_to_outs(innings_value)) if innings_value.present?
+    innings = innings_as_decimal(BaseballInnings.to_outs(innings_value)) if innings_value.present?
     if hits.nil? || walks.nil?
       return season_weighted_rate(rows, %w[whip WHIP], %w[inningsPitched IP], innings_weight: true)
     end
@@ -1280,7 +1280,7 @@ class PlayerProfileSnapshotQuery
       weight = season_additive_value(matching_rows, weight_aliases)
       next if weight.nil?
 
-      numeric_weight = innings_weight ? innings_as_decimal(innings_to_outs(weight)) : weight
+      numeric_weight = innings_weight ? innings_as_decimal(BaseballInnings.to_outs(weight)) : weight
       next unless numeric_weight&.positive?
 
       [ rate_row.value, numeric_weight ]
@@ -1331,7 +1331,7 @@ class PlayerProfileSnapshotQuery
     key = definition.fetch(:key)
     aliases = Array(definition.fetch(:aliases))
 
-    return format_innings(career_innings_outs) if category == "pitching" && key == "inningsPitched"
+    return BaseballInnings.format(career_innings_outs) if category == "pitching" && key == "inningsPitched"
     return batting_average if category == "batting" && key == "avg"
     return batting_obp if category == "batting" && key == "obp"
     return batting_slugging if category == "batting" && key == "slg"
@@ -1437,7 +1437,7 @@ class PlayerProfileSnapshotQuery
       weight = season_additive_value(rows, weight_aliases)
       next if rate_row.nil? || weight.nil?
 
-      numeric_weight = innings_weight ? innings_as_decimal(innings_to_outs(weight)) : weight
+      numeric_weight = innings_weight ? innings_as_decimal(BaseballInnings.to_outs(weight)) : weight
       next unless numeric_weight&.positive?
 
       [ rate_row.value, numeric_weight ]
@@ -1455,27 +1455,13 @@ class PlayerProfileSnapshotQuery
     end
     return if values.empty?
 
-    values.sum { |value| innings_to_outs(value) }
-  end
-
-  def innings_to_outs(value)
-    return if value.nil?
-
-    whole_innings = value.floor
-    partial_outs = ((value - whole_innings) * 10).round.to_i.clamp(0, 2)
-    (whole_innings * 3) + partial_outs
+    values.sum { |value| BaseballInnings.to_outs(value) }
   end
 
   def innings_as_decimal(outs)
     return if outs.nil? || outs.zero?
 
     outs.to_d / 3
-  end
-
-  def format_innings(outs)
-    return if outs.nil?
-
-    "#{outs / 3}.#{outs % 3}"
   end
 
   def divide(numerator, denominator)
