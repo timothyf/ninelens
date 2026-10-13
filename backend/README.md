@@ -47,6 +47,8 @@ Database credentials use standard Rails configuration. `DATABASE_URL` takes prec
 
 Login attempts are limited to 10 per normalized account and 30 per client IP in each 15-minute window. Registration attempts are limited to 3 per normalized account and 5 per client IP per hour. Counters are stored in PostgreSQL so limits apply across web processes and restarts; raw emails and IP addresses are not stored in the rate-limit table.
 
+Signed-in users receive independently revocable, database-backed bearer sessions that expire after 12 hours by default. Set `USER_SESSION_TTL_HOURS` to a positive number to change the lifetime. Logging out revokes only the presented session; disabling an account or resetting its access revokes every active session. Deploying the session-table migration invalidates legacy non-expiring tokens, so existing users must sign in again.
+
 ## Common data workflows
 
 Most imports and synchronization jobs can be launched from the Admin page, which persists progress in Solid Queue task runs. The same operations are available from the command line:

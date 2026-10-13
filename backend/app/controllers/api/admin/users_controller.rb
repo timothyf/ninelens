@@ -34,7 +34,7 @@ module Api
           user: current_user,
           action: "user_created",
           record: user,
-          changes: user.saved_changes.except("auth_token_digest", "password_digest", "password_salt"),
+          changes: user.saved_changes.except("password_digest", "password_salt"),
           metadata: { "request_id" => request.request_id }
         )
 
@@ -69,15 +69,16 @@ module Api
         changes[:role] = requested_role if requested_role
         changes[:disabled_at] = requested_disabled ? Time.current : nil unless requested_disabled.nil?
 
-        @user.assign_attributes(changes)
-        @user.auth_token_digest = nil if requested_disabled
-        @user.save!
+        @user.transaction do
+          @user.update!(changes)
+          @user.revoke_all_sessions! if requested_disabled
+        end
 
         AuditLog.record!(
           user: current_user,
           action: "user_access_updated",
           record: @user,
-          changes: @user.saved_changes.except("auth_token_digest", "password_digest", "password_salt"),
+          changes: @user.saved_changes.except("password_digest", "password_salt"),
           metadata: { "request_id" => request.request_id }
         )
 
@@ -94,9 +95,10 @@ module Api
         end
 
         temporary_password = SecureRandom.urlsafe_base64(15)
-        @user.password = temporary_password
-        @user.auth_token_digest = nil
-        @user.save!
+        @user.transaction do
+          @user.update!(password: temporary_password)
+          @user.revoke_all_sessions!
+        end
 
         AuditLog.record!(
           user: current_user,

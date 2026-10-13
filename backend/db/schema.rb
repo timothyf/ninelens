@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_13_000000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_13_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -1241,13 +1241,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_13_000000) do
     t.index ["occurred_on"], name: "index_trades_on_occurred_on"
   end
 
+  create_table "user_sessions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "token_digest", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "last_used_at"
+    t.datetime "revoked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["revoked_at"], name: "index_user_sessions_on_revoked_at"
+    t.index ["token_digest"], name: "index_user_sessions_on_token_digest", unique: true
+    t.index ["user_id", "expires_at"], name: "index_user_sessions_on_user_id_and_expires_at"
+    t.index ["user_id"], name: "index_user_sessions_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", null: false
     t.string "name", null: false
     t.string "role", default: "viewer", null: false
     t.string "password_salt"
     t.string "password_digest"
-    t.string "auth_token_digest"
     t.datetime "last_signed_in_at"
     t.datetime "disabled_at"
     t.boolean "system_account", default: false, null: false
@@ -1257,7 +1270,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_13_000000) do
     t.integer "alert_digest_day"
     t.integer "alert_digest_hour", default: 8, null: false
     t.index "lower((email)::text)", name: "idx_users_lower_email", unique: true
-    t.index ["auth_token_digest"], name: "index_users_on_auth_token_digest", unique: true
     t.check_constraint "alert_digest_day IS NULL OR alert_digest_day >= 0 AND alert_digest_day <= 6", name: "users_valid_alert_digest_day"
     t.check_constraint "alert_digest_frequency::text = ANY (ARRAY['off'::character varying, 'daily'::character varying, 'weekly'::character varying]::text[])", name: "users_valid_alert_digest_frequency"
     t.check_constraint "alert_digest_hour >= 0 AND alert_digest_hour <= 23", name: "users_valid_alert_digest_hour"
@@ -1408,6 +1420,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_13_000000) do
   add_foreign_key "trade_participants", "teams", column: "from_team_id"
   add_foreign_key "trade_participants", "teams", column: "to_team_id"
   add_foreign_key "trade_participants", "trades"
+  add_foreign_key "user_sessions", "users"
   add_foreign_key "watchlist_entries", "players"
   add_foreign_key "watchlist_entries", "users", column: "candidate_owner_id"
   add_foreign_key "watchlist_entries", "watchlists"

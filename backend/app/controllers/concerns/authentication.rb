@@ -11,6 +11,10 @@ module Authentication
     Current.user
   end
 
+  def current_session
+    Current.session
+  end
+
   def require_authenticated_user
     return if current_user.present?
 
@@ -39,10 +43,14 @@ module Authentication
     Current.request_id = request.request_id
     token = request.authorization.to_s[/\ABearer\s+(.+)\z/i, 1].presence
     if token.present?
-      user = User.active.find_by(auth_token_digest: Digest::SHA256.hexdigest(token))
-      user ||= system_account_user if admin_token_authenticated?
-      Current.user = user
-      user&.touch(:last_signed_in_at)
+      session = UserSession.authenticate(token)
+      if session&.user&.active_for_sign_in?
+        Current.session = session
+        Current.user = session.user
+        session.mark_used!
+      elsif admin_token_authenticated?
+        Current.user = system_account_user
+      end
     elsif admin_token_authenticated?
       Current.user = system_account_user
     end

@@ -42,7 +42,7 @@ module Api
     end
 
     def logout
-      current_user&.revoke_auth_token!
+      current_session&.revoke!
       head :no_content
     end
 
@@ -74,9 +74,18 @@ module Api
     end
 
     def issue_session(user)
-      token = user.issue_auth_token!
-      AuditLog.record!(user: user, action: "signed_in", record: user, metadata: { "request_id" => request.request_id })
-      serialize_user(user).merge(token: token)
+      issued_session = user.issue_session!
+      user.touch(:last_signed_in_at)
+      AuditLog.record!(
+        user: user,
+        action: "signed_in",
+        record: user,
+        metadata: { "request_id" => request.request_id, "session_id" => issued_session.session.id }
+      )
+      serialize_user(user).merge(
+        token: issued_session.token,
+        expires_at: issued_session.session.expires_at
+      )
     end
 
     def serialize_user(user)

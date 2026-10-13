@@ -29,7 +29,7 @@ RSpec.describe "Api::Admin::Users", type: :request do
     temporary_password = json_body.dig("data", "temporary_password")
     expect(created).to have_attributes(name: "New Analyst", role: "analyst")
     expect(created.authenticate_password(temporary_password)).to be(true)
-    expect(administrator.reload.auth_token_digest).to be_present
+    expect(administrator.user_sessions.active).to exist
 
     audit = AuditLog.order(:id).last
     expect(audit).to have_attributes(user_id: administrator.id, action: "user_created",
@@ -69,7 +69,7 @@ RSpec.describe "Api::Admin::Users", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(target.reload.disabled_at).to be_present
-    expect(target.auth_token_digest).to be_nil
+    expect(target.user_sessions.active).not_to exist
 
     get api_auth_me_path, headers: target_headers
     expect(response).to have_http_status(:unauthorized)

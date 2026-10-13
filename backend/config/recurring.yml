@@ -16,3 +16,6 @@ production:
   clear_expired_authentication_rate_limits:
     command: "AuthenticationRateLimit.expired.delete_all"
     schedule: every day at 4:25am
+  clear_stale_user_sessions:
+    command: "UserSession.stale.delete_all"
+    schedule: every day at 4:35am

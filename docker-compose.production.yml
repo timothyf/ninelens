@@ -12,6 +12,7 @@ x-backend-environment: &backend-environment
   RAILS_LOG_TO_STDOUT: "true"
   RAILS_LOG_LEVEL: ${RAILS_LOG_LEVEL:-info}
   RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
+  USER_SESSION_TTL_HOURS: ${USER_SESSION_TTL_HOURS:-12}
 
 x-logging: &default-logging
   driver: json-file

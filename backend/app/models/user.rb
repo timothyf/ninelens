@@ -14,6 +14,7 @@ class User < ApplicationRecord
   has_many :alert_subscriptions, dependent: :destroy
   has_many :alerts, dependent: :destroy
   has_many :assigned_alerts, class_name: "Alert", foreign_key: :assigned_to_id, dependent: :nullify
+  has_many :user_sessions, dependent: :destroy
 
   validates :email, presence: true, uniqueness: { case_sensitive: false }, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :name, presence: true
@@ -43,14 +44,16 @@ class User < ApplicationRecord
     )
   end
 
-  def issue_auth_token!
-    raw_token = SecureRandom.urlsafe_base64(48)
-    update!(auth_token_digest: Digest::SHA256.hexdigest(raw_token))
-    raw_token
+  def issue_session!
+    UserSession.issue_for!(user: self)
   end
 
-  def revoke_auth_token!
-    update!(auth_token_digest: nil)
+  def issue_auth_token!
+    issue_session!.token
+  end
+
+  def revoke_all_sessions!
+    user_sessions.active.update_all(revoked_at: Time.current, updated_at: Time.current)
   end
 
   def admin?

@@ -1,3 +1,3 @@
 class Current < ActiveSupport::CurrentAttributes
-  attribute :user, :request_id
+  attribute :user, :session, :request_id
 end
