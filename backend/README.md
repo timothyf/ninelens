@@ -45,6 +45,8 @@ Database credentials use standard Rails configuration. `DATABASE_URL` takes prec
 
 `ADMIN_API_TOKEN` protects unsafe operational API requests when configured. In production, unsafe requests fail closed unless the token is set or a signed-in administrator authorizes the request. Send it as either `Authorization: Bearer <token>` or `X-Admin-Token: <token>` from trusted server-to-server automation only. Never expose it through a `VITE_` variable or other browser configuration.
 
+Login attempts are limited to 10 per normalized account and 30 per client IP in each 15-minute window. Registration attempts are limited to 3 per normalized account and 5 per client IP per hour. Counters are stored in PostgreSQL so limits apply across web processes and restarts; raw emails and IP addresses are not stored in the rate-limit table.
+
 ## Common data workflows
 
 Most imports and synchronization jobs can be launched from the Admin page, which persists progress in Solid Queue task runs. The same operations are available from the command line:

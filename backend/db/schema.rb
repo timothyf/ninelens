@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_13_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -107,6 +107,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_09_010000) do
     t.index ["auditable_type", "auditable_id", "created_at"], name: "idx_audit_logs_auditable_history"
     t.index ["user_id", "created_at"], name: "idx_audit_logs_user_history"
     t.index ["user_id"], name: "index_audit_logs_on_user_id"
+  end
+
+  create_table "authentication_rate_limits", force: :cascade do |t|
+    t.string "action", null: false
+    t.string "identifier_digest", null: false
+    t.datetime "window_started_at", null: false
+    t.integer "attempt_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action", "identifier_digest"], name: "idx_auth_rate_limits_action_identifier", unique: true
+    t.index ["window_started_at"], name: "index_authentication_rate_limits_on_window_started_at"
+    t.check_constraint "attempt_count >= 0", name: "authentication_rate_limits_nonnegative_attempts"
   end
 
   create_table "batter_split_summaries", force: :cascade do |t|

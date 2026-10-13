@@ -107,6 +107,7 @@ The current application version is recorded in [`VERSION`](VERSION). See [`CHANG
 ### Accounts and Access
 
 - Account registration, sign-in, sign-out, bearer-token sessions, and current-user lookup.
+- PostgreSQL-backed login and registration throttling by both client IP and normalized account, with privacy-preserving identifier digests.
 - Roles include administrator, analyst, coach, scout, and viewer. Legacy `admin` and `editor` values remain supported for compatibility.
 - Watchlists require a signed-in user. Admin pages and Admin APIs require an administrator role.
 - The frontend hides Watchlists for signed-out users and Admin for signed-out or non-administrator users; backend authorization remains authoritative.

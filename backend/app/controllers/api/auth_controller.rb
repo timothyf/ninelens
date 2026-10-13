@@ -3,6 +3,8 @@ module Api
     skip_before_action :authenticate_unsafe_api_request
 
     def register
+      return if authentication_throttled?(:registration)
+
       if User.where(system_account: false).exists? && !current_user&.admin?
         return render json: { message: "Only an administrator can create additional users" }, status: :forbidden
       end
@@ -22,9 +24,13 @@ module Api
     end
 
     def login
-      user = User.active.find_by(email: params[:email].to_s.strip.downcase)
+      email = normalized_email
+      return if authentication_throttled?(:login, email:)
+
+      user = User.active.find_by(email: email)
       return render json: { message: "Invalid email or password" }, status: :unauthorized unless user&.authenticate_password(params[:password])
 
+      AuthenticationRateLimiter.reset(action: :login_account, identifier: email)
       render json: { data: issue_session(user) }
     end
 
@@ -48,6 +54,23 @@ module Api
 
     def first_human_user?
       !User.where(system_account: false).exists?
+    end
+
+    def authentication_throttled?(operation, email: normalized_email)
+      results = [
+        AuthenticationRateLimiter.consume(action: "#{operation}_ip", identifier: request.remote_ip),
+        AuthenticationRateLimiter.consume(action: "#{operation}_account", identifier: email)
+      ]
+      blocked_results = results.reject(&:allowed)
+      return false if blocked_results.empty?
+
+      response.set_header("Retry-After", blocked_results.map(&:retry_after).max.to_s)
+      render json: { message: "Too many authentication attempts. Try again later." }, status: :too_many_requests
+      true
+    end
+
+    def normalized_email
+      params[:email].to_s.strip.downcase
     end
 
     def issue_session(user)
