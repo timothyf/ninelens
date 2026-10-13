@@ -1,0 +1,147 @@
+x-backend-environment: &backend-environment
+  RAILS_ENV: production
+  POSTGRES_HOST: db
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ninelens_production
+  POSTGRES_USER: ninelens
+  BACKEND_DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the production environment file}
+  SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE in the production environment file}
+  FORCE_SSL: "true"
+  ASSUME_SSL: "true"
+  RAILS_HOSTS: ${APP_DOMAIN:?Set APP_DOMAIN in the production environment file}
+  RAILS_LOG_TO_STDOUT: "true"
+  RAILS_LOG_LEVEL: ${RAILS_LOG_LEVEL:-info}
+  RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-backend-service: &backend-service
+  build:
+    context: ./backend
+  image: ninelens-backend:${NINELENS_IMAGE_TAG:-latest}
+  environment: *backend-environment
+  restart: unless-stopped
+  init: true
+  security_opt:
+    - no-new-privileges:true
+  volumes:
+    - backend_storage:/rails/storage
+  networks:
+    - web
+    - data
+  logging: *default-logging
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ninelens_production
+      POSTGRES_USER: ninelens
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the production environment file}
+    restart: unless-stopped
+    stop_grace_period: 1m
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ninelens -d ninelens_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    logging: *default-logging
+
+  migrate:
+    <<: *backend-service
+    restart: "no"
+    command: ["./bin/rails", "db:prepare"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    <<: *backend-service
+    command: ["./bin/rails", "server"]
+    environment:
+      <<: *backend-environment
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:3000/up || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    <<: *backend-service
+    command: ["./bin/jobs", "start"]
+    environment:
+      <<: *backend-environment
+      JOB_CONCURRENCY: ${JOB_CONCURRENCY:-1}
+      JOB_THREADS: ${JOB_THREADS:-3}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: ./frontend
+    image: ninelens-frontend:${NINELENS_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - web
+    depends_on:
+      backend:
+        condition: service_healthy
+    logging: *default-logging
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN in the production environment file}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL in the production environment file}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    logging: *default-logging
+
+volumes:
+  postgres_data:
+  backend_storage:
+  caddy_data:
+  caddy_config:
+
+networks:
+  web:
+  data:
+    internal: true

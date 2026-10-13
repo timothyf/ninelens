@@ -217,6 +217,27 @@ docker compose up --build
 
 Open `http://localhost:8080`. The API is also available at `http://localhost:3000`, and the database data is kept in the `postgres_data` volume. Set `POSTGRES_PASSWORD`, `SECRET_KEY_BASE`, and `ADMIN_API_TOKEN` in the environment when using the stack beyond local development. Stop the stack with `docker compose down`; add `-v` only when you intentionally want to remove the database volume.
 
+The local Compose file is not intended to be exposed to the internet. For a single-server production deployment, use the hardened stack in `docker-compose.production.yml`. It places Caddy in front of the application for automatic HTTPS, publishes only ports 80 and 443, keeps Rails and PostgreSQL private, and runs the Solid Queue worker separately.
+
+```bash
+cp deploy/production.env.example deploy/production.env
+# Replace every example value, point APP_DOMAIN at this server, and allow inbound TCP 80/443 and UDP 443.
+docker compose --env-file deploy/production.env -f docker-compose.production.yml config --quiet
+docker compose --env-file deploy/production.env -f docker-compose.production.yml up -d --build
+```
+
+Before directing public traffic to a fresh deployment, bootstrap the administrator through the running backend container:
+
+```bash
+docker compose --env-file deploy/production.env -f docker-compose.production.yml exec \
+  -e ADMIN_EMAIL=owner@example.com \
+  -e ADMIN_NAME="Workspace Owner" \
+  -e ADMIN_PASSWORD='use-a-secret-password' \
+  backend bin/rails users:bootstrap_admin
+```
+
+DNS must resolve `APP_DOMAIN` to the server before Caddy can obtain its certificate. Back up the `postgres_data`, `backend_storage`, and `caddy_data` volumes off-machine; do not rely on Docker volumes as the only copy of production data. For managed PostgreSQL or a multi-server deployment, adapt the database connection and persistent storage rather than using this single-host topology.
+
 ### Frontend
 
 In a second terminal:

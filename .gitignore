@@ -11,7 +11,10 @@
 /tmp/
 
 # Used by dotenv library to load environment variables.
-# .env
+.env
+.env.*
+!/deploy/production.env.example
+/deploy/production.env
 
 # Ignore Byebug command history file.
 .byebug_history
