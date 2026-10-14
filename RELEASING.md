@@ -51,7 +51,7 @@ After publishing, create the source-code release from the tag and copy the corre
 
 Complete these items when production deployment is introduced in a future release:
 
-- Verify the deployed `/up` health endpoint.
+- Verify the deployed `/up` readiness endpoint reports both application and database checks as `ok`.
 - Verify login, public dashboards, saved analyses, watchlists, and administrator access.
 - Verify at least one background task completes successfully.
 - Record the deployed release version in the hosting/deployment metadata, if the host supports it.

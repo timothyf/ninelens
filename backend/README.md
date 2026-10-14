@@ -53,6 +53,8 @@ Signed-in users receive independently revocable, database-backed bearer sessions
 
 Passwords are stored with PBKDF2-HMAC-SHA256 using a per-account salt and a 600,000-iteration work factor. The work factor is stored with each account so legacy 120,000-iteration hashes remain valid and are transparently rehashed after the next successful sign-in.
 
+`GET /up` is the unauthenticated readiness endpoint used by the production container healthcheck. It returns `200` only when the Rails process can execute a lightweight PostgreSQL query. A database connection or query failure returns `503` with a minimal JSON response; connection details are never included and responses are not cached.
+
 ## Common data workflows
 
 Most imports and synchronization jobs can be launched from the Admin page, which persists progress in Solid Queue task runs. The same operations are available from the command line:
