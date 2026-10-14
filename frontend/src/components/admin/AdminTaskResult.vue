@@ -24,7 +24,7 @@ const resultEntries = computed(() => {
 </script>
 
 <template>
-  <div v-if="error" class="admin-result admin-result--error" role="alert">
+  <div v-if="error" class="admin-result admin-result--error" role="alert" data-test="task-result">
     <strong>Task could not be completed</strong>
     <p>{{ error }}</p>
   </div>

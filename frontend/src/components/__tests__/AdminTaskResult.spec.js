@@ -12,6 +12,7 @@ describe('AdminTaskResult', () => {
       },
     })
 
+    expect(wrapper.get('[data-test="task-result"]').attributes('role')).toBe('alert')
     expect(wrapper.get('[role="alert"]').text()).toContain('Task could not be completed')
     expect(wrapper.text()).toContain('The synchronization failed.')
     expect(wrapper.text()).not.toContain('Older success')

@@ -141,7 +141,8 @@ test.describe('Admin task lifecycle', () => {
 
     await signIn(page)
 
-    const failure = page.getByRole('alert')
+    const failure = page.getByTestId('task-result')
+    await expect(failure).toHaveAttribute('role', 'alert')
     await expect(failure).toContainText('Task could not be completed')
     await expect(failure).toContainText('E2E task failure: position source is unavailable')
   })
