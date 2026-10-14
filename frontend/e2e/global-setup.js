@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 
 const backendDirectory = fileURLToPath(new URL('../../backend', import.meta.url))
 const e2ePassword = 'playwright-password-123'
-const rubyBinPath = '/Users/timothyfisher/.rvm/gems/ruby-3.2.3/bin:/Users/timothyfisher/.rvm/gems/ruby-3.2.3@global/bin:/Users/timothyfisher/.rvm/rubies/ruby-3.2.3/bin'
+const rubyBinPath = '/Users/timothyfisher/.rvm/gems/ruby-3.4.11/bin:/Users/timothyfisher/.rvm/gems/ruby-3.4.11@global/bin:/Users/timothyfisher/.rvm/rubies/ruby-3.4.11/bin'
 const seedUsers = `
   [
     { email: 'e2e.viewer@ninelens.test', name: 'E2E Viewer', role: 'viewer' },

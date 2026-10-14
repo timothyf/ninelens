@@ -159,7 +159,7 @@ flowchart LR
 
 ## Tech Stack
 
-- Backend: Ruby 3.2.3, Rails 7.1.6, PostgreSQL, Solid Queue, RSpec 6.1, and SeedFu
+- Backend: Ruby 3.4.11, Rails 7.1.6, PostgreSQL, Solid Queue, RSpec 6.1, and SeedFu
 - Frontend: Vue 3.5, Vue Router 4.6, Vite 8, Vitest 4, and Vue Test Utils
 - Sources:
   - MLB Stats API for schedules, games, box scores, live feeds, teams, rosters, profiles, and season statistics
@@ -173,7 +173,7 @@ flowchart LR
 
 ## Local Setup
 
-Prerequisites: Ruby 3.2.3, PostgreSQL, and Node.js 20.19+ (or 22.12+).
+Prerequisites: Ruby 3.4.11, PostgreSQL, and Node.js 20.19+ (or 22.12+).
 
 ### Backend
 

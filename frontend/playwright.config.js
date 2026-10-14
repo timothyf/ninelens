@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test'
 
 const baseURL = process.env.E2E_BASE_URL || 'http://127.0.0.1:4173'
 const useManagedServers = !process.env.E2E_BASE_URL
-const rubyBinPath = '/Users/timothyfisher/.rvm/gems/ruby-3.2.3/bin:/Users/timothyfisher/.rvm/gems/ruby-3.2.3@global/bin:/Users/timothyfisher/.rvm/rubies/ruby-3.2.3/bin'
+const rubyBinPath = '/Users/timothyfisher/.rvm/gems/ruby-3.4.11/bin:/Users/timothyfisher/.rvm/gems/ruby-3.4.11@global/bin:/Users/timothyfisher/.rvm/rubies/ruby-3.4.11/bin'
 const railsEnvironment = {
   ...process.env,
   PATH: `${rubyBinPath}:${process.env.PATH}`,

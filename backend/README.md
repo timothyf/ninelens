@@ -4,7 +4,7 @@ The backend is a Rails 7.1 JSON API backed by PostgreSQL. It stores normalized M
 
 ## Requirements
 
-- Ruby 3.2.3 (see `.ruby-version`)
+- Ruby 3.4.11 (see `.ruby-version`)
 - PostgreSQL
 - Bundler
 
