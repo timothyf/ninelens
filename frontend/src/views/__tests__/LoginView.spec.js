@@ -34,6 +34,12 @@ describe('LoginView', () => {
     vi.unstubAllGlobals()
   })
 
+  it('offers local account bootstrap outside production builds', async () => {
+    const { wrapper } = await mountLogin('/login')
+
+    expect(wrapper.get('.login-switch').text()).toBe('Create the first workspace account')
+  })
+
   it('returns to the page supplied by the sign-in redirect', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,

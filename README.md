@@ -106,7 +106,7 @@ The current application version is recorded in [`VERSION`](VERSION). See [`CHANG
 
 ### Accounts and Access
 
-- Account registration, sign-in, sign-out, bearer-token sessions, and current-user lookup.
+- Administrator-provisioned production accounts, local first-account registration, sign-in, sign-out, bearer-token sessions, and current-user lookup.
 - Expiring, database-backed sessions with per-session logout and account-wide revocation on disable or access reset.
 - PostgreSQL-backed login and registration throttling by both client IP and normalized account, with privacy-preserving identifier digests.
 - Roles include administrator, analyst, coach, scout, and viewer. Legacy `admin` and `editor` values remain supported for compatibility.
@@ -209,6 +209,8 @@ bin/rails users:bootstrap_admin
 
 The task is safe to rerun: it leaves an existing administrator with that email unchanged, including their password. It refuses to create a different administrator after any human account exists. Do not place the password in source control or shared shell history; inject these values through the deployment platform's secret mechanism.
 
+Production rejects anonymous HTTP registration even when the database is empty. Bootstrap the first administrator with this task before exposing the application, then create additional accounts through the Admin user-management page.
+
 ### Docker
 
 Docker Compose runs PostgreSQL, the Rails API, and the built Vue frontend together:
@@ -271,7 +273,7 @@ The main frontend routes are:
 - `/teams/:id` — analytical Team Profile
 - `/admin` — imports, synchronization, data health, analytics, and database information
 - `/watchlists` — private watchlists, acquisition fit, candidate discovery, and audit history (signed-in users only)
-- `/login` — account sign-in and workspace registration
+- `/login` — account sign-in; development and test builds also expose first-account registration
 
 ## Recommended Data Workflow
 
@@ -474,7 +476,7 @@ Import and download writes require an authenticated administrator or the configu
 
 ### Authentication and Private Resources
 
-- `POST /api/auth/register` — create the first workspace account; subsequent account creation requires an administrator
+- `POST /api/auth/register` — create an account as an authenticated administrator; development and test also permit first-account bootstrap, while production rejects all anonymous requests
 - `POST /api/auth/login` — issue a bearer-token session
 - `GET /api/auth/me` — return the current signed-in user
 - `DELETE /api/auth/logout` — revoke the current session token

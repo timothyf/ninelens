@@ -3,6 +3,12 @@ module Api
     skip_before_action :authenticate_unsafe_api_request
 
     def register
+      if Rails.env.production? && current_user.blank?
+        return render json: {
+          message: "Public registration is disabled. Ask an administrator to create your account."
+        }, status: :forbidden
+      end
+
       return if authentication_throttled?(:registration)
 
       if User.where(system_account: false).exists? && !current_user&.admin?
