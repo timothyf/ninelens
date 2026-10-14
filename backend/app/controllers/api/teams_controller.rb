@@ -1,7 +1,7 @@
 module Api
   class TeamsController < ApplicationController
     def index
-      teams = Team.order(:name)
+      teams = Team.where(mlb_id: MlbRosterBatchSync::ALL_TEAM_IDS).order(:name)
       filter = params[:filter] || {}
       name_filter = filter[:name] || filter["name"]
       if name_filter.present?

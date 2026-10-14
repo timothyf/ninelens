@@ -23,6 +23,15 @@ RSpec.describe "Api::Teams", type: :request do
   end
 
   it "lists teams for the team directory" do
+    create_team(
+      mlb_id: 5521,
+      name: "CLE/CWS",
+      abbreviation: "CLE/CWS",
+      team_name: "CLE/CWS",
+      location_name: "CLE/CWS",
+      short_name: "CLE/CWS"
+    )
+
     get api_teams_path
 
     expect(response).to have_http_status(:ok)
