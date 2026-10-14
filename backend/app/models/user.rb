@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   ROLES = %w[administrator analyst coach scout viewer admin editor].freeze
-  PASSWORD_ITERATIONS = 120_000
+  LEGACY_PASSWORD_ITERATIONS = 120_000
+  PASSWORD_ITERATIONS = 600_000
 
   has_many :owned_watchlists, class_name: "Watchlist", foreign_key: :owner_id, dependent: :nullify
   has_many :owned_need_profiles, class_name: "NeedProfile", foreign_key: :owner_id, dependent: :nullify
@@ -33,15 +34,20 @@ class User < ApplicationRecord
   def password=(value)
     @password = value.to_s
     self.password_salt = SecureRandom.hex(16)
-    self.password_digest = digest_password(@password, password_salt)
+    self.password_iterations = PASSWORD_ITERATIONS
+    self.password_digest = digest_password(@password, password_salt, iterations: password_iterations)
   end
 
   def authenticate_password(value)
     return false if password_digest.blank? || password_salt.blank?
 
-    ActiveSupport::SecurityUtils.secure_compare(
-      digest_password(value.to_s, password_salt), password_digest
+    candidate_password = value.to_s
+    authenticated = ActiveSupport::SecurityUtils.secure_compare(
+      digest_password(candidate_password, password_salt, iterations: effective_password_iterations),
+      password_digest
     )
+    upgrade_password_hash!(candidate_password) if authenticated && effective_password_iterations < PASSWORD_ITERATIONS
+    authenticated
   end
 
   def issue_session!
@@ -78,8 +84,39 @@ class User < ApplicationRecord
 
   private
 
-  def digest_password(value, salt)
-    OpenSSL::KDF.pbkdf2_hmac(value, salt: salt, iterations: PASSWORD_ITERATIONS, length: 32, hash: "SHA256").unpack1("H*")
+  def effective_password_iterations
+    password_iterations.presence || LEGACY_PASSWORD_ITERATIONS
+  end
+
+  def digest_password(value, salt, iterations:)
+    OpenSSL::KDF.pbkdf2_hmac(value, salt: salt, iterations: iterations, length: 32, hash: "SHA256").unpack1("H*")
+  end
+
+  def upgrade_password_hash!(value)
+    previous_digest = password_digest
+    previous_salt = password_salt
+    previous_iterations = effective_password_iterations
+    upgraded_salt = SecureRandom.hex(16)
+    upgraded_digest = digest_password(value, upgraded_salt, iterations: PASSWORD_ITERATIONS)
+    now = Time.current
+
+    upgraded = self.class.where(
+      id: id,
+      password_digest: previous_digest,
+      password_salt: previous_salt,
+      password_iterations: previous_iterations
+    ).update_all(
+      password_digest: upgraded_digest,
+      password_salt: upgraded_salt,
+      password_iterations: PASSWORD_ITERATIONS,
+      updated_at: now
+    )
+    return unless upgraded == 1
+
+    self.password_digest = upgraded_digest
+    self.password_salt = upgraded_salt
+    self.password_iterations = PASSWORD_ITERATIONS
+    self.updated_at = now
   end
 
   def normalize_email

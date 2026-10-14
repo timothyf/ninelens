@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_13_010000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_14_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -1269,10 +1269,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_13_010000) do
     t.string "alert_digest_frequency", default: "off", null: false
     t.integer "alert_digest_day"
     t.integer "alert_digest_hour", default: 8, null: false
+    t.integer "password_iterations", default: 600000, null: false
     t.index "lower((email)::text)", name: "idx_users_lower_email", unique: true
     t.check_constraint "alert_digest_day IS NULL OR alert_digest_day >= 0 AND alert_digest_day <= 6", name: "users_valid_alert_digest_day"
     t.check_constraint "alert_digest_frequency::text = ANY (ARRAY['off'::character varying, 'daily'::character varying, 'weekly'::character varying]::text[])", name: "users_valid_alert_digest_frequency"
     t.check_constraint "alert_digest_hour >= 0 AND alert_digest_hour <= 23", name: "users_valid_alert_digest_hour"
+    t.check_constraint "password_iterations >= 120000", name: "users_password_iterations_minimum"
     t.check_constraint "role::text = ANY (ARRAY['admin'::character varying::text, 'administrator'::character varying::text, 'analyst'::character varying::text, 'coach'::character varying::text, 'scout'::character varying::text, 'editor'::character varying::text, 'viewer'::character varying::text])", name: "users_valid_role"
   end
 
