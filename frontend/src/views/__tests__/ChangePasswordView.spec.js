@@ -30,6 +30,14 @@ describe('ChangePasswordView', () => {
 
   afterEach(() => vi.unstubAllGlobals())
 
+  it('presents the screen as a normal authenticated password change', async () => {
+    const { wrapper } = await mountView()
+
+    expect(wrapper.get('h1').text()).toBe('Change your password')
+    expect(wrapper.text()).toContain('Enter your current password')
+    expect(wrapper.findAll('label')[0].text()).toContain('Current password')
+  })
+
   it('replaces the temporary password and returns to the requested page', async () => {
     const fetch = vi.fn().mockResolvedValue({
       ok: true,

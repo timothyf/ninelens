@@ -27,6 +27,13 @@ vi.mock('../composables/useAuth', async () => {
   }
 })
 
+vi.mock('../composables/usePostseason', async () => {
+  const { ref } = await import('vue')
+  return {
+    usePostseason: () => ({ postseason: ref({ active: false }), load: vi.fn() }),
+  }
+})
+
 vi.mock('vue-router', () => ({
   useRoute: () => mocks.route,
   useRouter: () => ({ replace: mocks.replace }),
@@ -44,6 +51,7 @@ describe('App', () => {
   it('leaves a protected route immediately when the user signs out', async () => {
     const wrapper = shallowMount(App, {
       global: {
+        renderStubDefaultSlot: true,
         stubs: {
           RouterLink: true,
           RouterView: true,
@@ -60,5 +68,23 @@ describe('App', () => {
       name: 'login',
       query: { redirect: '/watchlists?watchlist=7' },
     })
+  })
+
+  it('offers signed-in users an authenticated password-change screen', async () => {
+    const wrapper = shallowMount(App, {
+      global: {
+        renderStubDefaultSlot: true,
+        stubs: {
+          RouterLink: true,
+          RouterView: true,
+        },
+      },
+    })
+
+    await wrapper.get('.app-account__trigger').trigger('click')
+
+    const changePasswordLink = wrapper.findAll('[role="menuitem"]')
+      .find((item) => item.text() === 'Change password')
+    expect(changePasswordLink).toBeTruthy()
   })
 })

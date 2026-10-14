@@ -17,6 +17,10 @@ const signInTarget = computed(() => ({
   name: 'login',
   query: route.name === 'login' ? {} : { redirect: route.fullPath },
 }))
+const passwordChangeTarget = computed(() => ({
+  name: 'change-password',
+  query: route.name === 'change-password' ? {} : { redirect: route.fullPath },
+}))
 
 function closeAccountMenu(event) {
   if (!event?.target?.closest?.('.app-account')) accountMenuOpen.value = false
@@ -76,6 +80,7 @@ onBeforeUnmount(() => document.removeEventListener('click', closeAccountMenu))
         <div v-if="accountMenuOpen" class="app-account__menu" role="menu">
           <span class="app-account__email">{{ user.email }}</span>
           <RouterLink to="/watchlists" role="menuitem" @click="accountMenuOpen = false">Watchlists</RouterLink>
+          <RouterLink :to="passwordChangeTarget" role="menuitem" @click="accountMenuOpen = false">Change password</RouterLink>
           <RouterLink v-if="isAdministrator" to="/admin" role="menuitem" @click="accountMenuOpen = false">Admin</RouterLink>
           <button type="button" role="menuitem" @click="signOut">Sign out</button>
         </div>

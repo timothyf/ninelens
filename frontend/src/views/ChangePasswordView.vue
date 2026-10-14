@@ -1,15 +1,16 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useAuth } from '../composables/useAuth'
 
 const route = useRoute()
 const router = useRouter()
-const { changePassword, loading, error } = useAuth()
+const { user, changePassword, loading, error } = useAuth()
 const currentPassword = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
+const replacementRequired = computed(() => Boolean(user.value?.password_change_required))
 
 async function submit() {
   try {
@@ -38,14 +39,15 @@ function returnDestination() {
   <main class="password-shell">
     <section class="password-card">
       <p class="eyebrow">Secure your account</p>
-      <h1>Choose a new password</h1>
-      <p>Your temporary password must be replaced before you can continue.</p>
+      <h1>Change your password</h1>
+      <p v-if="replacementRequired">Your temporary password must be replaced before you can continue.</p>
+      <p v-else>Enter your current password and choose a new password for your account.</p>
       <form @submit.prevent="submit">
-        <label>Temporary password<input v-model="currentPassword" required type="password" autocomplete="current-password" /></label>
+        <label>{{ replacementRequired ? 'Temporary password' : 'Current password' }}<input v-model="currentPassword" required type="password" autocomplete="current-password" /></label>
         <label>New password<input v-model="password" required minlength="8" type="password" autocomplete="new-password" /></label>
         <label>Confirm new password<input v-model="passwordConfirmation" required minlength="8" type="password" autocomplete="new-password" /></label>
         <p v-if="error" class="password-error" role="alert">{{ error }}</p>
-        <button type="submit" :disabled="loading">{{ loading ? 'Updating…' : 'Set new password' }}</button>
+        <button type="submit" :disabled="loading">{{ loading ? 'Updating…' : 'Change password' }}</button>
       </form>
     </section>
   </main>
