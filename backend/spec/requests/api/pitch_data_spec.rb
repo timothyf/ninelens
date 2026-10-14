@@ -298,7 +298,7 @@ RSpec.describe "Api::PitchData", type: :request do
     csv_file.close!
   end
 
-  it "rejects pitch data imports when an admin token is configured but missing" do
+  it "requires authentication for pitch data imports when an admin token is configured" do
     csv_file = Tempfile.new(["pitch-data", ".csv"])
     csv_file.write(<<~CSV)
       game_pk,at_bat_number,pitch_number,game_date,pitch_type,description
@@ -315,7 +315,7 @@ RSpec.describe "Api::PitchData", type: :request do
     end.not_to change(PitchDatum, :count)
 
     expect(response).to have_http_status(:unauthorized)
-    expect(json_body["message"]).to eq("Admin API token is required")
+    expect(json_body["message"]).to eq("Authentication is required")
   ensure
     csv_file.close!
   end

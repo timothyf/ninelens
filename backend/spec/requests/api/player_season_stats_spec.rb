@@ -402,7 +402,7 @@ RSpec.describe "Api::PlayerSeasonStats", type: :request do
     expect(json_body.dig("data", "id")).to eq(@player_season_stat.id)
   end
 
-  it "rejects unsafe requests when an admin token is configured but missing" do
+  it "requires administrator authentication for direct stat mutations" do
     expect do
       with_admin_api_token("test-admin-token") do
         post api_player_season_stats_path,
@@ -419,10 +419,10 @@ RSpec.describe "Api::PlayerSeasonStats", type: :request do
     end.not_to change(PlayerSeasonStat, :count)
 
     expect(response).to have_http_status(:unauthorized)
-    expect(json_body["message"]).to eq("Admin API token is required")
+    expect(json_body["message"]).to eq("Authentication is required")
   end
 
-  it "rejects unsafe production requests when no admin token is configured" do
+  it "requires administrator authentication for direct stat mutations in production" do
     allow(Rails.env).to receive(:production?).and_return(true)
 
     post api_player_season_stats_path,
@@ -437,21 +437,21 @@ RSpec.describe "Api::PlayerSeasonStats", type: :request do
          as: :json
 
     expect(response).to have_http_status(:unauthorized)
-    expect(json_body["message"]).to eq("Admin API token is required")
+    expect(json_body["message"]).to eq("Authentication is required")
   end
 
   it "creates a player season stat" do
     expect do
-      post api_player_season_stats_path,
-           params: {
-             player_season_stat: {
-               player_id: @player.id,
-               stat_type_id: @stat_type.id,
-               season: 2025,
-               value: "4.7"
-             }
-           },
-           as: :json
+      post_as_admin api_player_season_stats_path,
+                    params: {
+                      player_season_stat: {
+                        player_id: @player.id,
+                        stat_type_id: @stat_type.id,
+                        season: 2025,
+                        value: "4.7"
+                      }
+                    },
+                    as: :json
     end.to change(PlayerSeasonStat, :count).by(1)
 
     expect(response).to have_http_status(:created)
@@ -481,16 +481,16 @@ RSpec.describe "Api::PlayerSeasonStats", type: :request do
   end
 
   it "returns validation errors for invalid create input" do
-    post api_player_season_stats_path,
-         params: {
-           player_season_stat: {
-             player_id: @player.id,
-             stat_type_id: @stat_type.id,
-             season: nil,
-             value: nil
-           }
-         },
-         as: :json
+    post_as_admin api_player_season_stats_path,
+                  params: {
+                    player_season_stat: {
+                      player_id: @player.id,
+                      stat_type_id: @stat_type.id,
+                      season: nil,
+                      value: nil
+                    }
+                  },
+                  as: :json
 
     expect(response).to have_http_status(:unprocessable_content)
     expect(json_body.fetch("errors")).to include("Season can't be blank", "Value can't be blank")
@@ -624,9 +624,12 @@ RSpec.describe "Api::PlayerSeasonStats", type: :request do
   end
 
   it "updates a player season stat" do
-    patch api_player_season_stat_path(@player_season_stat),
-          params: { player_season_stat: { value: "5.1" } },
-          as: :json
+    with_admin_api_token("test-admin-token") do
+      patch api_player_season_stat_path(@player_season_stat),
+            params: { player_season_stat: { value: "5.1" } },
+            headers: admin_headers,
+            as: :json
+    end
 
     expect(response).to have_http_status(:ok)
     expect(@player_season_stat.reload.value).to eq(BigDecimal("5.1"))
@@ -634,7 +637,9 @@ RSpec.describe "Api::PlayerSeasonStats", type: :request do
 
   it "destroys a player season stat" do
     expect do
-      delete api_player_season_stat_path(@player_season_stat), as: :json
+      with_admin_api_token("test-admin-token") do
+        delete api_player_season_stat_path(@player_season_stat), headers: admin_headers, as: :json
+      end
     end.to change(PlayerSeasonStat, :count).by(-1)
 
     expect(response).to have_http_status(:no_content)

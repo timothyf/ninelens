@@ -15,6 +15,7 @@ class ApplicationController < ActionController::API
   end
 
   def authenticate_unsafe_api_request
+    return unless admin_api_request?
     return if safe_api_request?
     return if current_user&.admin?
 
@@ -28,6 +29,13 @@ class ApplicationController < ActionController::API
 
   def safe_api_request?
     request.get? || request.head? || request.request_method == "OPTIONS"
+  end
+
+  # Browser users authenticate through their session and each resource
+  # controller enforces its own role and ownership rules. The shared admin
+  # token is solely for operational automation under the admin API namespace.
+  def admin_api_request?
+    request.path.start_with?("/api/admin/")
   end
 
   def admin_token_matches?(expected_token)

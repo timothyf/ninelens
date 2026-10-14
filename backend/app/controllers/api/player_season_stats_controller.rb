@@ -1,8 +1,8 @@
 module Api
   class PlayerSeasonStatsController < ApplicationController
     before_action :set_player_season_stat, only: [:show, :update, :destroy]
-    before_action :require_authenticated_user, only: [:import, :download]
-    before_action :require_admin_user, only: [:import, :download]
+    before_action :require_authenticated_user, only: [:create, :update, :destroy, :import, :download]
+    before_action :require_admin_user, only: [:create, :update, :destroy, :import, :download]
 
     def index
       if params[:view] == "leaderboard"
