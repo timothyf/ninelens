@@ -1,8 +1,18 @@
 class ApplicationController < ActionController::API
   include Authentication
   before_action :authenticate_unsafe_api_request
+  before_action :require_completed_password_change
 
   private
+
+  def require_completed_password_change
+    return unless current_user&.password_change_required?
+
+    render json: {
+      message: "You must replace your temporary password before continuing.",
+      code: "password_change_required"
+    }, status: :forbidden
+  end
 
   def authenticate_unsafe_api_request
     return if safe_api_request?

@@ -66,6 +66,34 @@ export function useAuth() {
     return user.value
   }
 
+  async function changePassword(currentPassword, password, passwordConfirmation) {
+    loading.value = true
+    error.value = ''
+    try {
+      const token = localStorage.getItem(USER_TOKEN_STORAGE_KEY)
+      const updatedUser = await request('/api/auth/password', {
+        method: 'PATCH',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          password,
+          password_confirmation: passwordConfirmation,
+        }),
+      })
+      user.value = updatedUser
+      return updatedUser
+    } catch (requestError) {
+      error.value = requestError.message
+      throw requestError
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function logout() {
     const token = localStorage.getItem(USER_TOKEN_STORAGE_KEY)
     localStorage.removeItem(USER_TOKEN_STORAGE_KEY)
@@ -73,5 +101,5 @@ export function useAuth() {
     if (token) await request('/api/auth/logout', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }).catch(() => {})
   }
 
-  return { user: computed(() => user.value), loading, error, login, register, loadCurrentUser, logout }
+  return { user: computed(() => user.value), loading, error, login, register, loadCurrentUser, changePassword, logout }
 }

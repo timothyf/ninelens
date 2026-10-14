@@ -3,6 +3,7 @@ Rails.application.routes.draw do
     post "auth/register", to: "auth#register"
     post "auth/login", to: "auth#login"
     get "auth/me", to: "auth#me"
+    patch "auth/password", to: "auth#update_password"
     delete "auth/logout", to: "auth#logout"
     namespace :admin do
       resource :data_health, only: :show

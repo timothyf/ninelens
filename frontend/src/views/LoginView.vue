@@ -15,10 +15,21 @@ const password = ref('')
 
 async function submit() {
   try {
-    if (mode.value === 'register') await register(name.value, email.value, password.value)
-    else await login(email.value, password.value)
-    await router.replace(returnDestination())
+    const session = mode.value === 'register'
+      ? await register(name.value, email.value, password.value)
+      : await login(email.value, password.value)
+    const destination = returnDestination()
+    if (session.password_change_required) {
+      await router.replace({ name: 'change-password', query: redirectQuery(destination) })
+    } else {
+      await router.replace(destination)
+    }
   } catch (_error) {}
+}
+
+function redirectQuery(destination) {
+  if (typeof destination === 'string') return { redirect: destination }
+  return {}
 }
 
 function returnDestination() {

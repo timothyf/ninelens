@@ -1,6 +1,7 @@
 module Api
   class AuthController < ApplicationController
     skip_before_action :authenticate_unsafe_api_request
+    skip_before_action :require_completed_password_change, only: %i[login me logout update_password]
 
     def register
       if Rails.env.production? && current_user.blank?
@@ -52,6 +53,44 @@ module Api
       head :no_content
     end
 
+    def update_password
+      require_authenticated_user
+      return if performed?
+      unless current_session
+        return render json: { message: "A user session is required" }, status: :unauthorized
+      end
+
+      unless current_user.authenticate_password(params[:current_password])
+        return render json: { message: "Current password is incorrect" }, status: :unprocessable_content
+      end
+
+      password = params[:password].to_s
+      unless password == params[:password_confirmation].to_s
+        return render json: { message: "Password confirmation does not match" }, status: :unprocessable_content
+      end
+
+      if current_user.authenticate_password(password)
+        return render json: { message: "New password must be different from your current password" }, status: :unprocessable_content
+      end
+
+      password_change_was_required = current_user.password_change_required?
+      current_user.transaction do
+        current_user.update!(password:, password_change_required: false)
+        current_user.revoke_other_sessions!(current_session)
+        AuditLog.record!(
+          user: current_user,
+          action: "password_changed",
+          record: current_user,
+          changes: { "password_change_required" => [ password_change_was_required, false ] },
+          metadata: { "request_id" => request.request_id, "session_id" => current_session.id }
+        )
+      end
+
+      render json: { data: serialize_user(current_user) }
+    rescue ActiveRecord::RecordInvalid => error
+      render json: { message: error.record.errors.full_messages.to_sentence }, status: :unprocessable_content
+    end
+
     private
 
     def user_params
@@ -95,7 +134,14 @@ module Api
     end
 
     def serialize_user(user)
-      { id: user.id, email: user.email, name: user.name, role: user.role, role_label: user.role_label }
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        role_label: user.role_label,
+        password_change_required: user.password_change_required?
+      }
     end
   end
 end

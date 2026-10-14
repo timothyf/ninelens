@@ -115,6 +115,7 @@ async function submitNewUser() {
               <span>{{ user.email }}</span>
               <small v-if="user.current_user">Current account</small>
               <small v-else-if="user.system_account">Automation account</small>
+              <small v-else-if="user.password_change_required">Password replacement pending</small>
             </td>
             <td><span :class="['user-status', { 'user-status--disabled': user.disabled }]">{{ user.disabled ? 'Disabled' : 'Active' }}</span></td>
             <td>

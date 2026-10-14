@@ -7,6 +7,7 @@ import GameSummaryView from '../views/GameSummaryView.vue'
 import HomeView from '../views/HomeView.vue'
 import LineupScenarioView from '../views/LineupScenarioView.vue'
 import LoginView from '../views/LoginView.vue'
+import ChangePasswordView from '../views/ChangePasswordView.vue'
 import OpponentReportView from '../views/OpponentReportView.vue'
 import PostseasonView from '../views/PostseasonView.vue'
 import PlayerProfileView from '../views/PlayerProfile/PlayerProfileView.vue'
@@ -91,6 +92,12 @@ const router = createRouter({
       component: LoginView,
     },
     {
+      path: '/change-password',
+      name: 'change-password',
+      component: ChangePasswordView,
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/access-denied',
       name: 'access-denied',
       component: AccessDeniedView,
@@ -125,11 +132,16 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  if (!to.meta.requiresAuth && !to.meta.requiresAdmin) return true
-
   const auth = useAuth()
   const currentUser = auth.user.value || await auth.loadCurrentUser()
-  if (!currentUser) return { name: 'login', query: { redirect: to.fullPath } }
+  if (!currentUser && (to.meta.requiresAuth || to.meta.requiresAdmin)) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  if (currentUser?.password_change_required && to.name !== 'change-password') {
+    return { name: 'change-password', query: { redirect: to.fullPath } }
+  }
+  if (to.name === 'change-password' && !currentUser) return { name: 'login' }
+  if (!currentUser) return true
   if (to.meta.requiresAdmin && !['admin', 'administrator'].includes(currentUser.role)) return { name: 'access-denied' }
   return true
 })

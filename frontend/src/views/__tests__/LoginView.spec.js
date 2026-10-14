@@ -10,6 +10,7 @@ async function mountLogin(initialPath) {
     routes: [
       { path: '/', name: 'home', component: { template: '<div>Home</div>' } },
       { path: '/login', name: 'login', component: LoginView },
+      { path: '/change-password', name: 'change-password', component: { template: '<div>Change password</div>' } },
       { path: '/explore', name: 'stat-explorer', component: { template: '<div>Explore</div>' } },
     ],
   })
@@ -68,5 +69,20 @@ describe('LoginView', () => {
     await flushPromises()
 
     expect(router.currentRoute.value.fullPath).toBe('/')
+  })
+
+  it('sends a user with a temporary password to the required replacement page', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { token: 'session-token', name: 'Scout', password_change_required: true } }),
+    }))
+    const { wrapper, router } = await mountLogin('/login?redirect=/explore')
+
+    await wrapper.get('input[type="email"]').setValue('scout@example.com')
+    await wrapper.get('input[type="password"]').setValue('temporary-password')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+
+    expect(router.currentRoute.value.fullPath).toBe('/change-password?redirect=/explore')
   })
 })

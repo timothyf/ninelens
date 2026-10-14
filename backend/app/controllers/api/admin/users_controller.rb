@@ -27,7 +27,11 @@ module Api
         return if performed?
 
         temporary_password = SecureRandom.urlsafe_base64(15)
-        user = User.new(create_user_params.except(:role).merge(role:, password: temporary_password))
+        user = User.new(create_user_params.except(:role).merge(
+          role:,
+          password: temporary_password,
+          password_change_required: true
+        ))
         user.save!
 
         AuditLog.record!(
@@ -40,7 +44,7 @@ module Api
 
         render json: {
           data: serialize_user(user).merge(temporary_password: temporary_password),
-          meta: { message: "Share this temporary password securely; it is shown only once." }
+          meta: { message: "Share this temporary password securely. It is shown only once and must be replaced at first sign-in." }
         }, status: :created
       rescue ActiveRecord::RecordInvalid => error
         render json: { message: error.record.errors.full_messages.to_sentence }, status: :unprocessable_content
@@ -96,7 +100,7 @@ module Api
 
         temporary_password = SecureRandom.urlsafe_base64(15)
         @user.transaction do
-          @user.update!(password: temporary_password)
+          @user.update!(password: temporary_password, password_change_required: true)
           @user.revoke_all_sessions!
         end
 
@@ -110,7 +114,7 @@ module Api
 
         render json: {
           data: serialize_user(@user).merge(temporary_password: temporary_password),
-          meta: { message: "Existing sessions were revoked. Share this temporary password securely; it is shown only once." }
+          meta: { message: "Existing sessions were revoked. Share this temporary password securely; it is shown only once and must be replaced at next sign-in." }
         }
       end
 
@@ -173,7 +177,8 @@ module Api
           system_account: user.system_account?,
           current_user: user.id == current_user.id,
           created_at: user.created_at,
-          updated_at: user.updated_at
+          updated_at: user.updated_at,
+          password_change_required: user.password_change_required?
         }
       end
 

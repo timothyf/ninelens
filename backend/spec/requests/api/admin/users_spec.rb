@@ -28,6 +28,7 @@ RSpec.describe "Api::Admin::Users", type: :request do
     created = User.find_by!(email: "new.analyst@example.test")
     temporary_password = json_body.dig("data", "temporary_password")
     expect(created).to have_attributes(name: "New Analyst", role: "analyst")
+    expect(created).to be_password_change_required
     expect(created.authenticate_password(temporary_password)).to be(true)
     expect(administrator.user_sessions.active).to exist
 
@@ -88,6 +89,7 @@ RSpec.describe "Api::Admin::Users", type: :request do
     expect(response).to have_http_status(:ok)
     temporary_password = json_body.dig("data", "temporary_password")
     expect(temporary_password.length).to be >= 8
+    expect(target.reload).to be_password_change_required
     expect(AuditLog.order(:id).last.change_set.to_s).not_to include(temporary_password)
 
     get api_auth_me_path, headers: target_headers
@@ -95,6 +97,7 @@ RSpec.describe "Api::Admin::Users", type: :request do
 
     post api_auth_login_path, params: { email: target.email, password: temporary_password }
     expect(response).to have_http_status(:ok)
+    expect(json_body.dig("data", "password_change_required")).to be(true)
   end
 
   it "protects the system account and prevents administrators from locking themselves out" do

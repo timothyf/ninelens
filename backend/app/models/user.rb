@@ -23,7 +23,7 @@ class User < ApplicationRecord
   validates :alert_digest_frequency, inclusion: { in: %w[off daily weekly] }, if: -> { respond_to?(:alert_digest_frequency) }
   validates :alert_digest_day, numericality: { only_integer: true, in: 0..6 }, allow_nil: true, if: -> { respond_to?(:alert_digest_day) }
   validates :alert_digest_hour, numericality: { only_integer: true, in: 0..23 }, if: -> { respond_to?(:alert_digest_hour) }
-  validates :password, length: { minimum: 8 }, allow_nil: true, on: :create
+  validates :password, length: { minimum: 8 }, allow_nil: true
 
   scope :active, -> { where(disabled_at: nil) }
 
@@ -60,6 +60,10 @@ class User < ApplicationRecord
 
   def revoke_all_sessions!
     user_sessions.active.update_all(revoked_at: Time.current, updated_at: Time.current)
+  end
+
+  def revoke_other_sessions!(session)
+    user_sessions.active.where.not(id: session&.id).update_all(revoked_at: Time.current, updated_at: Time.current)
   end
 
   def admin?
