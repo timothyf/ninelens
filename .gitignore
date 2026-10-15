@@ -75,3 +75,8 @@ output/*
 output/pdf/*
 
 output/pdf/ninelens-codebase-overview.pdf
+
+dumpdb.sh
+ssh-prod.sh
+transferdb.sh
+/ninelens-transfer
