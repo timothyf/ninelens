@@ -114,12 +114,14 @@ const router = createRouter({
       name: 'opponent-report',
       component: OpponentReportView,
       props: (route) => ({ reportId: route.params.id }),
+      meta: { requiresAuth: true },
     },
     {
       path: '/lineup-scenarios/:id',
       name: 'lineup-scenario',
       component: LineupScenarioView,
       props: (route) => ({ scenarioId: route.params.id }),
+      meta: { requiresAuth: true },
     },
     {
       path: '/admin',
