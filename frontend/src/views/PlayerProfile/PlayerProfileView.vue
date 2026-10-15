@@ -53,6 +53,7 @@ const tabAnalysisOptions = reactive({
   'pitch-arsenal': { range: 'season', paWindow: 50, pitchWindow: 100, startDate: null, endDate: null },
 })
 const { player, loading, error, sectionLoading, loadSection, reloadSection, refresh } = usePlayerProfile(playerId, analysisOptions)
+const trackedPlayerMlbId = ref(null)
 const {
   careerTableRows, advancedTableRows, trendCharts, comparisonMetrics, selectedBatterSplit,
   batterSplitDimension, batterSplitMetrics, selectedPitcherSplit, pitcherSplitDimension,
@@ -64,6 +65,16 @@ const {
 const headshotFailed = ref(false)
 const sourceModalOpen = ref(false)
 const sourceModalTrigger = ref(null)
+
+watch(
+  () => player.value?.mlbId,
+  (mlbId) => {
+    if (!mlbId || trackedPlayerMlbId.value === mlbId) return
+
+    window.umami?.track?.('player-profile-viewed', { mlb_id: String(mlbId) })
+    trackedPlayerMlbId.value = mlbId
+  },
+)
 
 watch(
   () => [
