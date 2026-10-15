@@ -314,6 +314,21 @@ const payload = {
 }
 
 describe('TeamProfileView', () => {
+  it('tracks a loaded team using only its public MLB id', async () => {
+    const track = vi.fn()
+    vi.stubGlobal('umami', { track })
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }))
+
+    mount(TeamProfileView, {
+      props: { teamId: '1' },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    })
+    await flushPromises()
+
+    expect(track).toHaveBeenCalledTimes(1)
+    expect(track).toHaveBeenCalledWith('team-profile-viewed', { mlb_id: '116' })
+  })
+
   it('generates a frozen report from the current opponent preparation', async () => {
     const fetchMock = vi.fn().mockImplementation((url, options = {}) => {
       if (url === '/api/teams') return Promise.resolve({ ok: true, json: async () => ({ data: [{ id: 2, name: 'Cleveland Guardians', abbreviation: 'CLE' }] }) })

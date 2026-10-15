@@ -62,6 +62,7 @@ const savedAnalysisUrl = computed(() => {
   return `/teams/${encodeURIComponent(teamId.value)}${query.size ? `?${query}` : ''}`
 })
 const { team, loading, error, refresh } = useTeamProfile(teamId, selectedSeason, requestedProfileSection)
+const trackedTeamMlbId = ref(null)
 const teamHeaderStyle = computed(() => teamThemeStyle(team.value?.mlbId || team.value?.mlb_id))
 const externalTeamLinks = computed(() => {
   if (!team.value?.mlbId) return []
@@ -109,6 +110,16 @@ const availableTeams = ref([])
 const lineupRows = ref(Array.from({ length: 9 }, (_, index) => ({ battingSlot: index + 1, playerId: '', defensivePosition: '' })))
 const lineupPositions = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH']
 const opponentTeamOptions = computed(() => availableTeams.value.filter((teamOption) => teamOption.id !== team.value?.id))
+
+watch(
+  () => team.value?.mlbId,
+  (mlbId) => {
+    if (!mlbId || trackedTeamMlbId.value === mlbId) return
+
+    window.umami?.track?.('team-profile-viewed', { mlb_id: String(mlbId) })
+    trackedTeamMlbId.value = mlbId
+  },
+)
 
 watch(
   () => team.value?.season,
