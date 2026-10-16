@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 
 import PitchDataTable from './PitchDataTable.vue'
 import PlayerSeasonStatsTable from './PlayerSeasonStatsTable.vue'
@@ -73,6 +73,7 @@ const batterNameInput = ref('')
 let playerSuggestionBlurTimer = null
 let pitcherSuggestionBlurTimer = null
 let batterSuggestionBlurTimer = null
+let analyticsRunTimer = null
 
 applyUrlState()
 
@@ -161,6 +162,73 @@ watch(
   },
   { immediate: true },
 )
+
+watch(
+  () => JSON.stringify({
+    category: filters.category,
+    playerName: filters.playerName,
+    teamId: filters.teamId,
+    positionId: filters.positionId,
+    league: filters.league,
+    seasonStart: filters.seasonStart,
+    seasonEnd: filters.seasonEnd,
+    gameDateStart: pitchDataFilters.gameDateStart,
+    gameDateEnd: pitchDataFilters.gameDateEnd,
+    gamePk: pitchDataFilters.gamePk,
+    pitcher: pitchDataFilters.pitcher,
+    batter: pitchDataFilters.batter,
+    pitchType: pitchDataFilters.pitchType,
+    events: pitchDataFilters.events,
+  }),
+  () => {
+    if (analyticsRunTimer) window.clearTimeout(analyticsRunTimer)
+    analyticsRunTimer = window.setTimeout(() => {
+      const pitchMode = filters.category === 'pitchData'
+      const activeFilters = pitchMode
+        ? [
+            pitchDataFilters.gameDateStart,
+            pitchDataFilters.gameDateEnd,
+            pitchDataFilters.gamePk,
+            pitchDataFilters.pitcher,
+            pitchDataFilters.batter,
+            pitchDataFilters.pitchType,
+            pitchDataFilters.events,
+          ]
+        : [
+            filters.playerName,
+            filters.teamId,
+            filters.positionId,
+            filters.league,
+            filters.seasonStart,
+            filters.seasonEnd,
+          ]
+      const season = pitchMode
+        ? 'not-applicable'
+        : filters.seasonStart && filters.seasonEnd
+          ? filters.seasonStart === filters.seasonEnd
+            ? String(filters.seasonStart)
+            : `${filters.seasonStart}-${filters.seasonEnd}`
+          : filters.seasonStart
+            ? `${filters.seasonStart}-present`
+            : filters.seasonEnd
+              ? `through-${filters.seasonEnd}`
+              : 'all'
+
+      window.umami?.track?.('stat-explorer-run', {
+        mode: pitchMode ? 'pitch-data' : 'leaderboard',
+        category: filters.category,
+        season,
+        filter_count: activeFilters.filter((value) => value !== '' && value !== null && value !== undefined).length,
+      })
+      analyticsRunTimer = null
+    }, 400)
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(() => {
+  if (analyticsRunTimer) window.clearTimeout(analyticsRunTimer)
+})
 
 watch(
   () => [filters.playerName, filters.teamId, filters.positionId, filters.league, filters.seasonStart, filters.seasonEnd, filters.category, pagination.perPage, sort.value],

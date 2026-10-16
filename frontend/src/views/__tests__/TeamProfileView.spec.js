@@ -319,14 +319,20 @@ describe('TeamProfileView', () => {
     vi.stubGlobal('umami', { track })
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }))
 
-    mount(TeamProfileView, {
+    const wrapper = mount(TeamProfileView, {
       props: { teamId: '1' },
       global: { stubs: { RouterLink: RouterLinkStub } },
     })
     await flushPromises()
 
-    expect(track).toHaveBeenCalledTimes(1)
-    expect(track).toHaveBeenCalledWith('team-profile-viewed', { mlb_id: '116' })
+    expect(track.mock.calls.filter(([event]) => event === 'team-profile-viewed')).toEqual([
+      ['team-profile-viewed', { mlb_id: '116' }],
+    ])
+    expect(track).toHaveBeenCalledWith('team-profile-tab-viewed', { mlb_id: '116', tab: 'overview' })
+
+    await wrapper.get('[data-test="team-profile-tab-roster"]').trigger('click')
+
+    expect(track).toHaveBeenCalledWith('team-profile-tab-viewed', { mlb_id: '116', tab: 'roster' })
   })
 
   it('generates a frozen report from the current opponent preparation', async () => {

@@ -54,6 +54,7 @@ const tabAnalysisOptions = reactive({
 })
 const { player, loading, error, sectionLoading, loadSection, reloadSection, refresh } = usePlayerProfile(playerId, analysisOptions)
 const trackedPlayerMlbId = ref(null)
+const trackedPlayerTabSignature = ref('')
 const {
   careerTableRows, advancedTableRows, trendCharts, comparisonMetrics, selectedBatterSplit,
   batterSplitDimension, batterSplitMetrics, selectedPitcherSplit, pitcherSplitDimension,
@@ -73,6 +74,25 @@ watch(
 
     window.umami?.track?.('player-profile-viewed', { mlb_id: String(mlbId) })
     trackedPlayerMlbId.value = mlbId
+  },
+)
+
+watch(
+  () => [
+    player.value?.mlbId,
+    selectedPageTab.value === 'overview' ? selectedProfileTab.value : selectedPageTab.value,
+  ],
+  ([mlbId, tab]) => {
+    if (!mlbId || !tab) return
+
+    const signature = `${mlbId}:${tab}`
+    if (trackedPlayerTabSignature.value === signature) return
+
+    window.umami?.track?.('player-profile-tab-viewed', {
+      mlb_id: String(mlbId),
+      tab,
+    })
+    trackedPlayerTabSignature.value = signature
   },
 )
 

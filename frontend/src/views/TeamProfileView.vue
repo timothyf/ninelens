@@ -63,6 +63,7 @@ const savedAnalysisUrl = computed(() => {
 })
 const { team, loading, error, refresh } = useTeamProfile(teamId, selectedSeason, requestedProfileSection)
 const trackedTeamMlbId = ref(null)
+const trackedTeamTabSignature = ref('')
 const teamHeaderStyle = computed(() => teamThemeStyle(team.value?.mlbId || team.value?.mlb_id))
 const externalTeamLinks = computed(() => {
   if (!team.value?.mlbId) return []
@@ -118,6 +119,22 @@ watch(
 
     window.umami?.track?.('team-profile-viewed', { mlb_id: String(mlbId) })
     trackedTeamMlbId.value = mlbId
+  },
+)
+
+watch(
+  () => [team.value?.mlbId, selectedProfileTab.value],
+  ([mlbId, tab]) => {
+    if (!mlbId || !tab) return
+
+    const signature = `${mlbId}:${tab}`
+    if (trackedTeamTabSignature.value === signature) return
+
+    window.umami?.track?.('team-profile-tab-viewed', {
+      mlb_id: String(mlbId),
+      tab,
+    })
+    trackedTeamTabSignature.value = signature
   },
 )
 

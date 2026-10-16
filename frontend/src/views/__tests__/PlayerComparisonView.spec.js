@@ -65,6 +65,8 @@ describe('PlayerComparisonView', () => {
   })
 
   it('loads URL-selected players and aligns season and career statistics', async () => {
+    const track = vi.fn()
+    vi.stubGlobal('umami', { track })
     const responses = {
       '/api/players/1': profile(
         1, 'Riley Greene', { id: 10, name: 'Detroit Tigers', abbreviation: 'DET' },
@@ -94,6 +96,11 @@ describe('PlayerComparisonView', () => {
     const wrapper = mount(PlayerComparisonView, { global: { plugins: [router] } })
     await flushPromises()
 
+    expect(track).toHaveBeenCalledWith('player-comparison-run', {
+      player_count: 2,
+      category: 'batting',
+      scope: 'season-and-career',
+    })
     expect(fetch).toHaveBeenCalledWith('/api/players/compare?ids=1%2C2&sections=core%2Cadvanced_stats%2Cdefensive_stats&view=comparison', expect.any(Object))
     expect(wrapper.get('[data-test="comparison-identities"]').text()).toContain('Riley Greene')
     expect(wrapper.get('[data-test="comparison-identities"]').text()).toContain('Aaron Judge')

@@ -131,6 +131,42 @@ describe('StatExplorer', () => {
     expect(wrapper.text()).toContain('Data range: 1970-2026 seasons')
   })
 
+  it('tracks debounced explorer runs without sending filter values', async () => {
+    vi.useFakeTimers()
+    const track = vi.fn()
+    vi.stubGlobal('umami', { track })
+    let wrapper
+
+    try {
+      wrapper = mount(StatExplorer)
+      await vi.advanceTimersByTimeAsync(400)
+
+      expect(track).toHaveBeenCalledWith('stat-explorer-run', {
+        mode: 'leaderboard',
+        category: 'batting',
+        season: 'all',
+        filter_count: 0,
+      })
+
+      track.mockClear()
+      await wrapper.find('[data-test="team-filter"]').setValue('2')
+      await wrapper.find('[data-test="season-start-filter"]').setValue('2025')
+      await wrapper.find('[data-test="season-end-filter"]').setValue('2026')
+      await vi.advanceTimersByTimeAsync(400)
+
+      expect(track).toHaveBeenCalledTimes(1)
+      expect(track).toHaveBeenCalledWith('stat-explorer-run', {
+        mode: 'leaderboard',
+        category: 'batting',
+        season: '2025-2026',
+        filter_count: 3,
+      })
+    } finally {
+      wrapper?.unmount()
+      vi.useRealTimers()
+    }
+  })
+
   it('enables pitch-data loading only while Pitch Data mode is selected', async () => {
     const wrapper = mount(StatExplorer)
     const pitchDataEnabled = usePitchData.mock.calls[0][1]

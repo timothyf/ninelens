@@ -456,14 +456,23 @@ describe('PlayerProfileView', () => {
     vi.stubGlobal('umami', { track })
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => apiPayload() }))
 
-    mount(PlayerProfileView, {
+    const wrapper = mount(PlayerProfileView, {
       props: { playerId: '42' },
       global: { stubs: { RouterLink: true } },
     })
     await flushPromises()
 
-    expect(track).toHaveBeenCalledTimes(1)
-    expect(track).toHaveBeenCalledWith('player-profile-viewed', { mlb_id: '680776' })
+    expect(track.mock.calls.filter(([event]) => event === 'player-profile-viewed')).toEqual([
+      ['player-profile-viewed', { mlb_id: '680776' }],
+    ])
+    expect(track).toHaveBeenCalledWith('player-profile-tab-viewed', { mlb_id: '680776', tab: 'overview' })
+
+    await wrapper.get('[data-test="player-page-tab-performance-trends"]').trigger('click')
+
+    expect(track).toHaveBeenCalledWith('player-profile-tab-viewed', {
+      mlb_id: '680776',
+      tab: 'performance-trends',
+    })
   })
 
   it('shows a loading indicator while benchmark context is refreshing', () => {

@@ -54,6 +54,7 @@ const profileLoaders = computed(() => [
 const loadedProfileCount = computed(() => profileLoaders.value.filter((profile) => !profile.loading && !profile.error && profile.name).length)
 const comparisonLoading = computed(() => profileLoaders.value.some((profile) => profile.loading))
 const showSeasonComparison = computed(() => comparisonPlayers.value.every((player) => player.profile?.active !== false))
+const trackedComparisonSignature = ref('')
 
 const ready = computed(() => Boolean(
   leftPlayer.value &&
@@ -70,6 +71,22 @@ const comparisonNoteKey = computed(() => {
 })
 const sameCategory = computed(() =>
   ready.value && comparisonPlayers.value.every((player) => player.seasonOverview.category === comparisonPlayers.value[0].seasonOverview.category),
+)
+
+watch(
+  () => ready.value
+    ? comparisonPlayers.value.map((player) => player.mlbId).filter(Boolean).join(':')
+    : '',
+  (signature) => {
+    if (!signature || trackedComparisonSignature.value === signature) return
+
+    window.umami?.track?.('player-comparison-run', {
+      player_count: comparisonPlayers.value.length,
+      category: sameCategory.value ? comparisonPlayers.value[0].seasonOverview.category : 'mixed',
+      scope: showSeasonComparison.value ? 'season-and-career' : 'career-only',
+    })
+    trackedComparisonSignature.value = signature
+  },
 )
 const seasonRows = computed(() => alignedRows('season'))
 const careerRows = computed(() => alignedRows('career'))
