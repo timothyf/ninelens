@@ -34,6 +34,7 @@ const today = [
 const currentSeason = new Date().getFullYear()
 const databaseDetailsOpen = ref(false)
 const databaseDetailsButton = ref(null)
+const scheduleRequestError = ref('')
 const adminTabs = [
   { id: 'operations', label: 'Daily in-season' },
   { id: 'local-imports', label: 'Local File Imports' },
@@ -226,8 +227,9 @@ const contractSummary = computed(() => {
 const scheduleTask = computed(() =>
   currentTask.value?.taskName === 'mlb_schedule_sync' ? currentTask.value : null,
 )
-const scheduleTaskError = computed(() => (scheduleTask.value ? taskError.value : ''))
+const scheduleTaskError = computed(() => (scheduleTask.value ? taskError.value : scheduleRequestError.value))
 const scheduleTaskResult = computed(() => (scheduleTask.value ? lastResult.value : null))
+const scheduleOwnsTaskStatus = computed(() => Boolean(scheduleTask.value || scheduleRequestError.value))
 
 onMounted(() =>
   Promise.all([
@@ -284,12 +286,14 @@ async function handleContractsDownload() {
 
 async function handleScheduleSync() {
   normalizeDateRange(scheduleOptions)
+  scheduleRequestError.value = ''
   const result = await runTask('mlb_schedule_sync', {
     start_date: scheduleOptions.startDate,
     end_date: scheduleOptions.endDate,
     game_types: scheduleOptions.gameTypes,
     sport_id: scheduleOptions.sportId,
   })
+  if (!result) scheduleRequestError.value = taskError.value || 'Unable to start schedule synchronization.'
   if (result) await loadOverview()
 }
 
@@ -717,7 +721,7 @@ async function closeDatabaseDetails() {
       />
 
       <AdminTaskResult
-        v-if="currentTask?.taskName !== 'mlb_schedule_sync'"
+        v-if="!scheduleOwnsTaskStatus"
         :error="taskError"
         :result="lastResult"
         :task="currentTask"

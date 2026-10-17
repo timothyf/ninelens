@@ -61,12 +61,12 @@ function seriesState(series) {
 }
 
 function resolveWorldSeriesTeam(team) {
-  const league = ['AL', 'NL'].includes(team?.abbreviation) ? team.abbreviation : null
+  const league = team?.league || (['AL', 'NL'].includes(team?.abbreviation) ? team.abbreviation : null)
   if (!league) return team
 
   const championship = postseason.value.rounds
     .find((round) => round.key === 'league-championship-series')
-    ?.series?.find((series) => series.name.startsWith(league))
+    ?.series?.find((series) => series.league === league || series.name.startsWith(league))
   if (!championship) return team
 
   const winner = championship.teams.find((candidate) => seriesWins(championship, candidate) >= 4)

@@ -58,4 +58,59 @@ RSpec.describe "Api::Postseason", type: :request do
     expect(json_body.dig("data", "rounds")).to eq([])
     expect(json_body.dig("data", "leaders")).to eq("batting" => [], "pitching" => [])
   end
+
+  it "identifies championship-series leagues from MLB team metadata instead of display labels" do
+    schedule = create_schedule(season: 2026)
+    rays = create_team(name: "Tampa Bay Rays", abbreviation: "TB", mlb_id: 139)
+    guardians = create_team(name: "Cleveland Guardians", abbreviation: "CLE", mlb_id: 114)
+    brewers = create_team(name: "Milwaukee Brewers", abbreviation: "MIL", mlb_id: 158)
+    dodgers = create_team(name: "Los Angeles Dodgers", abbreviation: "LAD", mlb_id: 119)
+    al = create_team(name: "American League Champion", abbreviation: "AL", mlb_id: 159)
+    nl = create_team(name: "National League Champion", abbreviation: "NL", mlb_id: 160)
+
+    create_game(
+      schedule:, home_team: rays, away_team: guardians, game_type: "L", status: "final",
+      official_date: Date.new(2026, 10, 4), home_score: 5, away_score: 2,
+      raw_data: postseason_raw_data("League Championship Series A Game 1", rays, guardians, 103)
+    )
+    create_game(
+      schedule:, home_team: guardians, away_team: rays, game_type: "L", status: "final",
+      official_date: Date.new(2026, 10, 5), home_score: 2, away_score: 5,
+      raw_data: postseason_raw_data("League Championship Series A Game 2, Makeup of 10/4", guardians, rays, 103)
+    )
+    create_game(
+      schedule:, home_team: brewers, away_team: dodgers, game_type: "L", status: "final",
+      official_date: Date.new(2026, 10, 4), home_score: 5, away_score: 2,
+      raw_data: postseason_raw_data("League Championship Series B Game 1", brewers, dodgers, 104)
+    )
+    create_game(
+      schedule:, home_team: nl, away_team: al, game_type: "W", status: "preview",
+      official_date: Date.new(2026, 10, 6),
+      raw_data: postseason_raw_data("World Series Game 1", nl, al, nil, home_league_id: 104, away_league_id: 103)
+    )
+
+    get api_postseason_path, params: { season: 2026 }
+
+    lcs = json_body.dig("data", "rounds").find { |round| round["key"] == "league-championship-series" }
+    expect(lcs.fetch("series").size).to eq(2)
+    expect(lcs.fetch("series").map { |series| series["league"] }).to contain_exactly("AL", "NL")
+    world_series = json_body.dig("data", "rounds").find { |round| round["key"] == "world-series" }.dig("series", 0)
+    expect(world_series.fetch("teams").index_by { |team| team["abbreviation"] }).to include(
+      "AL" => include("league" => "AL"),
+      "NL" => include("league" => "NL")
+    )
+  end
+
+  def postseason_raw_data(description, home_team, away_team, league_id, home_league_id: league_id, away_league_id: league_id)
+    {
+      "description" => description,
+      "seriesDescription" => "Postseason",
+      "seriesGameNumber" => 1,
+      "ifNecessary" => "N",
+      "teams" => {
+        "home" => { "team" => { "id" => home_team.mlb_id, "league" => { "id" => home_league_id } } },
+        "away" => { "team" => { "id" => away_team.mlb_id, "league" => { "id" => away_league_id } } }
+      }
+    }
+  end
 end

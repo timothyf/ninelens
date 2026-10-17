@@ -34,7 +34,10 @@ RSpec.describe MlbStatsApiClient do
     expect(http).to have_received(:open_timeout=).with(17)
     expect(http).to have_received(:read_timeout=).with(17)
     expect(request["User-Agent"]).to eq("NineLens Schedule")
-    expect(request["Accept"]).to eq("application/json")
+    expect(request["Accept"]).to eq("application/json, text/plain, */*")
+    expect(request["Accept-Encoding"]).to eq("identity")
+    expect(request["Referer"]).to eq("https://www.mlb.com/")
+    expect(request["Connection"]).to eq("close")
     expect(request.path).to eq("/api/v1/schedule?sportId=1")
   end
 
@@ -55,7 +58,10 @@ RSpec.describe MlbStatsApiClient do
 
     expect do
       described_class.get_json("https://statsapi.mlb.com/missing", user_agent: "NineLens")
-    end.to raise_error(RuntimeError, "HTTP 404: Not Found")
+    end.to raise_error(MlbStatsApiClient::HttpError, "HTTP 404: Not Found (https://statsapi.mlb.com/missing)") do |error|
+      expect(error.status).to eq(404)
+      expect(error.url).to eq("https://statsapi.mlb.com/missing")
+    end
   end
 
   it "retries an MLB 406 response with browser-compatible request headers" do

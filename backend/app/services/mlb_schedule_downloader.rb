@@ -79,6 +79,19 @@ class MlbScheduleDownloader
       url,
       user_agent: service_config.fetch(:user_agents).fetch(:schedule)
     )
+  rescue MlbStatsApiClient::HttpError => error
+    raise unless error.status == 406
+
+    MlbStatsApiClient.get_json(
+      alternate_schedule_url(url),
+      user_agent: MlbStatsApiClient::COMPATIBLE_USER_AGENT
+    )
+  end
+
+  def alternate_schedule_url(url)
+    uri = URI(url)
+    uri.path = "/api/v1/schedule/games/"
+    uri.to_s
   end
 
   def service_config

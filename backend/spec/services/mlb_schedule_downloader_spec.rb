@@ -49,4 +49,21 @@ RSpec.describe MlbScheduleDownloader do
     expect(result[:success]).to be(false)
     expect(result[:message]).to eq("End date must be greater than or equal to start date")
   end
+
+  it "falls back to the alternate official schedule route after a 406 response" do
+    downloader = described_class.new(start_date: "2026-10-17", end_date: "2026-10-19")
+    primary_url = downloader.send(:build_url)
+    alternate_url = primary_url.sub("/api/v1/schedule?", "/api/v1/schedule/games/?")
+
+    expect(MlbStatsApiClient).to receive(:get_json).with(
+      primary_url,
+      user_agent: NineLensConfig.fetch(:external_services, :mlb_stats_api, :user_agents, :schedule)
+    ).and_raise(MlbStatsApiClient::HttpError.new(status: 406, message: "Not Acceptable", url: primary_url))
+    expect(MlbStatsApiClient).to receive(:get_json).with(
+      alternate_url,
+      user_agent: MlbStatsApiClient::COMPATIBLE_USER_AGENT
+    ).and_return("dates" => [])
+
+    expect(downloader.call).to include(success: true, message: "Downloaded 0 games from the MLB schedule")
+  end
 end

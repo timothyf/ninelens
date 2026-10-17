@@ -96,7 +96,7 @@ describe('PostseasonView', () => {
         key: 'league-championship-series',
         series: [
           {
-            name: 'ALCS', teams: [tampaBay, cleveland],
+            name: 'League Championship Series A', league: 'AL', teams: [tampaBay, cleveland],
             games: [
               finalGame(1, tampaBay, cleveland, 3, 7),
               finalGame(2, tampaBay, cleveland, 3, 1),
@@ -104,7 +104,7 @@ describe('PostseasonView', () => {
             ],
           },
           {
-            name: 'NLCS', teams: [milwaukee, losAngeles],
+            name: 'League Championship Series B', league: 'NL', teams: [milwaukee, losAngeles],
             games: [1, 2, 3, 4].map((id) => finalGame(id + 10, milwaukee, losAngeles, 5, 2)),
           },
         ],

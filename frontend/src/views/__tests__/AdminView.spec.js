@@ -470,6 +470,21 @@ describe('AdminView', () => {
     expect(wrapper.findAll('[role="alert"]')).toHaveLength(1)
   })
 
+  it('renders a schedule start failure in the card even when no task was created', async () => {
+    runTask.mockImplementationOnce(async () => {
+      adminTaskError.value = 'Schedule request failed with status 406.'
+      return null
+    })
+    const wrapper = mount(AdminView)
+
+    await wrapper.get('[data-test="schedule-sync-form"]').trigger('submit')
+    await flushPromises()
+
+    const alert = wrapper.get('[data-test="schedule-sync-form"] [role="alert"]')
+    expect(alert.text()).toContain('Schedule request failed with status 406.')
+    expect(wrapper.findAll('[role="alert"]')).toHaveLength(1)
+  })
+
   it('submits download and synchronization forms through their existing services', async () => {
     const wrapper = mount(AdminView)
 

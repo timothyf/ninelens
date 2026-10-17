@@ -88,7 +88,7 @@ class PostseasonSnapshotQuery
 
   def series_key(game)
     description = game.raw_data.to_h["description"].to_s
-    label = description.sub(/\s+Game\s+\d+\s*\z/i, "").strip
+    label = description.sub(/\s+Game\s+\d+.*\z/i, "").strip
     label.presence || game.raw_data.to_h["seriesDescription"].presence || "Series"
   end
 
@@ -97,9 +97,44 @@ class PostseasonSnapshotQuery
     {
       key: series_key(games.first).parameterize,
       name: series_key(games.first),
-      teams: teams.map { |team| team_payload(team) },
+      league: series_league(games),
+      teams: teams.map { |team| team_payload(team).merge(league: team_league(team, games)) },
       games: games.sort_by { |game| [game.raw_data.to_h["seriesGameNumber"].to_i, game.scheduled_at, game.mlb_id] }.map { |game| GameSerializer.call(game, include_schedule: false) }
     }
+  end
+
+  def series_league(games)
+    leagues = games.filter_map { |game| league_from_description(series_key(game)) }.uniq
+    leagues = games.flat_map { |game| %w[home away].filter_map { |side| league_from_raw_team(game, side) } }.uniq if leagues.empty?
+    leagues.one? ? leagues.first : nil
+  end
+
+  def team_league(team, games)
+    games.each do |game|
+      %w[home away].each do |side|
+        raw_team = game.raw_data.to_h.dig("teams", side, "team").to_h
+        next unless raw_team["id"].to_i == team.mlb_id
+
+        league = league_from_id(raw_team.dig("league", "id"))
+        return league if league
+      end
+    end
+
+    league_from_description(games.filter_map { |game| series_key(game) }.first)
+  end
+
+  def league_from_raw_team(game, side)
+    league_from_id(game.raw_data.to_h.dig("teams", side, "team", "league", "id"))
+  end
+
+  def league_from_id(id)
+    { 103 => "AL", 104 => "NL" }[id.to_i]
+  end
+
+  def league_from_description(value)
+    text = value.to_s.upcase
+    return "AL" if text.match?(/\AAL(?:CS|DS|\s)/) || text.include?("AMERICAN LEAGUE")
+    return "NL" if text.match?(/\ANL(?:CS|DS|\s)/) || text.include?("NATIONAL LEAGUE")
   end
 
   def team_score(game, team)
