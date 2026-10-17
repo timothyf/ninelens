@@ -10,7 +10,12 @@ const { postseason, loading, error, load } = usePostseason()
 const alRounds = computed(() => roundsFor('AL'))
 const nlRounds = computed(() => roundsFor('NL').reverse())
 const worldSeries = computed(() => postseason.value.rounds.find((round) => round.key === 'world-series')?.series?.[0] || null)
-const worldSeriesTeams = computed(() => (worldSeries.value?.teams || []).map(resolveWorldSeriesTeam))
+const worldSeriesTeams = computed(() => {
+  const resolvedTeams = (worldSeries.value?.teams || []).map(resolveWorldSeriesTeam)
+  return resolvedTeams.filter((team, index) => (
+    resolvedTeams.findIndex((candidate) => worldSeriesTeamKey(candidate) === worldSeriesTeamKey(team)) === index
+  ))
+})
 
 onMounted(load)
 
@@ -82,6 +87,10 @@ function resolveWorldSeriesTeam(team) {
   }
 }
 
+function worldSeriesTeamKey(team) {
+  return team?.id || team?.mlb_id || team?.abbreviation || team?.name
+}
+
 function seriesWins(series, team) {
   return (series.games || []).filter((game) => {
     if (game.status !== 'final') return false
@@ -141,7 +150,7 @@ function roundsFor(league) {
                 <RouterLink v-if="!team.inferred_matchup" :to="{ name: 'team-profile', params: { id: team.id } }" class="postseason-series__team">
                   <img v-if="teamLogo(team)" :src="teamLogo(team)" :alt="team.name + ' logo'" /><span><b>{{ team.abbreviation }}</b></span><strong>{{ seriesRecord(worldSeries, team) }}</strong>
                 </RouterLink>
-                <div v-else class="postseason-series__team"><span><b>{{ team.abbreviation }}</b></span><strong>0–0</strong></div>
+                <div v-else class="postseason-series__team postseason-series__team--inferred"><span><b>{{ team.abbreviation }}</b></span><strong>0–0</strong></div>
               </template>
             </template>
           </div>
@@ -237,6 +246,7 @@ function roundsFor(league) {
 .postseason-series__heading h3 { margin:0; color:#10263d; font-size:.66rem; line-height:1.1; text-transform:uppercase; }
 .postseason-series__heading small { color:#77858d; font-size:.54rem; white-space:nowrap; }
 .postseason-series__team { display:grid; grid-template-columns:25px 1fr auto; gap:.45rem; align-items:center; padding:.42rem 0; color:#10263d; text-decoration:none; }
+.postseason-series__team--inferred { grid-template-columns:1fr auto; }
 .postseason-series__team img { width:24px; height:24px; object-fit:contain; }
 .postseason-series__team span { display:grid; gap:.08rem; min-width:0; }
 .postseason-series__team b { font-size:.72rem; }

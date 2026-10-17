@@ -113,6 +113,7 @@ describe('PostseasonView', () => {
         series: [{
           name: 'World Series',
           teams: [
+            { ...milwaukee, league: 'NL' },
             { id: 37, name: 'NL Champion', abbreviation: 'NL', mlb_id: 160 },
             { id: 38, name: 'AL Champion', abbreviation: 'AL', mlb_id: 159 },
           ],
@@ -131,5 +132,8 @@ describe('PostseasonView', () => {
     expect(championship.text()).not.toContain('NL0–0')
     expect(championship.find('a[href="/teams/26"]').exists()).toBe(true)
     expect(championship.find('a[href="/teams/38"]').exists()).toBe(false)
+    expect(championship.findAll('.postseason-series__team')).toHaveLength(2)
+    expect(championship.findAll('a[href="/teams/26"]')).toHaveLength(1)
+    expect(championship.get('.postseason-series__team--inferred').text()).toBe('TB/CLE0–0')
   })
 })
