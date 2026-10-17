@@ -36,6 +36,18 @@ RSpec.describe "Api::Home", type: :request do
     rays = create_team(mlb_id: 139, name: "Tampa Bay Rays", abbreviation: "TB")
     yankees = create_team(mlb_id: 147, name: "New York Yankees", abbreviation: "NYY")
     schedule = create_schedule(season: 2026, schedule_type: "D", start_date: Date.new(2026, 10, 1), end_date: Date.new(2026, 10, 15))
+    3.times do |index|
+      create_game(
+        schedule:,
+        official_date: ApplicationCalendar.current_date - (index + 1).days,
+        home_team: rays,
+        away_team: yankees,
+        home_score: 4,
+        away_score: 2,
+        game_type: "D",
+        status: "final"
+      )
+    end
     create_game(
       schedule:,
       official_date: ApplicationCalendar.current_date,

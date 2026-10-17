@@ -58,6 +58,29 @@ RSpec.describe MlbStatsApiClient do
     end.to raise_error(RuntimeError, "HTTP 404: Not Found")
   end
 
+  it "retries an MLB 406 response with browser-compatible request headers" do
+    rejected = Net::HTTPNotAcceptable.new("1.1", "406", "Not Acceptable")
+    accepted = Net::HTTPOK.new("1.1", "200", "OK")
+    allow(accepted).to receive(:body).and_return('{"dates":[]}')
+    requests = []
+    allow(http).to receive(:request) do |request|
+      requests << request
+      requests.length == 1 ? rejected : accepted
+    end
+
+    payload = described_class.get_json(
+      "https://statsapi.mlb.com/api/v1/schedule?sportId=1",
+      user_agent: "NineLens/1.0 (MLB schedule synchronization)"
+    )
+
+    expect(payload).to eq("dates" => [])
+    expect(requests.length).to eq(2)
+    expect(requests.first["User-Agent"]).to eq("NineLens/1.0 (MLB schedule synchronization)")
+    expect(requests.second["User-Agent"]).to eq(MlbStatsApiClient::COMPATIBLE_USER_AGENT)
+    expect(requests.second["Accept-Language"]).to eq("en-US,en;q=0.9")
+    expect(requests.second["Cache-Control"]).to eq("no-cache")
+  end
+
   it "allows JSON parser errors to retain their error type" do
     response = Net::HTTPOK.new("1.1", "200", "OK")
     allow(response).to receive(:body).and_return("not-json")

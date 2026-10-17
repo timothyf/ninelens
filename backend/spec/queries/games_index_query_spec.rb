@@ -71,17 +71,65 @@ RSpec.describe GamesIndexQuery, type: :model do
     expect(query.metadata[:filters]).to include(team_id: tigers.id)
   end
 
-  it "does not return unplayed if-necessary postseason placeholders" do
-    visible_game = create_game(official_date: Date.new(2026, 10, 1), status: "preview")
-    create_game(
-      official_date: Date.new(2026, 10, 1),
-      game_type: "F",
+  it "returns an if-necessary postseason game while its series is active" do
+    home_team = create_team
+    away_team = create_team
+    schedule = create_schedule(season: 2026)
+    [ [ 5, 2 ], [ 1, 3 ], [ 4, 2 ] ].each_with_index do |(home_score, away_score), index|
+      create_game(
+        schedule: schedule,
+        home_team: home_team,
+        away_team: away_team,
+        official_date: Date.new(2026, 10, 12) + index.days,
+        game_type: "L",
+        status: "final",
+        home_score: home_score,
+        away_score: away_score
+      )
+    end
+    if_necessary_game = create_game(
+      schedule: schedule,
+      home_team: away_team,
+      away_team: home_team,
+      official_date: Date.new(2026, 10, 19),
+      game_type: "L",
       status: "preview",
-      raw_data: { "ifNecessary" => "Y", "ifNecessaryDescription" => "If Necessary Game" }
+      raw_data: { "ifNecessary" => "Y", "seriesGameNumber" => 6, "ifNecessaryDescription" => "If Necessary Game" }
     )
 
-    query = described_class.new(params: { start_date: "2026-10-01", end_date: "2026-10-01" })
+    query = described_class.new(params: { start_date: "2026-10-19", end_date: "2026-10-19" })
 
-    expect(query.results).to eq([ visible_game ])
+    expect(query.results).to eq([ if_necessary_game ])
+  end
+
+  it "does not return an unused if-necessary game after the series is clinched" do
+    home_team = create_team
+    away_team = create_team
+    schedule = create_schedule(season: 2026)
+    4.times do |index|
+      create_game(
+        schedule: schedule,
+        home_team: home_team,
+        away_team: away_team,
+        official_date: Date.new(2026, 10, 10) + index.days,
+        game_type: "L",
+        status: "final",
+        home_score: 5,
+        away_score: 2
+      )
+    end
+    create_game(
+      schedule: schedule,
+      home_team: away_team,
+      away_team: home_team,
+      official_date: Date.new(2026, 10, 15),
+      game_type: "L",
+      status: "preview",
+      raw_data: { "ifNecessary" => "Y", "seriesGameNumber" => 6 }
+    )
+
+    query = described_class.new(params: { start_date: "2026-10-15", end_date: "2026-10-15" })
+
+    expect(query.results).to be_empty
   end
 end

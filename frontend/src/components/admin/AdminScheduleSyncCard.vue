@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { formatDate } from '../../utils/adminFormatting'
 
 import AdminTaskCard from './AdminTaskCard.vue'
+import AdminTaskResult from './AdminTaskResult.vue'
 
 const props = defineProps({
   options: { type: Object, required: true },
@@ -12,6 +13,9 @@ const props = defineProps({
   overviewError: { type: String, default: '' },
   anyActionRunning: { type: Boolean, default: false },
   runningTask: { type: String, default: '' },
+  task: { type: Object, default: null },
+  error: { type: String, default: '' },
+  result: { type: Object, default: null },
 })
 const emit = defineEmits(['submit'])
 
@@ -76,6 +80,7 @@ const hasStoredGames = computed(
     <button class="admin-button" type="submit" :disabled="anyActionRunning">
       {{ runningTask === 'mlb_schedule_sync' ? 'Synchronizing schedule…' : 'Synchronize schedule' }}
     </button>
+    <AdminTaskResult :error="error" :result="result" :task="task" />
   </AdminTaskCard>
 </template>
 

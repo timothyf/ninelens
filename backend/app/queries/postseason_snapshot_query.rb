@@ -50,11 +50,7 @@ class PostseasonSnapshotQuery
       .joins(:schedule)
       .includes(:home_team, :away_team)
       .where(schedules: { season: season }, game_type: POSTSEASON_GAME_TYPES)
-      .where.not(
-        "games.status IN (?) AND COALESCE(games.raw_data ->> 'ifNecessary', 'N') = ?",
-        %w[scheduled preview],
-        "Y"
-      )
+      .without_unplayed_if_necessary
       .chronological
   end
 

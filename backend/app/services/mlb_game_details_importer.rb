@@ -67,6 +67,8 @@ class MlbGameDetailsImporter
 
     Game.transaction do
       game.update!(
+        official_date: live_official_date || game.official_date,
+        scheduled_at: live_scheduled_at || game.scheduled_at,
         status: live_game_status,
         detailed_status: live_detailed_status,
         home_score: live_score("home") || game.home_score,
@@ -95,6 +97,14 @@ class MlbGameDetailsImporter
 
   def live_detailed_status
     live_feed.dig("gameData", "status", "detailedState").presence || game.detailed_status
+  end
+
+  def live_official_date
+    parse_date(live_feed.dig("gameData", "datetime", "officialDate"))
+  end
+
+  def live_scheduled_at
+    parse_time(live_feed.dig("gameData", "datetime", "dateTime"))
   end
 
   def live_game_status
@@ -380,6 +390,15 @@ class MlbGameDetailsImporter
 
   def parse_integer(value)
     Integer(value, exception: false)
+  end
+
+  def parse_date(value)
+    return if value.blank?
+    return value.to_date if value.respond_to?(:to_date)
+
+    Date.iso8601(value.to_s)
+  rescue ArgumentError
+    nil
   end
 
   def parse_time(value)

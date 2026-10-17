@@ -37,9 +37,8 @@ class GamesIndexQuery
 
   def filtered_relation
     @filtered_relation ||= begin
-      # MLB publishes "if necessary" postseason placeholders before it knows
-      # whether the game will be needed. They are not real scheduled games
-      # when they remain in a scheduled/preview state.
+      # Keep MLB's tentative postseason games visible while their series is
+      # active, then remove any unused games after a team clinches.
       scope = base_relation.without_unplayed_if_necessary
 
       if normalized_filters[:team_id].present?

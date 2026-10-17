@@ -128,6 +128,27 @@ RSpec.describe MlbGameDetailsImporter do
     )
   end
 
+  it "moves a postponed game to its rescheduled date from the live feed" do
+    payload = live_feed.deep_dup
+    payload["gameData"] = {
+      "datetime" => {
+        "dateTime" => "2026-10-18T21:00:00Z",
+        "officialDate" => "2026-10-18"
+      },
+      "status" => { "abstractGameState" => "Preview", "detailedState" => "Scheduled" }
+    }
+
+    result = import(live_payload: payload)
+
+    expect(result[:success]).to be(true)
+    expect(game.reload).to have_attributes(
+      official_date: Date.new(2026, 10, 18),
+      scheduled_at: Time.zone.parse("2026-10-18T21:00:00Z"),
+      status: "preview",
+      detailed_status: "Scheduled"
+    )
+  end
+
   it "removes stale lines when an authoritative box score has an empty player list" do
     import
     boxscore_payload = boxscore.deep_dup

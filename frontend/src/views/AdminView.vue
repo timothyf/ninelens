@@ -223,6 +223,11 @@ const contractSummary = computed(() => {
   if (contractTask.value?.status !== 'completed') return ''
   return contractTask.value.resultData?.message || 'Salary and contract data updated.'
 })
+const scheduleTask = computed(() =>
+  currentTask.value?.taskName === 'mlb_schedule_sync' ? currentTask.value : null,
+)
+const scheduleTaskError = computed(() => (scheduleTask.value ? taskError.value : ''))
+const scheduleTaskResult = computed(() => (scheduleTask.value ? lastResult.value : null))
 
 onMounted(() =>
   Promise.all([
@@ -558,6 +563,9 @@ async function closeDatabaseDetails() {
           :overview-error="overviewError"
           :any-action-running="anyActionRunning"
           :running-task="runningTask"
+          :task="scheduleTask"
+          :error="scheduleTaskError"
+          :result="scheduleTaskResult"
           @submit="handleScheduleSync"
         />
 
@@ -708,7 +716,12 @@ async function closeDatabaseDetails() {
         @load="handleRosterSnapshotLoad"
       />
 
-      <AdminTaskResult :error="taskError" :result="lastResult" :task="currentTask" />
+      <AdminTaskResult
+        v-if="currentTask?.taskName !== 'mlb_schedule_sync'"
+        :error="taskError"
+        :result="lastResult"
+        :task="currentTask"
+      />
     </section>
   </main>
 </template>

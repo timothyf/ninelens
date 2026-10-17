@@ -11,6 +11,9 @@ const importPitchFile = vi.fn()
 const loadOverview = vi.fn()
 const loadDataHealth = vi.fn()
 const loadSnapshots = vi.fn()
+const adminTaskCurrentTask = ref(null)
+const adminTaskError = ref('')
+const adminTaskLastResult = ref(null)
 const startGameDetailsSync = vi.fn()
 const cancelGameDetailsSync = vi.fn()
 const loadActiveGameDetailsSync = vi.fn()
@@ -31,8 +34,9 @@ const rosterSnapshots = ref([])
 vi.mock('../../composables/useAdminTask', () => ({
   useAdminTask: () => ({
     runningTask: computed(() => ''),
-    error: computed(() => ''),
-    lastResult: ref(null),
+    error: computed(() => adminTaskError.value),
+    currentTask: computed(() => adminTaskCurrentTask.value),
+    lastResult: computed(() => adminTaskLastResult.value),
     overviewLoading: computed(() => false),
     overviewError: computed(() => ''),
     dataHealth: computed(() => ({
@@ -254,6 +258,9 @@ vi.mock('../../composables/useRosterSnapshots', () => ({
 
 describe('AdminView', () => {
   beforeEach(() => {
+    adminTaskCurrentTask.value = null
+    adminTaskError.value = ''
+    adminTaskLastResult.value = null
     runTask.mockReset().mockResolvedValue({ success: true })
     downloadStats.mockReset().mockResolvedValue({ success: true })
     importStatsFile.mockReset().mockResolvedValue({ success: true })
@@ -444,6 +451,23 @@ describe('AdminView', () => {
     expect(localImportsTab.attributes('aria-selected')).toBe('true')
     expect(wrapper.get('[data-test="admin-panel-operations"]').attributes('style')).toContain('display: none')
     expect(wrapper.get('[data-test="admin-panel-local-imports"]').attributes('style') || '').not.toContain('display: none')
+  })
+
+  it('renders a persisted schedule failure beside the schedule controls', () => {
+    adminTaskCurrentTask.value = {
+      taskName: 'mlb_schedule_sync',
+      status: 'failed',
+      progressPercentage: 0,
+      errorMessage: 'Failed to download MLB schedule: HTTP 406: Not Acceptable',
+    }
+    adminTaskError.value = adminTaskCurrentTask.value.errorMessage
+
+    const wrapper = mount(AdminView)
+    const scheduleCard = wrapper.get('[data-test="schedule-sync-form"]')
+    const alert = scheduleCard.get('[role="alert"]')
+
+    expect(alert.text()).toContain('HTTP 406: Not Acceptable')
+    expect(wrapper.findAll('[role="alert"]')).toHaveLength(1)
   })
 
   it('submits download and synchronization forms through their existing services', async () => {

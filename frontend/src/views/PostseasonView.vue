@@ -10,6 +10,7 @@ const { postseason, loading, error, load } = usePostseason()
 const alRounds = computed(() => roundsFor('AL'))
 const nlRounds = computed(() => roundsFor('NL').reverse())
 const worldSeries = computed(() => postseason.value.rounds.find((round) => round.key === 'world-series')?.series?.[0] || null)
+const worldSeriesTeams = computed(() => (worldSeries.value?.teams || []).map(resolveWorldSeriesTeam))
 
 onMounted(load)
 
@@ -59,6 +60,38 @@ function seriesState(series) {
   return finalGames ? `${finalGames} game${finalGames === 1 ? '' : 's'} played` : 'Series pending'
 }
 
+function resolveWorldSeriesTeam(team) {
+  const league = ['AL', 'NL'].includes(team?.abbreviation) ? team.abbreviation : null
+  if (!league) return team
+
+  const championship = postseason.value.rounds
+    .find((round) => round.key === 'league-championship-series')
+    ?.series?.find((series) => series.name.startsWith(league))
+  if (!championship) return team
+
+  const winner = championship.teams.find((candidate) => seriesWins(championship, candidate) >= 4)
+  if (winner) return winner
+
+  return {
+    ...team,
+    name: championship.teams.map((candidate) => candidate.name).join(' / '),
+    abbreviation: championship.teams.map((candidate) => candidate.abbreviation).join('/'),
+    logo_url: null,
+    mlb_id: null,
+    inferred_matchup: true,
+  }
+}
+
+function seriesWins(series, team) {
+  return (series.games || []).filter((game) => {
+    if (game.status !== 'final') return false
+    const homeScore = Number(game.home_score)
+    const awayScore = Number(game.away_score)
+    if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore)) return false
+    return game.home_team?.id === team.id ? homeScore > awayScore : awayScore > homeScore
+  }).length
+}
+
 function roundsFor(league) {
   return (postseason.value.rounds || [])
     .filter((round) => round.key !== 'world-series')
@@ -104,9 +137,12 @@ function roundsFor(league) {
           <div class="postseason-bracket__championship">
             <span>Championship</span><strong>World Series</strong><small>Every game leads here</small><div aria-hidden="true">◆</div>
             <template v-if="worldSeries">
-              <RouterLink v-for="team in worldSeries.teams" :key="team.id" :to="{ name: 'team-profile', params: { id: team.id } }" class="postseason-series__team">
-                <img v-if="teamLogo(team)" :src="teamLogo(team)" :alt="team.name + ' logo'" /><span><b>{{ team.abbreviation }}</b></span><strong>{{ seriesRecord(worldSeries, team) }}</strong>
-              </RouterLink>
+              <template v-for="team in worldSeriesTeams" :key="team.id">
+                <RouterLink v-if="!team.inferred_matchup" :to="{ name: 'team-profile', params: { id: team.id } }" class="postseason-series__team">
+                  <img v-if="teamLogo(team)" :src="teamLogo(team)" :alt="team.name + ' logo'" /><span><b>{{ team.abbreviation }}</b></span><strong>{{ seriesRecord(worldSeries, team) }}</strong>
+                </RouterLink>
+                <div v-else class="postseason-series__team"><span><b>{{ team.abbreviation }}</b></span><strong>0–0</strong></div>
+              </template>
             </template>
           </div>
           <div class="postseason-bracket__side postseason-bracket__side--nl">
