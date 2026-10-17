@@ -1,0 +1,15 @@
+{
+  "name": "ninelens-mlb-relay",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-strip-types --test test/*.test.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^6.0.2",
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
+}

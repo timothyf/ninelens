@@ -1,0 +1,74 @@
+import assert from "node:assert/strict"
+import test from "node:test"
+
+import { createMlbRelayHandler } from "../netlify/functions/mlb-relay.mts"
+
+const relayUrl = "https://relay.example/.netlify/functions/mlb-relay"
+const secret = "test-relay-secret"
+
+function request(upstream, token = secret) {
+  return new Request(`${relayUrl}?upstream=${encodeURIComponent(upstream)}`, {
+    headers: token ? { "x-ninelens-relay-token": token } : {},
+  })
+}
+
+test("rejects requests without the shared secret", async () => {
+  let fetched = false
+  const handler = createMlbRelayHandler({
+    getSecret: () => secret,
+    fetchImpl: async () => {
+      fetched = true
+      return Response.json({})
+    },
+  })
+
+  const response = await handler(request("/api/v1/schedule?sportId=1", ""))
+
+  assert.equal(response.status, 401)
+  assert.equal(fetched, false)
+})
+
+test("rejects absolute URLs and non-allowlisted MLB paths", async () => {
+  const handler = createMlbRelayHandler({
+    getSecret: () => secret,
+    fetchImpl: async () => Response.json({}),
+  })
+
+  assert.equal((await handler(request("https://example.com/api/v1/schedule"))).status, 400)
+  assert.equal((await handler(request("/api/v1/teams"))).status, 400)
+})
+
+test("forwards an allowlisted request only to the fixed MLB origin", async () => {
+  let fetchedUrl
+  let fetchedHeaders
+  const handler = createMlbRelayHandler({
+    getSecret: () => secret,
+    fetchImpl: async (url, options) => {
+      fetchedUrl = url
+      fetchedHeaders = options.headers
+      return Response.json({ dates: [] }, { status: 200 })
+    },
+  })
+
+  const response = await handler(request("/api/v1/schedule/games/?sportId=1&gameTypes=R%2CW"))
+
+  assert.equal(response.status, 200)
+  assert.equal(fetchedUrl.origin, "https://statsapi.mlb.com")
+  assert.equal(fetchedUrl.pathname, "/api/v1/schedule/games/")
+  assert.equal(fetchedUrl.searchParams.get("gameTypes"), "R,W")
+  assert.match(fetchedHeaders["user-agent"], /Mozilla\/5\.0/)
+  assert.equal(response.headers.get("x-ninelens-relay"), "1")
+  assert.deepEqual(await response.json(), { dates: [] })
+})
+
+test("passes an MLB upstream failure through to NineLens", async () => {
+  const handler = createMlbRelayHandler({
+    getSecret: () => secret,
+    fetchImpl: async () => Response.json({ message: "Not found" }, { status: 404 }),
+  })
+
+  const response = await handler(request("/api/v1/people/1"))
+
+  assert.equal(response.status, 404)
+  assert.deepEqual(await response.json(), { message: "Not found" })
+})
