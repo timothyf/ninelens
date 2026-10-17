@@ -116,5 +116,5 @@ export function createMlbRelayHandler({ fetchImpl = fetch, getSecret }: RelayDep
 }
 
 export default createMlbRelayHandler({
-  getSecret: () => Netlify.env.get("MLB_RELAY_TOKEN"),
+  getSecret: () => process.env.MLB_RELAY_TOKEN,
 })
