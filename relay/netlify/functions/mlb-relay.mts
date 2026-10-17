@@ -55,8 +55,22 @@ export function createMlbRelayHandler({ fetchImpl = fetch, getSecret }: RelayDep
   return async (request: Request, context?: Context) => {
     if (request.method !== "GET") return jsonResponse(405, "Method not allowed")
 
-    const authorized = await tokensMatch(request.headers.get(TOKEN_HEADER), getSecret())
-    if (!authorized) return jsonResponse(401, "Unauthorized")
+    const expectedToken = getSecret()
+    if (!expectedToken) {
+      console.error(JSON.stringify({ requestId: context?.requestId, relayAuthConfigured: false }))
+      return jsonResponse(503, "Relay authentication is not configured")
+    }
+
+    const providedToken = request.headers.get(TOKEN_HEADER)
+    const authorized = await tokensMatch(providedToken, expectedToken)
+    if (!authorized) {
+      console.warn(JSON.stringify({
+        requestId: context?.requestId,
+        relayAuthConfigured: true,
+        relayTokenProvided: Boolean(providedToken),
+      }))
+      return jsonResponse(401, "Unauthorized")
+    }
 
     const upstream = allowedUpstream(new URL(request.url).searchParams.get("upstream"))
     if (!upstream) return jsonResponse(400, "Unsupported MLB API path")

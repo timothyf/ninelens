@@ -28,6 +28,29 @@ test("rejects requests without the shared secret", async () => {
   assert.equal(fetched, false)
 })
 
+test("reports a missing relay secret as a configuration error", async () => {
+  let fetched = false
+  const handler = createMlbRelayHandler({
+    getSecret: () => undefined,
+    fetchImpl: async () => {
+      fetched = true
+      return Response.json({})
+    },
+  })
+
+  const originalError = console.error
+  console.error = () => {}
+  try {
+    const response = await handler(request("/api/v1/schedule?sportId=1"))
+
+    assert.equal(response.status, 503)
+    assert.deepEqual(await response.json(), { message: "Relay authentication is not configured" })
+    assert.equal(fetched, false)
+  } finally {
+    console.error = originalError
+  }
+})
+
 test("rejects absolute URLs and non-allowlisted MLB paths", async () => {
   const handler = createMlbRelayHandler({
     getSecret: () => secret,
