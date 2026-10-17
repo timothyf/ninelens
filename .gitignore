@@ -63,6 +63,7 @@ build-iPhoneSimulator/
 # .rubocop-https?--*
 .DS_Store
 .vscode/
+/.netlify/
 /data/
 scratch.txt
 backend/config/master.key
