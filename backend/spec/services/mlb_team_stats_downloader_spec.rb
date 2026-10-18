@@ -32,7 +32,7 @@ RSpec.describe MlbTeamStatsDownloader, type: :service do
       }
     )
     expect(MlbStatsApiClient).to have_received(:get_json).with(
-      a_string_including("/api/v1/teams/stats"),
+      a_string_including("/api/v1/teams/stats", "sportIds=1"),
       user_agent: a_string_including("NineLens")
     )
   end

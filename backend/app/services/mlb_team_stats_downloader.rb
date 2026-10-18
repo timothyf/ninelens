@@ -31,7 +31,7 @@ class MlbTeamStatsDownloader
       stats: "season",
       group: GROUPS.fetch(category),
       season: season,
-      sportId: 1,
+      sportIds: 1,
       gameType: "R"
     }.to_query
 
