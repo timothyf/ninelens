@@ -1,6 +1,3 @@
-require "json"
-require "net/http"
-
 class MlbTeamStatsDownloader
   GROUPS = {
     "batting" => "hitting",
@@ -38,8 +35,7 @@ class MlbTeamStatsDownloader
       gameType: "R"
     }.to_query
 
-    response = request(uri)
-    payload = JSON.parse(response.body)
+    payload = MlbStatsApiClient.get_json(uri.to_s, user_agent: user_agent)
     splits = payload.dig("stats", 0, "splits") || []
 
     splits.each_with_object({}) do |split, values|
@@ -59,10 +55,6 @@ class MlbTeamStatsDownloader
 
   def base_url
     NineLensConfig.fetch(:external_services, :mlb_stats_api, :base_url)
-  end
-
-  def timeout_seconds
-    NineLensConfig.fetch(:external_services, :mlb_stats_api, :timeout_seconds).to_i
   end
 
   def user_agent
@@ -85,17 +77,4 @@ class MlbTeamStatsDownloader
     }.fetch(source_key, source_key)
   end
 
-  def request(uri)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = uri.scheme == "https"
-    http.open_timeout = timeout_seconds
-    http.read_timeout = timeout_seconds
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request["User-Agent"] = user_agent
-    request["Accept"] = "application/json"
-    response = http.request(request)
-    raise "HTTP #{response.code}: #{response.message}" unless response.is_a?(Net::HTTPSuccess)
-
-    response
-  end
 end

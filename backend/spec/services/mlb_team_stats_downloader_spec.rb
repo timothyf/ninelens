@@ -20,7 +20,7 @@ RSpec.describe MlbTeamStatsDownloader, type: :service do
       }.to_json
     )
     allow(response).to receive(:is_a?).with(Net::HTTPSuccess).and_return(true)
-    allow_any_instance_of(Net::HTTP).to receive(:request).and_return(response)
+    allow(MlbStatsApiClient).to receive(:get_json).and_return(JSON.parse(response.body))
 
     expect(described_class.call(season: 2026, category: "batting")).to eq(
       116 => {
@@ -30,6 +30,10 @@ RSpec.describe MlbTeamStatsDownloader, type: :service do
         "avg" => ".242",
         "ops" => ".723"
       }
+    )
+    expect(MlbStatsApiClient).to have_received(:get_json).with(
+      a_string_including("/api/v1/teams/stats"),
+      user_agent: a_string_including("NineLens")
     )
   end
 end
