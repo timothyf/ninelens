@@ -283,6 +283,46 @@ function roundsFor(league) {
 .postseason-leader-card td strong { color:#a93627; }
 .postseason-leader-rank { display:inline-grid; width:19px; height:19px; margin-right:.4rem; place-items:center; border-radius:50%; color:#fff; background:#183e5b; font-size:.55rem; }
 .postseason-leader-card .postseason-empty { margin:0; padding:1.25rem 1rem; }
-@media (max-width:760px) { .postseason-shell { width:calc(100% - 1.4rem); padding-top:1rem; }.postseason-hero { align-items:stretch; flex-direction:column; }.postseason-game { grid-template-columns:1fr 1fr; }.postseason-game time,.postseason-game small { grid-column:1 / -1; }.postseason-bracket-panel { padding-right:.7rem; padding-left:.7rem; }.postseason-bracket { min-width:930px; } }
+@media (max-width:760px) {
+  .postseason-shell { width:calc(100% - 1.4rem); padding-top:1rem; }
+  .postseason-hero { align-items:stretch; flex-direction:column; }
+  .postseason-game { grid-template-columns:1fr 1fr; }
+  .postseason-game time,.postseason-game small { grid-column:1 / -1; }
+  .postseason-bracket-panel { overflow:visible; padding-right:.7rem; padding-left:.7rem; }
+  .postseason-bracket-panel > header { align-items:flex-start; }
+  .postseason-bracket {
+    display:flex;
+    min-width:0;
+    flex-direction:column;
+    gap:1.15rem;
+    overflow:visible;
+    padding:.35rem 0 0;
+  }
+  .postseason-bracket__side {
+    display:flex;
+    min-width:0;
+    flex-direction:column;
+    gap:.8rem;
+  }
+  .postseason-bracket__side--al { order:1; }
+  .postseason-bracket__side--nl { order:2; }
+  .postseason-bracket__championship { order:3; }
+  .postseason-bracket__league-label { order:0; padding:.65rem .6rem; border-radius:12px; border-bottom:0; color:#fffaf0; background:#183e5b; }
+  .postseason-round { min-width:0; padding:0; }
+  .postseason-bracket__side .postseason-round--wild-card { order:1; }
+  .postseason-bracket__side .postseason-round--division-series { order:2; }
+  .postseason-bracket__side .postseason-round--league-championship-series { order:3; }
+  .postseason-round::after,
+  .postseason-series::after { display:none; }
+  .postseason-round__heading { min-height:0; padding:.45rem .35rem; }
+  .postseason-series-list { min-height:0; gap:.7rem; padding:.65rem 0 0; }
+  .postseason-series { padding:.8rem; }
+  .postseason-bracket__championship {
+    min-width:0;
+    margin:0;
+    padding:1.4rem 1rem;
+  }
+  .postseason-bracket__championship .postseason-series__team { width:min(100%,320px); }
+}
 @media (max-width:1050px) { .postseason-leaders-grid { grid-template-columns:1fr; } }
 </style>
