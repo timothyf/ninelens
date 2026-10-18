@@ -33,6 +33,72 @@ textarea {
   font: inherit;
 }
 
+:where(
+  button,
+  input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+  select,
+  textarea
+) {
+  min-inline-size: 44px !important;
+  min-block-size: 44px !important;
+}
+
+/* Keep the control compact while giving checkboxes a reliable 44px hit area. */
+input[type='checkbox'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-grid;
+  width: 44px !important;
+  height: 44px !important;
+  flex: 0 0 44px !important;
+  margin: 0;
+  padding: 0;
+  place-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type='checkbox']::before {
+  grid-area: 1 / 1;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #71808c;
+  border-radius: 4px;
+  background: #fffdf7;
+  content: '';
+}
+
+input[type='checkbox']::after {
+  grid-area: 1 / 1;
+  color: #fffdf7;
+  content: '✓';
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0;
+}
+
+input[type='checkbox']:checked::before {
+  border-color: #20543c;
+  background: #20543c;
+}
+
+input[type='checkbox']:checked::after {
+  opacity: 1;
+}
+
+input[type='checkbox']:focus-visible {
+  outline: 3px solid rgba(32, 84, 60, 0.35);
+  outline-offset: -3px;
+}
+
+input[type='checkbox']:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 /* iOS Safari zooms the viewport when a focused form control is smaller than 16px. */
 @media (max-width: 860px) {
   input,
