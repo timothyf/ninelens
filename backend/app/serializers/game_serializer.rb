@@ -20,6 +20,9 @@ class GameSerializer
       if_necessary: game.raw_data.to_h["ifNecessary"] == "Y",
       status: game.status,
       detailed_status: game.detailed_status,
+      current_inning: current_inning,
+      current_inning_ordinal: current_inning_ordinal,
+      inning_state: inning_state,
       venue_name: game.venue_name,
       game_number: game.game_number,
       doubleheader: game.doubleheader,
@@ -78,5 +81,21 @@ class GameSerializer
       source_key: schedule.source_key,
       last_synced_at: schedule.last_synced_at
     }
+  end
+
+  def linescore
+    game.live_feed_raw_data.to_h.dig("liveData", "linescore").to_h
+  end
+
+  def current_inning
+    linescore["currentInning"]
+  end
+
+  def current_inning_ordinal
+    linescore["currentInningOrdinal"]
+  end
+
+  def inning_state
+    linescore["inningState"]
   end
 end

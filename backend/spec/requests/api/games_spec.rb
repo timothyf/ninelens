@@ -90,6 +90,22 @@ RSpec.describe "Api::Games", type: :request do
     expect(json_body.dig("data", "source_url")).to include("823443")
     expect(json_body.dig("data", "last_synced_at")).to eq("2026-07-14T12:00:00.000Z")
     expect(json_body.dig("data", "schedule", "source_key")).to eq("mlb:schedule:1:2026:R")
+
+    @game.update!(live_feed_raw_data: {
+      "liveData" => {
+        "linescore" => {
+          "currentInning" => 5,
+          "currentInningOrdinal" => "5th",
+          "inningState" => "Top"
+        }
+      }
+    })
+
+    get api_game_path(@game)
+
+    expect(json_body.dig("data", "current_inning")).to eq(5)
+    expect(json_body.dig("data", "current_inning_ordinal")).to eq("5th")
+    expect(json_body.dig("data", "inning_state")).to eq("Top")
   end
 
   it "returns normalized box-score and plate-appearance drill-down data" do

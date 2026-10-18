@@ -11,10 +11,21 @@ function formatTime(value) {
 }
 
 function gameState(game) {
-  const status = String(game.status || '').toLowerCase()
+  const status = String(game.status || '').toLowerCase().replace(/[-_]/g, ' ')
   if (game.home_score !== null && game.home_score !== undefined && ['final', 'completed'].some((value) => status.includes(value))) return 'Final'
-  if (['live', 'in progress', 'manager challenge'].some((value) => status.includes(value))) return game.detailed_status || 'Live'
+  if (['live', 'in progress', 'manager challenge'].some((value) => status.includes(value))) {
+    const liveStatus = game.detailed_status || 'Live'
+    const inning = game.current_inning_ordinal || formatInning(game.current_inning)
+    return inning ? `${liveStatus} · ${inning}` : liveStatus
+  }
   return formatTime(game.scheduled_at)
+}
+
+function formatInning(value) {
+  const inning = Number(value)
+  if (!Number.isInteger(inning) || inning < 1) return null
+  const suffix = inning % 100 >= 11 && inning % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[inning % 10] || 'th')
+  return `${inning}${suffix}`
 }
 
 function teamLogo(team) {
@@ -39,16 +50,16 @@ function score(game, side) {
       <span>{{ gameState(game) }}</span>
       <small>{{ game.venue_name || 'Venue TBD' }}</small>
     </header>
-    <RouterLink :to="{ name: 'team-profile', params: { id: game.away_team.id } }" class="schedule-game-card__team">
+    <div class="schedule-game-card__team">
       <img v-if="teamLogo(game.away_team)" class="schedule-game-card__team-logo" :src="teamLogo(game.away_team)" :alt="`${game.away_team.name} logo`" /><b v-else>{{ game.away_team.abbreviation }}</b>
-      <strong>{{ game.away_team.name }}</strong>
+      <RouterLink :to="{ name: 'team-profile', params: { id: game.away_team.id } }" class="schedule-game-card__team-name">{{ game.away_team.name }}</RouterLink>
       <em>{{ score(game, 'away') }}</em>
-    </RouterLink>
-    <RouterLink :to="{ name: 'team-profile', params: { id: game.home_team.id } }" class="schedule-game-card__team">
+    </div>
+    <div class="schedule-game-card__team">
       <img v-if="teamLogo(game.home_team)" class="schedule-game-card__team-logo" :src="teamLogo(game.home_team)" :alt="`${game.home_team.name} logo`" /><b v-else>{{ game.home_team.abbreviation }}</b>
-      <strong>{{ game.home_team.name }}</strong>
+      <RouterLink :to="{ name: 'team-profile', params: { id: game.home_team.id } }" class="schedule-game-card__team-name">{{ game.home_team.name }}</RouterLink>
       <em>{{ score(game, 'home') }}</em>
-    </RouterLink>
+    </div>
     <footer>
       <span>{{ game.away_probable_pitcher?.full_name || 'Away probable TBD' }}</span>
       <span>{{ game.home_probable_pitcher?.full_name || 'Home probable TBD' }}</span>
@@ -63,10 +74,11 @@ function score(game, side) {
 .schedule-game-card > header { display: flex; justify-content: space-between; gap: .5rem; padding-bottom: .65rem; border-bottom: 1px solid rgba(16,38,61,.08); }
 .schedule-game-card > header span { color: #a93627; font-size: .73rem; font-weight: 900; text-transform: uppercase; }
 .schedule-game-card > header small { overflow: hidden; color: #78838b; text-overflow: ellipsis; white-space: nowrap; }
-.schedule-game-card__team { position: relative; z-index: 2; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: .65rem; align-items: center; padding-top: .75rem; color: #10263d; text-decoration: none; }
+.schedule-game-card__team { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: .65rem; align-items: center; padding-top: .75rem; color: #10263d; }
 .schedule-game-card__team-logo { display: block; width: 38px; height: 38px; object-fit: contain; }
 .schedule-game-card__team b { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; color: white; background: #183e5b; font-size: .7rem; }
-.schedule-game-card__team strong { overflow: hidden; font-size: .88rem; text-overflow: ellipsis; white-space: nowrap; }
+.schedule-game-card__team-name { position: relative; z-index: 2; min-width: 0; overflow: hidden; color: #10263d; font-size: .88rem; font-weight: 700; text-overflow: ellipsis; text-decoration: none; white-space: nowrap; }
+.schedule-game-card__team-name:hover,.schedule-game-card__team-name:focus-visible { color: #a93627; text-decoration: underline; }
 .schedule-game-card__team em { font-family: 'Avenir Next Condensed', sans-serif; font-size: 1.7rem; font-style: normal; font-weight: 900; }
 .schedule-game-card > footer { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: .75rem; padding-top: .65rem; border-top: 1px solid rgba(16,38,61,.08); color: #6c7881; font-size: .67rem; }
 .schedule-game-card > footer span:last-child { text-align: right; }

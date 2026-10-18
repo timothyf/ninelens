@@ -21,6 +21,19 @@ const dashboardPayload = {
         away_probable_pitcher: { id: 20, full_name: 'Tanner Bibee' },
         home_probable_pitcher: { id: 21, full_name: 'Tarik Skubal' },
       },
+      {
+        id: 11,
+        scheduled_at: '2026-07-16T18:10:00Z',
+        status: 'live',
+        detailed_status: 'In Progress',
+        current_inning: 5,
+        current_inning_ordinal: '5th',
+        venue_name: 'Progressive Field',
+        away_score: 2,
+        home_score: 3,
+        away_team: { id: 4, mlb_id: 117, abbreviation: 'HOU', name: 'Houston Astros' },
+        home_team: { id: 5, mlb_id: 118, abbreviation: 'CLE', name: 'Cleveland Guardians' },
+      },
     ],
     leaders: [
       {
@@ -107,8 +120,9 @@ describe('HomeView', () => {
     expect(wrapper.text()).toContain('Baseball intelligence, brought into focus')
     expect(wrapper.get('[data-test="today-games"]').text()).toContain('Detroit Tigers')
     expect(wrapper.get('[data-test="today-games"]').text()).toContain('Tarik Skubal')
+    expect(wrapper.get('[data-test="today-games"]').text()).toContain('In Progress · 5th')
     expect(wrapper.get('[data-test="game-summary-link"]').exists()).toBe(true)
-    expect(wrapper.findAll('.schedule-game-card__team-logo')).toHaveLength(2)
+    expect(wrapper.findAll('.schedule-game-card__team-logo')).toHaveLength(4)
     expect(wrapper.get('.schedule-game-card__team-logo').attributes('src')).toContain('team-logos/114.svg')
     expect(wrapper.get('[data-test="home-leaders"]').text()).toContain('Aaron Judge')
     expect(wrapper.get('[data-test="home-leaders"]').text()).toContain('1.025')
