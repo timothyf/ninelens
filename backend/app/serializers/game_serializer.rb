@@ -84,6 +84,8 @@ class GameSerializer
   end
 
   def linescore
+    return {} unless game.has_attribute?(:live_feed_raw_data)
+
     game.live_feed_raw_data.to_h.dig("liveData", "linescore").to_h
   end
 
