@@ -87,4 +87,23 @@ describe('App', () => {
       .find((item) => item.text() === 'Change password')
     expect(changePasswordLink).toBeTruthy()
   })
+
+  it('uses mutually exclusive mobile navigation and search panels', async () => {
+    const wrapper = shallowMount(App, {
+      global: { stubs: { RouterLink: true, RouterView: true } },
+    })
+
+    await wrapper.get('button[aria-label="Open navigation"]').trigger('click')
+    expect(wrapper.get('.app-navigation-shell').classes()).toContain('is-open')
+    expect(wrapper.find('.app-mobile-scrim').exists()).toBe(true)
+
+    await wrapper.get('button[aria-label="Search"]').trigger('click')
+    expect(wrapper.get('.app-navigation-shell').classes()).not.toContain('is-open')
+    expect(wrapper.get('.app-search-shell').classes()).toContain('is-open')
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('.app-search-shell').classes()).not.toContain('is-open')
+    expect(wrapper.find('.app-mobile-scrim').exists()).toBe(false)
+  })
 })

@@ -51,6 +51,20 @@
   white-space: nowrap;
 }
 
+.app-navigation-shell {
+  display: contents;
+}
+
+.app-search-shell {
+  min-width: 0;
+}
+
+.app-mobile-actions,
+.app-mobile-panel__header,
+.app-mobile-scrim {
+  display: none;
+}
+
 .app-primary-nav {
   justify-content: flex-start;
   overflow-x: auto;
@@ -991,24 +1005,185 @@
 @media (max-width: 860px) {
   .app-bar {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+    width: 100%;
+    height: 64px;
+    min-height: 64px;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
   }
 
-  .app-primary-nav {
-    order: 4;
-    flex: 1 0 100%;
-    justify-content: flex-start;
-    overflow-x: auto;
-    padding-bottom: 0.15rem;
+  .app-brand {
+    gap: 0.55rem;
   }
 
-  .app-account { margin-left: auto; }
+  .app-brand__mark {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+    border-radius: 10px;
+  }
 
-  .player-search {
-    order: 3;
-    flex: 1 0 100%;
-    margin: 0.65rem 0 0;
+  .app-brand__mark img {
+    top: -1px;
+    width: 70px;
+  }
+
+  .app-brand small {
+    display: none;
+  }
+
+  .app-mobile-actions {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+  }
+
+  .app-mobile-actions button,
+  .app-mobile-panel__close {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 12px;
+    color: #fff7e7;
+    background: rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+  }
+
+  .app-mobile-actions button:hover,
+  .app-mobile-actions button:focus-visible,
+  .app-mobile-panel__close:hover,
+  .app-mobile-panel__close:focus-visible {
+    outline: none;
+    background: rgba(241, 215, 168, 0.2);
+    box-shadow: 0 0 0 2px rgba(241, 215, 168, 0.55);
+  }
+
+  .app-mobile-actions svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .app-mobile-panel__header {
+    display: flex;
+    min-height: 48px;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff7e7;
+  }
+
+  .app-mobile-panel__header strong {
+    font-family: 'Avenir Next Condensed', sans-serif;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+  }
+
+  .app-mobile-panel__close {
+    width: 40px;
+    height: 40px;
+    font-size: 1.75rem;
+    line-height: 1;
+  }
+
+  .app-search-shell {
+    position: fixed;
+    z-index: 22;
+    top: 64px;
+    right: 0;
+    left: 0;
+    display: none;
+    padding: 0.65rem 0.85rem 1rem;
+    background: #10263d;
+    box-shadow: 0 14px 30px rgba(2, 15, 28, 0.28);
+  }
+
+  .app-search-shell.is-open {
+    display: block;
+  }
+
+  .app-search-shell .player-search {
+    width: 100%;
+    max-width: none;
+  }
+
+  .app-search-shell .player-search__panel {
+    max-height: calc(100vh - 140px);
+  }
+
+  .app-navigation-shell {
+    position: fixed;
+    z-index: 22;
+    top: 64px;
+    right: 0;
+    bottom: auto;
+    display: none;
+    width: min(320px, 88vw);
+    height: calc(100vh - 64px);
+    height: calc(100dvh - 64px);
+    padding: 0.65rem 0.85rem 1.25rem;
+    overflow-y: auto;
+    color: #fff7e7;
+    background: #10263d;
+    box-shadow: -14px 20px 36px rgba(2, 15, 28, 0.34);
+  }
+
+  .app-navigation-shell.is-open {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-navigation-shell .app-primary-nav {
+    display: grid;
+    gap: 0.2rem;
+    align-items: stretch;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .app-navigation-shell .app-primary-nav a {
+    padding: 0.7rem 0.8rem;
+    border-radius: 10px;
+    font-size: 0.92rem;
+  }
+
+  .app-navigation-shell .app-account {
+    display: grid;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .app-navigation-shell .app-account > a,
+  .app-navigation-shell .app-account__trigger {
+    width: 100%;
+    padding: 0.72rem 0.8rem;
+    text-align: center;
+  }
+
+  .app-navigation-shell .app-account__menu {
+    position: static;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .app-mobile-scrim {
+    position: fixed;
+    z-index: 19;
+    inset: 64px 0 0;
+    display: block;
+    width: 100%;
+    height: calc(100vh - 64px);
+    padding: 0;
+    border: 0;
+    background: rgba(2, 15, 28, 0.55);
+    cursor: default;
   }
 
   .dashboard-shell {
