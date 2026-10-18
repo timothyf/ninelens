@@ -1762,14 +1762,23 @@ async function closeDatabaseDetails() {
   }
 
   .admin-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 0.35rem;
+    overflow-x: visible;
     border-radius: 15px;
   }
 
   .admin-tabs__tab {
+    min-width: 0;
     min-height: 42px;
     padding: 0.6rem 0.8rem;
     font-size: 0.7rem;
+    white-space: normal;
+  }
+
+  .admin-tabs__tab:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   .admin-hero,
