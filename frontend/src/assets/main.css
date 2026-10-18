@@ -1,6 +1,8 @@
 @import './base.css';
 
 #app {
+  --app-header-height: 76px;
+
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -1003,6 +1005,10 @@
 }
 
 @media (max-width: 860px) {
+  #app {
+    --app-header-height: 64px;
+  }
+
   .app-bar {
     display: flex;
     width: 100%;
@@ -1221,6 +1227,10 @@
 }
 
 @media (min-width: 861px) and (max-width: 1280px) {
+  #app {
+    --app-header-height: 132px;
+  }
+
   .app-bar {
     grid-template-columns: auto minmax(220px, 1fr) auto;
   }

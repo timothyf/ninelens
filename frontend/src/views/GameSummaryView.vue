@@ -1271,7 +1271,7 @@ async function handleTabKey(event, index) {
 .game-tabs {
   position: sticky;
   z-index: 8;
-  top: .5rem;
+  top: calc(var(--app-header-height, 76px) + .5rem);
   margin-top: 1rem;
   padding: .35rem;
   border: 1px solid rgba(16, 38, 61, .1);
@@ -2317,7 +2317,7 @@ table a {
   }
 
   .game-tabs {
-    top: .25rem;
+    top: calc(var(--app-header-height, 64px) + .25rem);
   }
 
   .game-tabs [role='tablist'] {

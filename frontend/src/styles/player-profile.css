@@ -127,7 +127,7 @@
 .profile-tabs {
   position: sticky;
   z-index: 8;
-  top: 0.5rem;
+  top: calc(var(--app-header-height, 76px) + 0.5rem);
   margin-top: 1.25rem;
   margin-bottom: 0;
   padding: 0.35rem;
