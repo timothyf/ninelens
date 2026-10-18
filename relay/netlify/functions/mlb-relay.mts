@@ -7,6 +7,7 @@ const ALLOWED_PATHS = [
   /^\/api\/v1\/schedule(?:\/games\/?)?$/,
   /^\/api\/v1\/game\/\d+\/boxscore$/,
   /^\/api\/v1\.1\/game\/\d+\/feed\/live$/,
+  /^\/api\/v1\/teams\/stats$/,
   /^\/api\/v1\/teams\/\d+\/roster$/,
   /^\/api\/v1\/people(?:\/\d+)?$/,
   /^\/api\/v1\/transactions$/,

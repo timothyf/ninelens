@@ -84,6 +84,23 @@ test("forwards an allowlisted request only to the fixed MLB origin", async () =>
   assert.deepEqual(await response.json(), { dates: [] })
 })
 
+test("allows league-wide team stats requests", async () => {
+  let fetchedUrl
+  const handler = createMlbRelayHandler({
+    getSecret: () => secret,
+    fetchImpl: async (url) => {
+      fetchedUrl = url
+      return Response.json({ stats: [] }, { status: 200 })
+    },
+  })
+
+  const response = await handler(request("/api/v1/teams/stats?gameType=R&group=hitting&season=2026&sportIds=1&stats=season"))
+
+  assert.equal(response.status, 200)
+  assert.equal(fetchedUrl.pathname, "/api/v1/teams/stats")
+  assert.equal(fetchedUrl.searchParams.get("sportIds"), "1")
+})
+
 test("passes an MLB upstream failure through to NineLens", async () => {
   const handler = createMlbRelayHandler({
     getSecret: () => secret,
