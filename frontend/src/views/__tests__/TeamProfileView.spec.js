@@ -325,21 +325,25 @@ describe('TeamProfileView', () => {
     })
     await flushPromises()
 
-    expect(track.mock.calls.filter(([event]) => event === 'team-profile-viewed')).toEqual([
-      ['team-profile-viewed', { mlb_id: '116', team_name: 'Detroit Tigers' }],
-    ])
-    expect(track).toHaveBeenCalledWith('team-profile-tab-viewed', {
-      mlb_id: '116',
-      team_name: 'Detroit Tigers',
-      tab: 'overview',
+    const viewedEvent = track.mock.calls.find(([event]) => typeof event === 'function')[0]
+    expect(viewedEvent({ data: {} })).toMatchObject({
+      name: 'team-profile-viewed',
+      data: { mlb_id: '116', team_name: 'Detroit Tigers' },
+    })
+    expect(track.mock.calls).toHaveLength(2)
+
+    const overviewEvent = track.mock.calls[1][0]
+    expect(overviewEvent({ data: {} })).toMatchObject({
+      name: 'team-profile-tab-viewed',
+      data: { mlb_id: '116', team_name: 'Detroit Tigers', tab: 'overview' },
     })
 
     await wrapper.get('[data-test="team-profile-tab-roster"]').trigger('click')
 
-    expect(track).toHaveBeenCalledWith('team-profile-tab-viewed', {
-      mlb_id: '116',
-      team_name: 'Detroit Tigers',
-      tab: 'roster',
+    const rosterEvent = track.mock.calls[2][0]
+    expect(rosterEvent({ data: {} })).toMatchObject({
+      name: 'team-profile-tab-viewed',
+      data: { mlb_id: '116', team_name: 'Detroit Tigers', tab: 'roster' },
     })
   })
 

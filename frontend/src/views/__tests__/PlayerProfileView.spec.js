@@ -462,21 +462,25 @@ describe('PlayerProfileView', () => {
     })
     await flushPromises()
 
-    expect(track.mock.calls.filter(([event]) => event === 'player-profile-viewed')).toEqual([
-      ['player-profile-viewed', { mlb_id: '680776', player_name: 'Riley Greene' }],
-    ])
-    expect(track).toHaveBeenCalledWith('player-profile-tab-viewed', {
-      mlb_id: '680776',
-      player_name: 'Riley Greene',
-      tab: 'overview',
+    const viewedEvent = track.mock.calls.find(([event]) => typeof event === 'function')[0]
+    expect(viewedEvent({ data: {} })).toMatchObject({
+      name: 'player-profile-viewed',
+      data: { mlb_id: '680776', player_name: 'Riley Greene' },
+    })
+    expect(track.mock.calls).toHaveLength(2)
+
+    const overviewEvent = track.mock.calls[1][0]
+    expect(overviewEvent({ data: {} })).toMatchObject({
+      name: 'player-profile-tab-viewed',
+      data: { mlb_id: '680776', player_name: 'Riley Greene', tab: 'overview' },
     })
 
     await wrapper.get('[data-test="player-page-tab-performance-trends"]').trigger('click')
 
-    expect(track).toHaveBeenCalledWith('player-profile-tab-viewed', {
-      mlb_id: '680776',
-      player_name: 'Riley Greene',
-      tab: 'performance-trends',
+    const trendsEvent = track.mock.calls[2][0]
+    expect(trendsEvent({ data: {} })).toMatchObject({
+      name: 'player-profile-tab-viewed',
+      data: { mlb_id: '680776', player_name: 'Riley Greene', tab: 'performance-trends' },
     })
   })
 

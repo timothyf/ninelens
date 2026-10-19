@@ -112,12 +112,20 @@ const lineupRows = ref(Array.from({ length: 9 }, (_, index) => ({ battingSlot: i
 const lineupPositions = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH']
 const opponentTeamOptions = computed(() => availableTeams.value.filter((teamOption) => teamOption.id !== team.value?.id))
 
+function trackTeamEvent(name, data) {
+  window.umami?.track?.((payload) => ({
+    ...payload,
+    name,
+    data: { ...(payload.data || {}), ...data },
+  }))
+}
+
 watch(
   () => team.value?.mlbId,
   (mlbId) => {
     if (!mlbId || trackedTeamMlbId.value === mlbId) return
 
-    window.umami?.track?.('team-profile-viewed', {
+    trackTeamEvent('team-profile-viewed', {
       mlb_id: String(mlbId),
       team_name: team.value.name,
     })
@@ -133,7 +141,7 @@ watch(
     const signature = `${mlbId}:${tab}`
     if (trackedTeamTabSignature.value === signature) return
 
-    window.umami?.track?.('team-profile-tab-viewed', {
+    trackTeamEvent('team-profile-tab-viewed', {
       mlb_id: String(mlbId),
       team_name: team.value.name,
       tab,

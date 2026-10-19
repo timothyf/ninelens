@@ -67,12 +67,20 @@ const headshotFailed = ref(false)
 const sourceModalOpen = ref(false)
 const sourceModalTrigger = ref(null)
 
+function trackPlayerEvent(name, data) {
+  window.umami?.track?.((payload) => ({
+    ...payload,
+    name,
+    data: { ...(payload.data || {}), ...data },
+  }))
+}
+
 watch(
   () => player.value?.mlbId,
   (mlbId) => {
     if (!mlbId || trackedPlayerMlbId.value === mlbId) return
 
-    window.umami?.track?.('player-profile-viewed', {
+    trackPlayerEvent('player-profile-viewed', {
       mlb_id: String(mlbId),
       player_name: player.value.fullName,
     })
@@ -91,7 +99,7 @@ watch(
     const signature = `${mlbId}:${tab}`
     if (trackedPlayerTabSignature.value === signature) return
 
-    window.umami?.track?.('player-profile-tab-viewed', {
+    trackPlayerEvent('player-profile-tab-viewed', {
       mlb_id: String(mlbId),
       player_name: player.value.fullName,
       tab,
