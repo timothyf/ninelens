@@ -1,7 +1,12 @@
 module Api
   class HomeController < ApplicationController
     def show
-      snapshot = HomeSnapshotQuery.new(on: params[:date], league: params[:league]).result
+      date = params[:date].presence || ApplicationCalendar.current_date
+      league = params[:league].to_s.downcase
+      cache_key = [ "home-snapshot/v1", date, league ]
+      snapshot = Rails.cache.fetch(cache_key, expires_in: 2.minutes) do
+        HomeSnapshotQuery.new(on: date, league: league).result
+      end
 
       render json: { data: snapshot }
     end

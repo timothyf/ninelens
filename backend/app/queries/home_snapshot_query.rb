@@ -240,44 +240,63 @@ class HomeSnapshotQuery
   end
 
   def team_summaries
-    @team_summaries ||= team_metric_rows.group_by(&:team).filter_map do |team, rows|
-      totals = sum_metrics(rows)
-      next if totals[:games].zero?
+    @team_summaries ||= begin
+      metric_totals = team_metric_rows
+      teams = Team.where(id: metric_totals.map(&:first)).index_by(&:id)
 
-      recent = recent_game_summary(team)
-      recent_30 = recent_game_summary(team, RECENT_TEAM_30_GAME_LIMIT)
-      {
-        team: serialize_team(team),
-        games: totals[:games],
-        wins: totals[:wins],
-        losses: totals[:losses],
-        ties: totals[:ties],
-        winning_percentage: ratio(totals[:wins], totals[:wins] + totals[:losses]),
-        run_differential: totals[:runs_scored] - totals[:runs_allowed],
-        recent_games: recent[:games],
-        recent_wins: recent[:wins],
-        recent_losses: recent[:losses],
-        recent_ties: recent[:ties],
-        recent_winning_percentage: ratio(recent[:wins], recent[:wins] + recent[:losses]),
-        recent_run_differential: recent[:runs_scored] - recent[:runs_allowed],
-        recent_30_games: recent_30[:games],
-        recent_30_wins: recent_30[:wins],
-        recent_30_losses: recent_30[:losses],
-        recent_30_ties: recent_30[:ties],
-        recent_30_winning_percentage: ratio(recent_30[:wins], recent_30[:wins] + recent_30[:losses]),
-        recent_30_run_differential: recent_30[:runs_scored] - recent_30[:runs_allowed]
-      }
+      metric_totals.filter_map do |team_id, totals|
+        team = teams[team_id]
+        next if totals[:games].zero?
+
+        recent = recent_game_summary(team)
+        recent_30 = recent_game_summary(team, RECENT_TEAM_30_GAME_LIMIT)
+        {
+          team: serialize_team(team),
+          games: totals[:games],
+          wins: totals[:wins],
+          losses: totals[:losses],
+          ties: totals[:ties],
+          winning_percentage: ratio(totals[:wins], totals[:wins] + totals[:losses]),
+          run_differential: totals[:runs_scored] - totals[:runs_allowed],
+          recent_games: recent[:games],
+          recent_wins: recent[:wins],
+          recent_losses: recent[:losses],
+          recent_ties: recent[:ties],
+          recent_winning_percentage: ratio(recent[:wins], recent[:wins] + recent[:losses]),
+          recent_run_differential: recent[:runs_scored] - recent[:runs_allowed],
+          recent_30_games: recent_30[:games],
+          recent_30_wins: recent_30[:wins],
+          recent_30_losses: recent_30[:losses],
+          recent_30_ties: recent_30[:ties],
+          recent_30_winning_percentage: ratio(recent_30[:wins], recent_30[:wins] + recent_30[:losses]),
+          recent_30_run_differential: recent_30[:runs_scored] - recent_30[:runs_allowed]
+        }
+      end
     end
   end
 
   def team_metric_rows
-    return TeamDailyMetric.none if analytics_version.blank?
+    return [] if analytics_version.blank?
 
     TeamDailyMetric
       .where(metric_date: Date.new(season, 1, 1)..regular_season_end_date, calculation_version: analytics_version)
-      .includes(:team)
-      .order(:metric_date)
-      .to_a
+      .group(:team_id)
+      .pluck(
+        :team_id,
+        metric_sum("games"),
+        metric_sum("wins"),
+        metric_sum("losses"),
+        metric_sum("ties"),
+        metric_sum("runs_scored"),
+        metric_sum("runs_allowed")
+      )
+      .map do |team_id, games, wins, losses, ties, runs_scored, runs_allowed|
+        [ team_id, { games: games, wins: wins, losses: losses, ties: ties, runs_scored: runs_scored, runs_allowed: runs_allowed } ]
+      end
+  end
+
+  def metric_sum(key)
+    Arel.sql("COALESCE(SUM((team_daily_metrics.metrics ->> '#{key}')::integer), 0)")
   end
 
   def regular_season_end_date
@@ -290,12 +309,6 @@ class HomeSnapshotQuery
 
   def analytics_version
     @analytics_version ||= TeamDailyMetric.order(calculated_at: :desc).pick(:calculation_version)
-  end
-
-  def sum_metrics(rows)
-    rows.each_with_object({ games: 0, wins: 0, losses: 0, ties: 0, runs_scored: 0, runs_allowed: 0 }) do |row, totals|
-      totals.each_key { |key| totals[key] += row.metrics.to_h[key.to_s].to_i }
-    end
   end
 
   def recent_game_summary(team, limit = RECENT_TEAM_GAME_LIMIT)
