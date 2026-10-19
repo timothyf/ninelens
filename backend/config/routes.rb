@@ -34,6 +34,7 @@ Rails.application.routes.draw do
     end
     resources :users, only: [ :index ]
     resources :teams, only: [:index, :show] do
+      member { get :stats_summary }
       resources :opponent_reports, only: [ :index, :create ]
       resources :lineup_scenarios, only: [ :index, :create ] do
         collection { post :recommend }

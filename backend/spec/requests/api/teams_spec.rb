@@ -48,7 +48,7 @@ RSpec.describe "Api::Teams", type: :request do
     expect(json_body.dig("data", 0, "abbreviation")).to eq("DET")
   end
 
-  it "returns current team stat values and league ranks in the profile summary" do
+  it "loads official team stats separately from the overview" do
     allow(MlbTeamStatsDownloader).to receive(:call).with(season: Date.current.year, category: "batting").and_return(
       116 => { "avg" => ".242", "homeRuns" => 154 },
       114 => { "avg" => ".250", "homeRuns" => 100 }
@@ -60,7 +60,13 @@ RSpec.describe "Api::Teams", type: :request do
 
     get api_team_path(@tigers), params: { include: "overview" }
 
-    expect(json_body.dig("data", "team_stats_summary")).to include(
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("data")).not_to have_key("team_stats_summary")
+    expect(MlbTeamStatsDownloader).not_to have_received(:call)
+
+    get stats_summary_api_team_path(@tigers), params: { season: Date.current.year }
+
+    expect(json_body.fetch("data")).to include(
       "season" => Date.current.year,
       "batting" => {
         "avg" => { "value" => ".242", "rank" => 2 },
@@ -68,6 +74,16 @@ RSpec.describe "Api::Teams", type: :request do
       },
       "pitching" => { "ERA" => { "value" => "3.50", "rank" => 1 } }
     )
+  end
+
+  it "reuses official team stats across summary requests" do
+    allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+
+    2.times { get stats_summary_api_team_path(@tigers), params: { season: Date.current.year } }
+
+    expect(response).to have_http_status(:ok)
+    expect(MlbTeamStatsDownloader).to have_received(:call).with(season: Date.current.year, category: "batting").once
+    expect(MlbTeamStatsDownloader).to have_received(:call).with(season: Date.current.year, category: "pitching").once
   end
 
   it "returns the Rails exception details when the profile cannot be built" do

@@ -33,6 +33,17 @@ module Api
       render json: { message: "#{error.class}: #{error.message}", error: error.class.name }, status: :internal_server_error
     end
 
+    def stats_summary
+      team = Team.find(params[:id])
+      summary = TeamProfileSnapshotQuery.new(team: team, season: params[:season]).official_stats_summary
+      render json: { data: summary }
+    rescue ActiveRecord::RecordNotFound => error
+      render json: { message: error.message, error: error.class.name }, status: :not_found
+    rescue StandardError => error
+      Rails.logger.error("Team stats summary failed: #{error.class}: #{error.message}")
+      render json: { message: "#{error.class}: #{error.message}", error: error.class.name }, status: :internal_server_error
+    end
+
     private
 
     def serialize_team(team)

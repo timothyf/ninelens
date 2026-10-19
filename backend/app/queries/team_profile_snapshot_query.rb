@@ -61,13 +61,18 @@ class TeamProfileSnapshotQuery
       **schedule_payload,
       **player_stats_payload,
       **team_stats_payload,
-      team_stats_summary: team_stats_summary,
+      **(include_section?("team-stats") ? { team_stats_summary: team_stats_summary } : {}),
       **opponent_payload,
       **lineup_payload,
       team_leaders: team_leaders,
       source_metadata: source_metadata,
       performance_dashboard: performance_dashboard
     }
+  end
+
+  # The overview can render from stored data while official MLB figures load separately.
+  def official_stats_summary
+    team_stats_summary
   end
 
   private
@@ -200,7 +205,9 @@ class TeamProfileSnapshotQuery
 
   def official_team_stats(category)
     @official_team_stats ||= {}
-    @official_team_stats[category] ||= MlbTeamStatsDownloader.call(season: season, category: category)
+    @official_team_stats[category] ||= Rails.cache.fetch("team-official-stats/v1/#{season}/#{category}", expires_in: 30.minutes) do
+      MlbTeamStatsDownloader.call(season: season, category: category)
+    end
   end
 
   def ranked_team_stat(stats_by_team, key, direction)
@@ -571,7 +578,8 @@ class TeamProfileSnapshotQuery
   def pitching_role_for(player)
     return nil unless player
 
-    row = aggregate_player_rows(team_player_pitching_rows).find { |entry| entry[:player]&.id == player.id }
+    @pitching_rows_by_player ||= aggregate_player_rows(team_player_pitching_rows).index_by { |entry| entry[:player]&.id }
+    row = @pitching_rows_by_player[player.id]
     return nil unless row
 
     row[:games_started].positive? ? "starter" : "reliever"
@@ -621,6 +629,10 @@ class TeamProfileSnapshotQuery
   end
 
   def rankings_payload
+    @rankings_payload ||= build_rankings_payload
+  end
+
+  def build_rankings_payload
     team_totals = team_totals_index
     current = team_totals[team.id] || {}
 
@@ -683,7 +695,7 @@ class TeamProfileSnapshotQuery
   end
 
   def recent_form_payload
-    RECENT_GAME_WINDOWS.to_h do |window|
+    @recent_form_payload ||= RECENT_GAME_WINDOWS.to_h do |window|
       aggregate = aggregate_recent_window(window)
       [
         window.to_s,

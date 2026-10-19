@@ -314,9 +314,35 @@ const payload = {
 }
 
 describe('TeamProfileView', () => {
+  it('renders the overview before official stats arrive without refetching the profile season', async () => {
+    const overviewPayload = { data: { ...payload.data } }
+    delete overviewPayload.data.team_stats_summary
+    let resolveSummary
+    const summaryResponse = new Promise((resolve) => { resolveSummary = resolve })
+    const fetchMock = vi.fn((url) => {
+      if (String(url).includes('/stats_summary')) return summaryResponse
+      return Promise.resolve({ ok: true, json: async () => overviewPayload })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(TeamProfileView, {
+      props: { teamId: '1' },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    })
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="team-profile-panel-overview"]').text()).toContain('Team performance dashboard')
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes('/api/teams/1?'))).toHaveLength(1)
+    expect(fetchMock).toHaveBeenCalledWith('/api/teams/1/stats_summary?season=2026', expect.any(Object))
+
+    resolveSummary({ ok: true, json: async () => ({ data: payload.data.team_stats_summary }) })
+    await flushPromises()
+    expect(wrapper.get('[data-test="team-stat-summary"]').text()).toContain('.242')
+  })
+
   it('tracks a loaded team using its public MLB id and name', async () => {
     const track = vi.fn()
-    vi.stubGlobal('umami', { track })
+    vi.stubGlobal('ninelensTrackEvent', track)
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }))
 
     const wrapper = mount(TeamProfileView, {
@@ -325,25 +351,19 @@ describe('TeamProfileView', () => {
     })
     await flushPromises()
 
-    const viewedEvent = track.mock.calls.find(([event]) => typeof event === 'function')[0]
-    expect(viewedEvent({ data: {} })).toMatchObject({
-      name: 'team-profile-viewed',
-      data: { mlb_id: '116', team_name: 'Detroit Tigers' },
+    expect(track).toHaveBeenCalledWith('team-profile-viewed', {
+      mlb_id: '116', team_name: 'Detroit Tigers',
     })
     expect(track.mock.calls).toHaveLength(2)
 
-    const overviewEvent = track.mock.calls[1][0]
-    expect(overviewEvent({ data: {} })).toMatchObject({
-      name: 'team-profile-tab-viewed',
-      data: { mlb_id: '116', team_name: 'Detroit Tigers', tab: 'overview' },
+    expect(track).toHaveBeenCalledWith('team-profile-tab-viewed', {
+      mlb_id: '116', team_name: 'Detroit Tigers', tab: 'overview',
     })
 
     await wrapper.get('[data-test="team-profile-tab-roster"]').trigger('click')
 
-    const rosterEvent = track.mock.calls[2][0]
-    expect(rosterEvent({ data: {} })).toMatchObject({
-      name: 'team-profile-tab-viewed',
-      data: { mlb_id: '116', team_name: 'Detroit Tigers', tab: 'roster' },
+    expect(track).toHaveBeenLastCalledWith('team-profile-tab-viewed', {
+      mlb_id: '116', team_name: 'Detroit Tigers', tab: 'roster',
     })
   })
 

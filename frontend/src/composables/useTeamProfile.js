@@ -182,6 +182,23 @@ export function useTeamProfile(teamIdRef, seasonRef, tabRef) {
   const loading = ref(false)
   const error = ref('')
   let requestCounter = 0
+  const statsSummaryCache = new Map()
+
+  async function loadStatsSummary(teamId, season, requestId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/teams/${encodeURIComponent(teamId)}/stats_summary?season=${season}`, {
+        headers: adminRequestHeaders({ Accept: 'application/json' }),
+      })
+      if (!response.ok) return
+      const payload = await response.json()
+      statsSummaryCache.set(`${teamId}:${season}`, payload.data)
+      if (requestId === requestCounter && team.value?.season === season) {
+        team.value.teamStatsSummary = payload.data
+      }
+    } catch (error) {
+      console.error('Unable to load team stats summary', error)
+    }
+  }
 
   async function load() {
     const teamId = teamIdRef.value
@@ -209,7 +226,14 @@ export function useTeamProfile(teamIdRef, seasonRef, tabRef) {
         requestError.status = response.status
         throw requestError
       }
-      if (requestId === requestCounter) team.value = normalizeProfile(payload.data)
+      if (requestId === requestCounter) {
+        team.value = normalizeProfile(payload.data)
+        if (!Object.prototype.hasOwnProperty.call(payload.data, 'team_stats_summary')) {
+          const cachedSummary = statsSummaryCache.get(`${teamId}:${team.value.season}`)
+          if (cachedSummary) team.value.teamStatsSummary = cachedSummary
+          else void loadStatsSummary(teamId, team.value.season, requestId)
+        }
+      }
     } catch (fetchError) {
       if (requestId !== requestCounter) return
       team.value = null
@@ -222,7 +246,12 @@ export function useTeamProfile(teamIdRef, seasonRef, tabRef) {
     }
   }
 
-  watch([teamIdRef, ...(seasonRef ? [seasonRef] : []), ...(tabRef ? [tabRef] : [])], load, { immediate: true })
+  watch([teamIdRef, ...(seasonRef ? [seasonRef] : []), ...(tabRef ? [tabRef] : [])],
+    ([teamId, season, tab], previous) => {
+      if (previous && teamId === previous[0] && tab === previous[2] &&
+          !previous[1] && season === team.value?.season) return
+      void load()
+    }, { immediate: true })
 
   return {
     team: computed(() => team.value),

@@ -1,0 +1,17 @@
+default_permissions = "ninelens-postgres"
+
+[features]
+network_proxy = true
+
+[permissions.ninelens-postgres]
+description = "Workspace editing with access to the local PostgreSQL test socket."
+extends = ":workspace"
+
+[permissions.ninelens-postgres.network]
+enabled = true
+
+[permissions.ninelens-postgres.network.domains]
+"*" = "deny"
+
+[permissions.ninelens-postgres.network.unix_sockets]
+"/tmp/.s.PGSQL.5432" = "allow"
