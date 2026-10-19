@@ -520,6 +520,7 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
   const loading = ref(false)
   const error = ref('')
   const loadingSections = ref({})
+  const sectionErrors = ref({})
   const loadedSections = new Set()
   const requestedSections = new Set()
   const sectionRequestCounters = new Map()
@@ -542,6 +543,7 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
     requestedSections.clear()
     sectionRequestCounters.clear()
     loadingSections.value = {}
+    sectionErrors.value = {}
 
     try {
       const initialSections = [
@@ -590,6 +592,7 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
     const sectionRequestId = (sectionRequestCounters.get(section) || 0) + 1
     sectionRequestCounters.set(section, sectionRequestId)
     loadingSections.value = { ...loadingSections.value, [section]: true }
+    sectionErrors.value = { ...sectionErrors.value, [section]: '' }
 
     try {
       const hasSectionAnalysisRange = sectionOptions?.range !== undefined
@@ -598,10 +601,22 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
         section,
         { ...(hasSectionAnalysisRange ? {} : sectionOptions), view: 'section' },
       )
-      const response = await fetch(`${API_BASE_URL}/api/players/${encodeURIComponent(playerId)}${query}`, {
-        headers: { Accept: 'application/json' },
-      })
-      if (!response.ok) throw new Error(`Request failed with status ${response.status}`)
+      const url = `${API_BASE_URL}/api/players/${encodeURIComponent(playerId)}${query}`
+      const attempts = section === 'benchmarks' ? 2 : 1
+      let response
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        if (requestId !== requestCounter || sectionRequestId !== sectionRequestCounters.get(section)) return
+        try {
+          response = await fetch(url, { headers: { Accept: 'application/json' } })
+        } catch (fetchError) {
+          if (attempt + 1 === attempts) throw fetchError
+          continue
+        }
+        if (response.ok) break
+        if (attempt + 1 === attempts || (response.status !== 429 && response.status < 500)) {
+          throw new Error(`Request failed with status ${response.status}`)
+        }
+      }
 
       const payload = await response.json()
       if (requestId !== requestCounter || sectionRequestId !== sectionRequestCounters.get(section) || !player.value) return
@@ -609,7 +624,10 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
       player.value = { ...player.value, ...normalizedSection(payload.data, section) }
       loadedSections.add(section)
     } catch (fetchError) {
-      if (requestId === requestCounter && sectionRequestId === sectionRequestCounters.get(section)) console.error(fetchError)
+      if (requestId === requestCounter && sectionRequestId === sectionRequestCounters.get(section)) {
+        sectionErrors.value = { ...sectionErrors.value, [section]: fetchError.message }
+        console.error(fetchError)
+      }
     } finally {
       if (requestId === requestCounter && sectionRequestId === sectionRequestCounters.get(section)) {
         requestedSections.delete(section)
@@ -639,6 +657,7 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
     loading: computed(() => loading.value),
     error: computed(() => error.value),
     sectionLoading: (section) => computed(() => loadingSections.value[section] === true),
+    sectionError: (section) => computed(() => sectionErrors.value[section] || ''),
     loadSection,
     reloadSection,
     refresh: load,

@@ -2,7 +2,7 @@
 import { computed, inject } from 'vue'
 
 const {
-  player, sectionLoading, titleize, contextualMetricLabel, contextualValue, peerAverage, peerLabel,
+  player, sectionLoading, sectionError, reloadSection, titleize, contextualMetricLabel, contextualValue, peerAverage, peerLabel,
   percentileStyle, benchmarkPeriodLabel,
 } = inject('player-profile-context')
 
@@ -65,6 +65,10 @@ const benchmarkMetrics = computed(() => player.value.contextualBenchmarks.metric
       <span class="contextual-benchmarks-loading__spinner" aria-hidden="true"></span>
       Loading benchmark context…
     </p>
+    <div v-else-if="sectionError('benchmarks').value" class="profile-empty" role="alert" data-test="contextual-benchmarks-error">
+      <p>Unable to load benchmark context right now.</p>
+      <button type="button" class="profile-button" @click="reloadSection('benchmarks')">Try again</button>
+    </div>
     <div v-else-if="benchmarkMetrics.length" class="context-percentile-board">
       <div class="context-percentile-board__scale" aria-hidden="true">
         <span>Poor</span>

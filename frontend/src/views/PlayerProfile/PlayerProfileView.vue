@@ -52,7 +52,7 @@ const tabAnalysisOptions = reactive({
   'batted-ball-profile': { range: 'season', paWindow: 50, pitchWindow: 100, startDate: null, endDate: null },
   'pitch-arsenal': { range: 'season', paWindow: 50, pitchWindow: 100, startDate: null, endDate: null },
 })
-const { player, loading, error, sectionLoading, loadSection, reloadSection, refresh } = usePlayerProfile(playerId, analysisOptions)
+const { player, loading, error, sectionLoading, sectionError, loadSection, reloadSection, refresh } = usePlayerProfile(playerId, analysisOptions)
 watch(() => player.value?.id, (id) => {
   if (id) void loadSection('benchmarks')
 }, { immediate: true })
@@ -319,7 +319,7 @@ function closeSourceModal() {
 }
 
 provide('player-profile-context', {
-  player, selectedProfileTab, profileTabs, sectionLoading, reloadSection,
+  player, selectedProfileTab, profileTabs, sectionLoading, sectionError, reloadSection,
   canAccessNotes,
   defensiveStats: computed(() => player.value?.defensiveStats || { season: null, seasons: [], positions: [], fieldingPercentage: null, defensiveRunsSaved: null, outsAboveAverage: null }),
   careerTableRows, titleize, careerRangeLabel,

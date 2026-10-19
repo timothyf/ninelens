@@ -520,6 +520,62 @@ describe('PlayerProfileView', () => {
     expect(wrapper.find('[data-test="contextual-benchmarks-loading"]').exists()).toBe(false)
   })
 
+  it('retries a transient benchmark request failure', async () => {
+    const core = apiPayloadWith((payload) => { delete payload.data.contextual_benchmarks })
+    const benchmarks = apiPayload().data.contextual_benchmarks
+    let benchmarkAttempts = 0
+    vi.stubGlobal('fetch', vi.fn((url) => {
+      if (url.includes('sections=analytics')) return new Promise(() => {})
+      if (url.includes('sections=benchmarks')) {
+        benchmarkAttempts += 1
+        if (benchmarkAttempts === 1) return Promise.resolve({ ok: false, status: 503 })
+        return Promise.resolve({ ok: true, json: async () => ({ data: { contextual_benchmarks: benchmarks } }) })
+      }
+      return Promise.resolve({ ok: true, json: async () => core })
+    }))
+
+    const wrapper = mount(PlayerProfileView, {
+      props: { playerId: '42' },
+      global: { stubs: { RouterLink: true } },
+    })
+    await flushPromises()
+
+    expect(benchmarkAttempts).toBe(2)
+    expect(wrapper.get('[data-test="contextual-benchmarks"]').text()).toContain('OPS')
+  })
+
+  it('shows a retry action when benchmark requests keep failing', async () => {
+    const core = apiPayloadWith((payload) => { delete payload.data.contextual_benchmarks })
+    const benchmarks = apiPayload().data.contextual_benchmarks
+    let available = false
+    vi.stubGlobal('fetch', vi.fn((url) => {
+      if (url.includes('sections=analytics')) return new Promise(() => {})
+      if (url.includes('sections=benchmarks')) {
+        return Promise.resolve(available
+          ? { ok: true, json: async () => ({ data: { contextual_benchmarks: benchmarks } }) }
+          : { ok: false, status: 503 })
+      }
+      return Promise.resolve({ ok: true, json: async () => core })
+    }))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const wrapper = mount(PlayerProfileView, {
+      props: { playerId: '42' },
+      global: { stubs: { RouterLink: true } },
+    })
+    await flushPromises()
+
+    const error = wrapper.get('[data-test="contextual-benchmarks-error"]')
+    expect(error.text()).toContain('Unable to load benchmark context')
+    available = true
+    await error.get('button').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.get('[data-test="contextual-benchmarks"]').text()).toContain('OPS')
+    expect(wrapper.find('[data-test="contextual-benchmarks-error"]').exists()).toBe(false)
+    consoleError.mockRestore()
+  })
+
   it('opens data provenance from the profile header in a modal', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => apiPayload() }))
 
