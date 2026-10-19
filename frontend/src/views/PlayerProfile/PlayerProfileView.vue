@@ -72,7 +72,10 @@ watch(
   (mlbId) => {
     if (!mlbId || trackedPlayerMlbId.value === mlbId) return
 
-    window.umami?.track?.('player-profile-viewed', { mlb_id: String(mlbId) })
+    window.umami?.track?.('player-profile-viewed', {
+      mlb_id: String(mlbId),
+      player_name: player.value.fullName,
+    })
     trackedPlayerMlbId.value = mlbId
   },
 )
@@ -90,6 +93,7 @@ watch(
 
     window.umami?.track?.('player-profile-tab-viewed', {
       mlb_id: String(mlbId),
+      player_name: player.value.fullName,
       tab,
     })
     trackedPlayerTabSignature.value = signature

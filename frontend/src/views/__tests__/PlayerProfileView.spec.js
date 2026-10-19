@@ -451,7 +451,7 @@ function apiPayloadWith(mutator) {
 }
 
 describe('PlayerProfileView', () => {
-  it('tracks a loaded profile using only its public MLB id', async () => {
+  it('tracks a loaded profile using its public MLB id and name', async () => {
     const track = vi.fn()
     vi.stubGlobal('umami', { track })
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => apiPayload() }))
@@ -463,14 +463,19 @@ describe('PlayerProfileView', () => {
     await flushPromises()
 
     expect(track.mock.calls.filter(([event]) => event === 'player-profile-viewed')).toEqual([
-      ['player-profile-viewed', { mlb_id: '680776' }],
+      ['player-profile-viewed', { mlb_id: '680776', player_name: 'Riley Greene' }],
     ])
-    expect(track).toHaveBeenCalledWith('player-profile-tab-viewed', { mlb_id: '680776', tab: 'overview' })
+    expect(track).toHaveBeenCalledWith('player-profile-tab-viewed', {
+      mlb_id: '680776',
+      player_name: 'Riley Greene',
+      tab: 'overview',
+    })
 
     await wrapper.get('[data-test="player-page-tab-performance-trends"]').trigger('click')
 
     expect(track).toHaveBeenCalledWith('player-profile-tab-viewed', {
       mlb_id: '680776',
+      player_name: 'Riley Greene',
       tab: 'performance-trends',
     })
   })

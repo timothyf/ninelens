@@ -314,7 +314,7 @@ const payload = {
 }
 
 describe('TeamProfileView', () => {
-  it('tracks a loaded team using only its public MLB id', async () => {
+  it('tracks a loaded team using its public MLB id and name', async () => {
     const track = vi.fn()
     vi.stubGlobal('umami', { track })
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }))
@@ -326,13 +326,21 @@ describe('TeamProfileView', () => {
     await flushPromises()
 
     expect(track.mock.calls.filter(([event]) => event === 'team-profile-viewed')).toEqual([
-      ['team-profile-viewed', { mlb_id: '116' }],
+      ['team-profile-viewed', { mlb_id: '116', team_name: 'Detroit Tigers' }],
     ])
-    expect(track).toHaveBeenCalledWith('team-profile-tab-viewed', { mlb_id: '116', tab: 'overview' })
+    expect(track).toHaveBeenCalledWith('team-profile-tab-viewed', {
+      mlb_id: '116',
+      team_name: 'Detroit Tigers',
+      tab: 'overview',
+    })
 
     await wrapper.get('[data-test="team-profile-tab-roster"]').trigger('click')
 
-    expect(track).toHaveBeenCalledWith('team-profile-tab-viewed', { mlb_id: '116', tab: 'roster' })
+    expect(track).toHaveBeenCalledWith('team-profile-tab-viewed', {
+      mlb_id: '116',
+      team_name: 'Detroit Tigers',
+      tab: 'roster',
+    })
   })
 
   it('generates a frozen report from the current opponent preparation', async () => {
