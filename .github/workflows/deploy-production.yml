@@ -1,0 +1,98 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Require the main branch
+        shell: bash
+        run: test "$GITHUB_REF" = refs/heads/main
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Test and build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test:run
+          npm run build
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: production
+      url: https://www.ninelens.com
+    env:
+      DEPLOY_HOST: ${{ vars.PROD_HOST }}
+      DEPLOY_USER: ${{ vars.PROD_USER }}
+      DEPLOY_DIR: ${{ vars.PROD_DIR }}
+      DEPLOY_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+    steps:
+      - name: Deploy the selected commit over SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${DEPLOY_HOST:?Set the production environment variable PROD_HOST}"
+          : "${DEPLOY_USER:?Set the production environment variable PROD_USER}"
+          : "${DEPLOY_DIR:?Set the production environment variable PROD_DIR}"
+          : "${DEPLOY_SSH_KEY:?Set the production environment secret PROD_SSH_KEY}"
+          : "${DEPLOY_KNOWN_HOSTS:?Set the production environment secret PROD_SSH_KNOWN_HOSTS}"
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          printf -v remote_command 'bash -se -- %q %q' "$DEPLOY_DIR" "$GITHUB_SHA"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -i ~/.ssh/id_ed25519 -- "$DEPLOY_USER@$DEPLOY_HOST" "$remote_command" <<'REMOTE'
+          set -euo pipefail
+          cd "$1"
+          expected_sha="$2"
+
+          test -f .env
+          test "$(git branch --show-current)" = main
+          git diff --quiet
+          git diff --cached --quiet
+          git pull --ff-only origin main
+          test "$(git rev-parse HEAD)" = "$expected_sha"
+
+          compose=(docker compose --env-file .env -f docker-compose.yml -f docker-compose.production.yml)
+          "${compose[@]}" config --quiet
+          "${compose[@]}" build --pull
+          "${compose[@]}" up -d --remove-orphans
+          REMOTE
+
+      - name: Check production health
+        shell: bash
+        run: |
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error --max-time 10 \
+              --output /dev/null https://www.ninelens.com/up && \
+              curl --fail --silent --show-error --max-time 10 \
+              --output /dev/null https://www.ninelens.com/; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo 'Production health check failed' >&2
+          exit 1
