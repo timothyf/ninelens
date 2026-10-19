@@ -752,10 +752,13 @@ describe('TeamProfileView', () => {
     const historicalRequest = new Promise((resolve) => {
       resolveHistoricalRequest = resolve
     })
+    const overviewPayload = structuredClone(payload)
+    delete overviewPayload.data.player_stats
+    delete overviewPayload.data.team_stats
     const fetchMock = vi.fn().mockImplementation((url) => {
       if (String(url).includes('season=2025')) return historicalRequest
 
-      return Promise.resolve({ ok: true, json: async () => payload })
+      return Promise.resolve({ ok: true, json: async () => overviewPayload })
     })
     vi.stubGlobal('fetch', fetchMock)
 

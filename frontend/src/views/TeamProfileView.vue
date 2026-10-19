@@ -62,6 +62,8 @@ const savedAnalysisUrl = computed(() => {
   return `/teams/${encodeURIComponent(teamId.value)}${query.size ? `?${query}` : ''}`
 })
 const { team, loading, error, refresh } = useTeamProfile(teamId, selectedSeason, requestedProfileSection)
+const playerStatsLoading = computed(() => loading.value || (selectedProfileTab.value === 'player-stats' && !team.value?.playerStatsLoaded))
+const teamStatsLoading = computed(() => loading.value || (selectedProfileTab.value === 'team-stats' && !team.value?.teamStatsLoaded))
 const trackedTeamMlbId = ref(null)
 const trackedTeamTabSignature = ref('')
 const teamHeaderStyle = computed(() => teamThemeStyle(team.value?.mlbId || team.value?.mlb_id))
@@ -113,11 +115,7 @@ const lineupPositions = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH']
 const opponentTeamOptions = computed(() => availableTeams.value.filter((teamOption) => teamOption.id !== team.value?.id))
 
 function trackTeamEvent(name, data) {
-  window.umami?.track?.((payload) => ({
-    ...payload,
-    name,
-    data: { ...(payload.data || {}), ...data },
-  }))
+  window.ninelensTrackEvent?.(name, data)
 }
 
 watch(
@@ -923,7 +921,7 @@ async function saveLineupScenario() {
           </div>
         </header>
 
-        <p v-if="loading" class="team-empty" role="status" aria-live="polite" data-test="player-stats-loading">
+        <p v-if="playerStatsLoading" class="team-empty" role="status" aria-live="polite" data-test="player-stats-loading">
           Loading player stats for {{ selectedSeason }}…
         </p>
 
@@ -1018,7 +1016,7 @@ async function saveLineupScenario() {
           </div>
         </header>
 
-        <p v-if="loading" class="team-empty" role="status" aria-live="polite" data-test="team-stats-loading">
+        <p v-if="teamStatsLoading" class="team-empty" role="status" aria-live="polite" data-test="team-stats-loading">
           Loading team stats for {{ selectedSeason }}…
         </p>
 

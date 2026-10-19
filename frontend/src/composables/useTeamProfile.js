@@ -80,6 +80,7 @@ function normalizeProfile(data) {
         players: data.player_stats?.pitching?.players || [],
       },
     },
+    playerStatsLoaded: Object.prototype.hasOwnProperty.call(data, 'player_stats'),
     teamStats: {
       season: data.team_stats?.season || data.season,
       batting: {
@@ -91,6 +92,7 @@ function normalizeProfile(data) {
         teams: data.team_stats?.pitching?.teams || [],
       },
     },
+    teamStatsLoaded: Object.prototype.hasOwnProperty.call(data, 'team_stats'),
     teamStatsSummary: data.team_stats_summary || {
       season: data.season,
       batting: {},

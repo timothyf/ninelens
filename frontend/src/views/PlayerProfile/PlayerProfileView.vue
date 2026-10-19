@@ -68,11 +68,7 @@ const sourceModalOpen = ref(false)
 const sourceModalTrigger = ref(null)
 
 function trackPlayerEvent(name, data) {
-  window.umami?.track?.((payload) => ({
-    ...payload,
-    name,
-    data: { ...(payload.data || {}), ...data },
-  }))
+  window.ninelensTrackEvent?.(name, data)
 }
 
 watch(

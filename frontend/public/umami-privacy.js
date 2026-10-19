@@ -1,4 +1,5 @@
 (function () {
+  const eventProperties = Object.create(null)
   const dynamicRoutes = [
     [/^\/players\/[^/]+\/?$/, '/players/:id'],
     [/^\/games\/[^/]+\/?$/, '/games/:id'],
@@ -7,6 +8,12 @@
     [/^\/opponent-reports\/[^/]+\/?$/, '/opponent-reports/:id'],
     [/^\/lineup-scenarios\/[^/]+\/?$/, '/lineup-scenarios/:id'],
   ]
+
+  window.ninelensTrackEvent = function (name, data) {
+    const key = `${name}:${data.mlb_id ?? ''}`
+    eventProperties[key] = { ...(eventProperties[key] || {}), ...data }
+    window.umami?.track?.(name, data)
+  }
 
   window.ninelensUmamiBeforeSend = function (_type, payload) {
     if (!payload || typeof payload.url !== 'string') {
@@ -21,8 +28,13 @@
         pattern.test(pathname),
       )
 
+      const key = `${payload.name || ''}:${payload.data?.mlb_id ?? ''}`
+      const eventData = eventProperties[key]
+      delete eventProperties[key]
+
       return {
         ...payload,
+        ...(eventData ? { data: { ...(payload.data || {}), ...eventData } } : {}),
         url: matchingRoute ? matchingRoute[1] : pathname,
       }
     } catch (_error) {
