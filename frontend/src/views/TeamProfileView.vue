@@ -915,6 +915,11 @@ async function saveLineupScenario() {
           </div>
         </header>
 
+        <p v-if="loading" class="team-empty" role="status" aria-live="polite" data-test="player-stats-loading">
+          Loading player stats for {{ selectedSeason }}…
+        </p>
+
+        <template v-else>
         <div v-if="playerStatsCategory === 'batting' && team.playerStats.batting.players.length" class="player-stats-category" data-test="team-player-stats-batting">
           <h3>Batters</h3>
           <div class="player-stats-table-wrap">
@@ -988,6 +993,7 @@ async function saveLineupScenario() {
           </div>
         </div>
         <p v-else-if="playerStatsCategory === 'pitching'" class="team-empty">No pitching stats are stored for {{ team.playerStats.season }}.</p>
+        </template>
       </section>
 
       <section v-show="selectedProfileTab === 'team-stats'" id="team-profile-panel-team-stats"
@@ -1004,7 +1010,11 @@ async function saveLineupScenario() {
           </div>
         </header>
 
-        <div class="player-stats-table-wrap team-stats-table-wrap" data-test="team-stats-table">
+        <p v-if="loading" class="team-empty" role="status" aria-live="polite" data-test="team-stats-loading">
+          Loading team stats for {{ selectedSeason }}…
+        </p>
+
+        <div v-else class="player-stats-table-wrap team-stats-table-wrap" data-test="team-stats-table">
           <table class="player-stats-table team-stats-table">
             <thead>
               <tr>

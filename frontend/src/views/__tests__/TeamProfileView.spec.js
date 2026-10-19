@@ -614,6 +614,7 @@ describe('TeamProfileView', () => {
 
     const requestCount = fetch.mock.calls.length
     await wrapper.get("[data-test=team-profile-tab-player-stats]").trigger("click")
+    await flushPromises()
     const playerStatsPanel = wrapper.get("[data-test=team-profile-panel-player-stats]")
     expect(playerStatsPanel.text()).toContain("2026 player stats")
     expect(playerStatsPanel.get("[data-test=team-player-stats-batting]").text()).toContain("Riley Greene")
@@ -626,6 +627,7 @@ describe('TeamProfileView', () => {
     expect(playerStatsPanel.attributes("style") || "").not.toContain("display: none")
 
     await wrapper.get("[data-test=team-profile-tab-team-stats]").trigger("click")
+    await flushPromises()
     expect(wrapper.get("[data-test=team-profile-panel-team-stats]").text()).toContain("2026 team stats")
     expect(wrapper.get("[data-test=team-stats-table]").text()).toContain("Detroit Tigers")
     expect(wrapper.get("[data-test=team-stats-table] tbody th").classes()).toContain("is-current-team")
@@ -654,6 +656,7 @@ describe('TeamProfileView', () => {
     })
     await flushPromises()
     await wrapper.get('[data-test="team-profile-tab-player-stats"]').trigger('click')
+    await flushPromises()
 
     const batting = wrapper.get('[data-test="team-player-stats-batting"]')
     expect(batting.findAll('tbody tr')[0].text()).toContain('Aaron Judge')
@@ -738,6 +741,38 @@ describe('TeamProfileView', () => {
 
     expect(wrapper.find('[data-test="season-loading"]').exists()).toBe(false)
     expect(wrapper.get('[data-test="team-season-select"]').attributes()).not.toHaveProperty('disabled')
+  })
+
+  it('shows loading states in the player and team stats tabs while a season is loading', async () => {
+    let resolveHistoricalRequest
+    const historicalRequest = new Promise((resolve) => {
+      resolveHistoricalRequest = resolve
+    })
+    const fetchMock = vi.fn().mockImplementation((url) => {
+      if (String(url).includes('season=2025')) return historicalRequest
+
+      return Promise.resolve({ ok: true, json: async () => payload })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(TeamProfileView, {
+      props: { teamId: '1' },
+      global: { stubs: { RouterLink: true } },
+    })
+    await flushPromises()
+
+    await wrapper.get('[data-test="team-season-select"]').setValue('2025')
+
+    expect(wrapper.get('[data-test="player-stats-loading"]').text()).toContain('Loading player stats for 2025')
+    expect(wrapper.get('[data-test="team-stats-loading"]').text()).toContain('Loading team stats for 2025')
+    expect(wrapper.find('[data-test="team-stats-table"]').exists()).toBe(false)
+
+    resolveHistoricalRequest({ ok: true, json: async () => payload })
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="player-stats-loading"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="team-stats-loading"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="team-stats-table"]').exists()).toBe(true)
   })
 
   it('renders a retry state when the profile cannot load', async () => {
