@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { flushPromises } from '@vue/test-utils'
 import { vi } from 'vitest'
 
@@ -106,7 +106,7 @@ describe('usePlayerProfile', () => {
     const { player, loading, error } = usePlayerProfile(computed(() => '42'))
     await flushPromises()
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/players/42?sections=core', {
+    expect(fetchMock).toHaveBeenCalledWith('/api/players/42?sections=core&view=profile', {
       headers: { Accept: 'application/json' },
     })
     expect(player.value).toMatchObject({
@@ -155,5 +155,49 @@ describe('usePlayerProfile', () => {
 
     expect(player.value).toBeNull()
     expect(error.value).toBe('That player could not be found.')
+  })
+
+  it('reloads only analytics when the analysis range changes', async () => {
+    const analysisOptions = ref({ range: 'season', paWindow: 50, pitchWindow: 100 })
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { id: 42, full_name: 'Riley Greene' } }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    usePlayerProfile(computed(() => '42'), analysisOptions, { loadAnalyticsAfterInitial: false })
+    await flushPromises()
+    analysisOptions.value = { range: '7', paWindow: 50, pitchWindow: 100 }
+    await flushPromises()
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/api/players/42?sections=core&view=profile',
+      '/api/players/42?range=7&pa_window=50&pitch_window=100&sections=analytics&view=section',
+    ])
+  })
+
+  it('keeps the newest analytics when range requests finish out of order', async () => {
+    const analysisOptions = ref({ range: 'season' })
+    const pending = new Map()
+    vi.stubGlobal('fetch', vi.fn((url) => {
+      if (url.includes('sections=core')) {
+        return Promise.resolve({ ok: true, json: async () => ({ data: { id: 42 } }) })
+      }
+      return new Promise((resolve) => pending.set(new URLSearchParams(url.split('?')[1]).get('range'), resolve))
+    }))
+
+    const { player } = usePlayerProfile(computed(() => '42'), analysisOptions, { loadAnalyticsAfterInitial: false })
+    await flushPromises()
+    analysisOptions.value = { range: '7' }
+    await flushPromises()
+    analysisOptions.value = { range: '14' }
+    await flushPromises()
+
+    pending.get('14')({ ok: true, json: async () => ({ data: { analysis: { range: { preset: '14' } } } }) })
+    await flushPromises()
+    pending.get('7')({ ok: true, json: async () => ({ data: { analysis: { range: { preset: '7' } } } }) })
+    await flushPromises()
+
+    expect(player.value.analysis.range.preset).toBe('14')
   })
 })

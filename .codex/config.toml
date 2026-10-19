@@ -10,8 +10,5 @@ extends = ":workspace"
 [permissions.ninelens-postgres.network]
 enabled = true
 
-[permissions.ninelens-postgres.network.domains]
-"*" = "deny"
-
 [permissions.ninelens-postgres.network.unix_sockets]
 "/tmp/.s.PGSQL.5432" = "allow"

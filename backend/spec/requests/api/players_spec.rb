@@ -143,6 +143,31 @@ RSpec.describe "Api::Players", type: :request do
     expect(json_body.dig("data")).not_to have_key("recent_pitch_indicators")
   end
 
+  it "skips comparison benchmarks and date-range scans for the profile's first response" do
+    stat_type = create_stat_type(name: "gamesPlayed", label: "G", category: "batting")
+    create_player_season_stat(player: @miguel, stat_type: stat_type, attributes: { team: @tigers, season: 2026, value: 100 })
+    expect(ComparisonBenchmarkSnapshotQuery).not_to receive(:new)
+    expect(PlayerAnalysisRange).not_to receive(:resolve)
+
+    get api_player_path(@miguel), params: { sections: "core", view: "profile" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.dig("data", "season_overview", "comparison_benchmarks")).to eq({})
+    expect(json_body.dig("data", "career_overview")).to be_present
+    expect(json_body.dig("data")).not_to have_key("analysis")
+  end
+
+  it "returns only a requested deferred section without rebuilding the core profile" do
+    expect(ComparisonBenchmarkSnapshotQuery).not_to receive(:new)
+    expect(PlayerAnalysisRange).not_to receive(:resolve)
+
+    get api_player_path(@miguel), params: { sections: "postseason", view: "section" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.dig("data", "postseason_stats")).to be_present
+    expect(json_body.fetch("data").keys).to eq([ "postseason_stats" ])
+  end
+
   it "supports custom profile analysis ranges and rolling windows" do
     PitchDatum.create!(
       game_pk: 900_100,

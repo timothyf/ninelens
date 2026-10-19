@@ -167,26 +167,29 @@ class PlayerProfileSnapshotQuery
   def initialize(player:, on: Date.current, analysis_range: nil, similarity_options: {}, benchmark_cache: nil)
     @player = player
     @on = on
-    @analysis_range = analysis_range || PlayerAnalysisRange.resolve(player: player)
+    @analysis_range = analysis_range
     @similarity_options = similarity_options.to_h.symbolize_keys
     @benchmark_cache = benchmark_cache
   end
 
-  def result(sections: nil, compact: false)
+  def result(sections: nil, compact: false, core: true, comparison_benchmarks: true, core_analysis_range: true)
     selected_sections = sections.nil? ? DEFERRED_SECTIONS : Array(sections) & DEFERRED_SECTIONS
-    payload = {
-      season_overview: season_overview,
-      career_overview: career_overview,
-      display_team: serialize_team(display_team),
-      external_ids: external_ids
-    }
-    unless compact
+    payload = {}
+    if core
+      payload.merge!(
+        season_overview: season_overview(comparison_benchmarks: comparison_benchmarks),
+        career_overview: career_overview(comparison_benchmarks: comparison_benchmarks),
+        display_team: serialize_team(display_team),
+        external_ids: external_ids
+      )
+    end
+    if core && !compact
       payload.merge!(
         game_logs: game_logs,
         current_membership: serialize_membership(current_membership),
         team_history: organization_tenures,
         trades: trade_history,
-        analysis: { range: analysis_range.to_h },
+        **(core_analysis_range ? { analysis: { range: analysis_range.to_h } } : {}),
         source_metadata: source_metadata
       )
     end
@@ -216,7 +219,11 @@ class PlayerProfileSnapshotQuery
 
   private
 
-  attr_reader :player, :on, :analysis_range, :similarity_options, :benchmark_cache
+  attr_reader :player, :on, :similarity_options, :benchmark_cache
+
+  def analysis_range
+    @analysis_range ||= PlayerAnalysisRange.resolve(player: player)
+  end
 
   def comparison_benchmarks_for(season, category)
     return {} if season.blank? || category.blank?
@@ -259,7 +266,7 @@ class PlayerProfileSnapshotQuery
     Team.find_by(id: team_id) if team_id
   end
 
-  def season_overview
+  def season_overview(comparison_benchmarks: true)
     return empty_season_overview if latest_season.nil?
 
     available_categories = season_rows.map { |row| row.stat_type.category }.uniq & SEASON_CATEGORIES
@@ -271,7 +278,7 @@ class PlayerProfileSnapshotQuery
       preferred_category: preferred_category,
       stats: category.present? ? serialized_season_stats(category) : [],
       comparison_stats: category.present? ? serialized_comparison_stats(category, season_rows, career: false) : [],
-      comparison_benchmarks: category.present? ? comparison_benchmarks_for(latest_season, category) : {}
+      comparison_benchmarks: category.present? && comparison_benchmarks ? comparison_benchmarks_for(latest_season, category) : {}
     }
   end
 
@@ -279,7 +286,7 @@ class PlayerProfileSnapshotQuery
     { season: nil, category: preferred_category, preferred_category: preferred_category, stats: [], comparison_stats: [], comparison_benchmarks: {} }
   end
 
-  def career_overview
+  def career_overview(comparison_benchmarks: true)
     category = career_category
     rows = career_rows(category)
     return empty_career_overview if rows.empty?
@@ -293,7 +300,7 @@ class PlayerProfileSnapshotQuery
       last_season: seasons.last,
       season_count: seasons.length,
       columns: career_columns(category),
-      seasons: serialized_career_seasons(category),
+      seasons: serialized_career_seasons(category, comparison_benchmarks: comparison_benchmarks),
       stats: serialized_career_stats(category),
       comparison_stats: serialized_comparison_stats(category, rows, career: true),
       comparison_benchmarks: {}
@@ -1146,7 +1153,7 @@ class PlayerProfileSnapshotQuery
     end
   end
 
-  def serialized_career_seasons(category)
+  def serialized_career_seasons(category, comparison_benchmarks: true)
     career_rows_by_season(category).sort.map do |season, rows|
       team_rows = team_rows_for_season(rows)
       {
@@ -1155,7 +1162,7 @@ class PlayerProfileSnapshotQuery
         stats: serialized_stats_for_season(category, rows),
         team_rows: team_rows.map { |team, team_stats| { team: serialize_team(team), stats: serialized_stats_for_season(category, team_stats) } },
         total_stats: serialized_stats_for_season(category, rows),
-        comparison_benchmarks: comparison_benchmarks_for(season, category)
+        comparison_benchmarks: comparison_benchmarks ? comparison_benchmarks_for(season, category) : {}
       }
     end
   end

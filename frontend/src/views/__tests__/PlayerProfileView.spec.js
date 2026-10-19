@@ -453,7 +453,7 @@ function apiPayloadWith(mutator) {
 describe('PlayerProfileView', () => {
   it('tracks a loaded profile using its public MLB id and name', async () => {
     const track = vi.fn()
-    vi.stubGlobal('umami', { track })
+    vi.stubGlobal('ninelensTrackEvent', track)
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => apiPayload() }))
 
     const wrapper = mount(PlayerProfileView, {
@@ -462,25 +462,19 @@ describe('PlayerProfileView', () => {
     })
     await flushPromises()
 
-    const viewedEvent = track.mock.calls.find(([event]) => typeof event === 'function')[0]
-    expect(viewedEvent({ data: {} })).toMatchObject({
-      name: 'player-profile-viewed',
-      data: { mlb_id: '680776', player_name: 'Riley Greene' },
+    expect(track).toHaveBeenCalledWith('player-profile-viewed', {
+      mlb_id: '680776', player_name: 'Riley Greene',
     })
     expect(track.mock.calls).toHaveLength(2)
 
-    const overviewEvent = track.mock.calls[1][0]
-    expect(overviewEvent({ data: {} })).toMatchObject({
-      name: 'player-profile-tab-viewed',
-      data: { mlb_id: '680776', player_name: 'Riley Greene', tab: 'overview' },
+    expect(track).toHaveBeenCalledWith('player-profile-tab-viewed', {
+      mlb_id: '680776', player_name: 'Riley Greene', tab: 'overview',
     })
 
     await wrapper.get('[data-test="player-page-tab-performance-trends"]').trigger('click')
 
-    const trendsEvent = track.mock.calls[2][0]
-    expect(trendsEvent({ data: {} })).toMatchObject({
-      name: 'player-profile-tab-viewed',
-      data: { mlb_id: '680776', player_name: 'Riley Greene', tab: 'performance-trends' },
+    expect(track).toHaveBeenLastCalledWith('player-profile-tab-viewed', {
+      mlb_id: '680776', player_name: 'Riley Greene', tab: 'performance-trends',
     })
   })
 
@@ -679,7 +673,7 @@ describe('PlayerProfileView', () => {
     await wrapper.get('[data-test="player-page-tab-performance-trends"]').trigger('click')
     await wrapper.get('.range-presets button:nth-child(2)').trigger('click')
     await flushPromises()
-    expect(fetch).toHaveBeenCalledWith('/api/players/42?range=7&pa_window=50&pitch_window=100&sections=core', {
+    expect(fetch).toHaveBeenCalledWith('/api/players/42?range=7&pa_window=50&pitch_window=100&sections=analytics&view=section', {
       headers: { Accept: 'application/json' },
     })
   })

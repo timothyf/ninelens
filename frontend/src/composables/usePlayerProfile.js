@@ -522,6 +522,7 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
   const loadingSections = ref({})
   const loadedSections = new Set()
   const requestedSections = new Set()
+  const sectionRequestCounters = new Map()
   let requestCounter = 0
 
   async function load() {
@@ -539,6 +540,7 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
     error.value = ''
     loadedSections.clear()
     requestedSections.clear()
+    sectionRequestCounters.clear()
     loadingSections.value = {}
 
     try {
@@ -546,7 +548,7 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
         includeCoreSection ? 'core' : null,
         ...additionalSections,
       ].filter(Boolean).join(',') || null
-      const query = analysisQuery(analysisOptionsRef?.value, initialSections, requestParams)
+      const query = analysisQuery(null, initialSections, { ...requestParams, view: 'profile' })
       const response = await fetch(`${API_BASE_URL}/api/players/${encodeURIComponent(playerId)}${query}`, {
         headers: { Accept: 'application/json' },
       })
@@ -585,6 +587,8 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
     if (!playerId || requestId !== requestCounter || loadedSections.has(section) || requestedSections.has(section)) return
 
     requestedSections.add(section)
+    const sectionRequestId = (sectionRequestCounters.get(section) || 0) + 1
+    sectionRequestCounters.set(section, sectionRequestId)
     loadingSections.value = { ...loadingSections.value, [section]: true }
 
     try {
@@ -592,7 +596,7 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
       const query = analysisQuery(
         hasSectionAnalysisRange ? sectionOptions : analysisOptionsRef?.value,
         section,
-        hasSectionAnalysisRange ? {} : sectionOptions,
+        { ...(hasSectionAnalysisRange ? {} : sectionOptions), view: 'section' },
       )
       const response = await fetch(`${API_BASE_URL}/api/players/${encodeURIComponent(playerId)}${query}`, {
         headers: { Accept: 'application/json' },
@@ -600,15 +604,15 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
       if (!response.ok) throw new Error(`Request failed with status ${response.status}`)
 
       const payload = await response.json()
-      if (requestId !== requestCounter || !player.value) return
+      if (requestId !== requestCounter || sectionRequestId !== sectionRequestCounters.get(section) || !player.value) return
 
       player.value = { ...player.value, ...normalizedSection(payload.data, section) }
       loadedSections.add(section)
     } catch (fetchError) {
-      if (requestId === requestCounter) console.error(fetchError)
+      if (requestId === requestCounter && sectionRequestId === sectionRequestCounters.get(section)) console.error(fetchError)
     } finally {
-      requestedSections.delete(section)
-      if (requestId === requestCounter) {
+      if (requestId === requestCounter && sectionRequestId === sectionRequestCounters.get(section)) {
+        requestedSections.delete(section)
         loadingSections.value = { ...loadingSections.value, [section]: false }
       }
     }
@@ -620,9 +624,14 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
     return loadSection(section, requestCounter, sectionOptions)
   }
 
-  analysisOptionsRef
-    ? watch([playerIdRef, analysisOptionsRef], load, { immediate: true, deep: true })
-    : watch(playerIdRef, load, { immediate: true })
+  watch(playerIdRef, load, { immediate: true })
+  if (analysisOptionsRef) {
+    watch(() => JSON.stringify(analysisOptionsRef.value), () => {
+      if (!player.value || loading.value) return
+      void reloadSection('analytics')
+      if (loadedSections.has('splits')) void reloadSection('splits')
+    })
+  }
 
   return {
     player: computed(() => player.value),

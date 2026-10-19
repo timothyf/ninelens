@@ -11,18 +11,25 @@ module Api
 
     def show
       player = Player.includes(:profile, :team, player_positions: :position).find(params[:id])
-      analysis_range = PlayerAnalysisRange.resolve(player: player, params: analysis_params)
+      section_only = params[:view].to_s == "section"
+      selected_sections = profile_sections
+      needs_analysis_range = !%w[profile section].include?(params[:view].to_s) ||
+        (section_only && (selected_sections & %w[analytics splits]).any?)
+      analysis_range = PlayerAnalysisRange.resolve(player: player, params: analysis_params) if needs_analysis_range
       snapshot = PlayerProfileSnapshotQuery.new(
         player: player,
         analysis_range: analysis_range,
         similarity_options: similarity_params
       ).result(
-        sections: profile_sections,
-        compact: params[:view].to_s == "comparison"
+        sections: selected_sections,
+        compact: params[:view].to_s == "comparison",
+        core: !section_only,
+        comparison_benchmarks: params[:view].to_s != "profile",
+        core_analysis_range: params[:view].to_s != "profile"
       )
 
       render json: {
-        data: serialize_player(player, include_profile: true, include_positions: true, include_contract: true).merge(snapshot)
+        data: section_only ? snapshot : serialize_player(player, include_profile: true, include_positions: true, include_contract: true).merge(snapshot)
       }
     rescue ArgumentError => error
       render json: { message: error.message, errors: [ error.message ] }, status: :unprocessable_content

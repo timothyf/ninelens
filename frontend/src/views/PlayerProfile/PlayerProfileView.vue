@@ -128,8 +128,9 @@ watch(
 )
 
 watch(
-  selectedProfileTab,
-  (tab) => {
+  [selectedProfileTab, () => player.value?.id],
+  ([tab, playerId]) => {
+    if (!playerId) return
     if (tab === 'advanced-stats') void loadSection('advanced_stats')
     if (tab === 'defensive-stats') void loadSection('defensive_stats')
     if (tab === 'splits') void loadSection('splits')
@@ -139,8 +140,9 @@ watch(
 )
 
 watch(
-  selectedPageTab,
-  (tab) => {
+  [selectedPageTab, () => player.value?.id],
+  ([tab, playerId]) => {
+    if (!playerId) return
     if (tab === 'similar-players') void loadSection('similar_players')
     if (tab === 'batted-ball-profile' || tab === 'pitch-arsenal') {
       void reloadSection('analytics', tabAnalysisOptions[tab])
