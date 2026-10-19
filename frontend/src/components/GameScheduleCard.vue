@@ -21,6 +21,12 @@ function gameState(game) {
   return formatTime(game.scheduled_at)
 }
 
+function isFutureIfNecessary(game) {
+  if (!game.if_necessary) return false
+  const status = String(game.status || '').toLowerCase().replace(/[-_]/g, ' ')
+  return ['scheduled', 'preview'].some((value) => status.includes(value))
+}
+
 function formatInning(value) {
   const inning = Number(value)
   if (!Number.isInteger(inning) || inning < 1) return null
@@ -48,6 +54,7 @@ function score(game, side) {
     />
     <header>
       <span>{{ gameState(game) }}</span>
+      <span v-if="isFutureIfNecessary(game)" class="schedule-game-card__if-necessary">If necessary</span>
       <small>{{ game.venue_name || 'Venue TBD' }}</small>
     </header>
     <div class="schedule-game-card__team">
@@ -73,6 +80,7 @@ function score(game, side) {
 .schedule-game-card__summary-link { position: absolute; z-index: 1; inset: 0; border-radius: inherit; }
 .schedule-game-card > header { display: flex; justify-content: space-between; gap: .5rem; padding-bottom: .65rem; border-bottom: 1px solid rgba(16,38,61,.08); }
 .schedule-game-card > header span { color: #a93627; font-size: .73rem; font-weight: 900; text-transform: uppercase; }
+.schedule-game-card > header .schedule-game-card__if-necessary { padding: .2rem .4rem; border-radius: 999px; color: #7a4a00; background: #f6dfad; font-size: .62rem; letter-spacing: .04em; }
 .schedule-game-card > header small { overflow: hidden; color: #78838b; text-overflow: ellipsis; white-space: nowrap; }
 .schedule-game-card__team { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: .65rem; align-items: center; padding-top: .75rem; color: #10263d; }
 .schedule-game-card__team-logo { display: block; width: 38px; height: 38px; object-fit: contain; }

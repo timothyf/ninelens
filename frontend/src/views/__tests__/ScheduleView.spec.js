@@ -9,6 +9,7 @@ const games = [
     id: 10,
     scheduled_at: '2026-07-16T17:10:00Z',
     status: 'preview',
+    if_necessary: true,
     detailed_status: 'Pre-Game',
     venue_name: 'Comerica Park',
     away_score: null,
@@ -73,6 +74,7 @@ describe('ScheduleView', () => {
     expect(wrapper.findAll('.schedule-game-card__team-name')).toHaveLength(4)
     expect(wrapper.findAll('.schedule-game-card__team > a')).toHaveLength(4)
     expect(wrapper.text()).toContain('In Progress · 5th')
+    expect(wrapper.text()).toContain('If necessary')
 
     await wrapper.get('[data-test="schedule-next"]').trigger('click')
     await flushPromises()

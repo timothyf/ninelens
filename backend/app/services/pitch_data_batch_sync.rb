@@ -249,6 +249,7 @@ class PitchDataBatchSync
     @base_games ||= Game
       .where(official_date: start_date..end_date, game_type: game_types.split(","))
       .without_cancelled
+      .without_unplayed_if_necessary
   end
 
   def success(message, data)

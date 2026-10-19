@@ -42,4 +42,61 @@ RSpec.describe MlbGameDetailsTaskEstimate do
       estimate_source: "conservative_default"
     )
   end
+
+  it "excludes cancelled and unplayed if-necessary games from the estimate" do
+    home_team = create_team
+    away_team = create_team
+    schedule = create_schedule(
+      season: 2026,
+      schedule_type: "D",
+      start_date: Date.new(2026, 10, 1),
+      end_date: Date.new(2026, 10, 20)
+    )
+    3.times do |index|
+      create_game(
+        schedule: schedule,
+        official_date: Date.new(2026, 10, 15) + index.days,
+        home_team: home_team,
+        away_team: away_team,
+        status: "final",
+        home_score: 4,
+        away_score: 2,
+        game_type: "D"
+      )
+    end
+    create_game(
+      mlb_id: 820_200,
+      schedule: schedule,
+      official_date: Date.new(2026, 10, 18),
+      home_team: home_team,
+      away_team: away_team,
+      status: "final",
+      home_score: 4,
+      away_score: 2,
+      game_type: "D"
+    )
+    create_game(
+      mlb_id: 820_201,
+      schedule: schedule,
+      official_date: Date.new(2026, 10, 18),
+      home_team: away_team,
+      away_team: home_team,
+      status: "scheduled",
+      game_type: "D",
+      raw_data: { "ifNecessary" => "Y", "seriesGameNumber" => 6 }
+    )
+    create_game(
+      mlb_id: 820_202,
+      schedule: schedule,
+      official_date: Date.new(2026, 10, 18),
+      home_team: home_team,
+      away_team: away_team,
+      status: "cancelled",
+      detailed_status: "Cancelled"
+    )
+
+    estimate = described_class.call(start_date: "2026-10-18", end_date: "2026-10-18")
+
+    expect(estimate[:game_count]).to eq(1)
+  end
 end

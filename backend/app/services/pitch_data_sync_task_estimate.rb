@@ -97,7 +97,7 @@ class PitchDataSyncTaskEstimate
     Game.where(
       official_date: Date.iso8601(attributes.fetch("start_date"))..Date.iso8601(attributes.fetch("end_date")),
       game_type: attributes.fetch("game_types").split(",")
-    ).without_cancelled
+    ).without_cancelled.without_unplayed_if_necessary
   end
 
   def historical_timing

@@ -105,4 +105,58 @@ RSpec.describe "selective Statcast pitch synchronization" do
     expect(result.dig(:data, :game_count)).to eq(0)
     expect(result.dig(:data, :errors)).to be_empty
   end
+
+  it "excludes unplayed if-necessary games after a postseason series is clinched" do
+    home_team = create_team
+    away_team = create_team
+    schedule = create_schedule(
+      season: 2026,
+      schedule_type: "D",
+      start_date: Date.new(2026, 10, 1),
+      end_date: Date.new(2026, 10, 20)
+    )
+    3.times do |index|
+      create_game(
+        schedule: schedule,
+        official_date: Date.new(2026, 10, 15) + index.days,
+        home_team: home_team,
+        away_team: away_team,
+        status: "final",
+        home_score: 4,
+        away_score: 2,
+        game_type: "D"
+      )
+    end
+    create_game(
+      schedule: schedule,
+      official_date: Date.new(2026, 10, 18),
+      home_team: away_team,
+      away_team: home_team,
+      game_type: "D",
+      status: "scheduled",
+      raw_data: { "ifNecessary" => "Y" }
+    )
+
+    estimate = PitchDataSyncTaskEstimate.call(
+      start_date: "2026-10-18",
+      end_date: "2026-10-18",
+      game_types: "D",
+      chunk_days: 1,
+      replace_existing: true
+    )
+
+    expect(estimate).to include(game_count: 0, already_complete_game_count: 0)
+    expect(PitchDataDownloader).not_to receive(:call)
+
+    result = PitchDataBatchSync.call(
+      start_date: "2026-10-18",
+      end_date: "2026-10-18",
+      game_types: "D",
+      chunk_days: 1,
+      replace_existing: true
+    )
+
+    expect(result).to include(success: true)
+    expect(result.dig(:data, :game_count)).to eq(0)
+  end
 end

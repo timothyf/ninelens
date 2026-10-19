@@ -56,7 +56,10 @@ class MlbGameDetailsTaskEstimate
   def selected_games(attributes)
     return Game.where(mlb_id: attributes.fetch("mlb_game_id")) if attributes["mlb_game_id"]
 
-    Game.where(official_date: Date.iso8601(attributes.fetch("start_date"))..Date.iso8601(attributes.fetch("end_date")))
+    Game
+      .where(official_date: Date.iso8601(attributes.fetch("start_date"))..Date.iso8601(attributes.fetch("end_date")))
+      .without_cancelled
+      .without_unplayed_if_necessary
   end
 
   def historical_timing

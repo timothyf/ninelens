@@ -41,6 +41,71 @@ RSpec.describe MlbGameDetailsBatchSync do
     expect(result).to include(success: false, message: "End date must be on or after start date")
   end
 
+  it "does not synchronize cancelled or unplayed if-necessary games for a date range" do
+    home_team = create_team
+    away_team = create_team
+    schedule = create_schedule(
+      season: 2026,
+      schedule_type: "D",
+      start_date: Date.new(2026, 10, 1),
+      end_date: Date.new(2026, 10, 20)
+    )
+    3.times do |index|
+      create_game(
+        schedule: schedule,
+        official_date: Date.new(2026, 10, 15) + index.days,
+        home_team: home_team,
+        away_team: away_team,
+        status: "final",
+        home_score: 5,
+        away_score: 3,
+        game_type: "D"
+      )
+    end
+    played_game = create_game(
+      mlb_id: 849_805,
+      schedule: schedule,
+      official_date: Date.new(2026, 10, 18),
+      home_team: home_team,
+      away_team: away_team,
+      status: "final",
+      home_score: 5,
+      away_score: 3,
+      game_type: "D"
+    )
+    create_game(
+      mlb_id: 849_806,
+      schedule: schedule,
+      official_date: Date.new(2026, 10, 18),
+      home_team: away_team,
+      away_team: home_team,
+      status: "scheduled",
+      game_type: "D",
+      raw_data: { "ifNecessary" => "Y", "seriesGameNumber" => 6 }
+    )
+    create_game(
+      mlb_id: 849_807,
+      schedule: schedule,
+      official_date: Date.new(2026, 10, 18),
+      home_team: home_team,
+      away_team: away_team,
+      status: "cancelled",
+      detailed_status: "Cancelled"
+    )
+    allow(DailyAnalyticsRefresh).to receive(:call).and_return(success: true, message: "ok", data: {})
+    allow(MlbGameDetailsSync).to receive(:call).with(game: played_game).and_return(
+      success: true,
+      message: "Synchronized",
+      data: {}
+    )
+
+    result = described_class.call(start_date: "2026-10-18", end_date: "2026-10-18", worker_count: 1)
+
+    expect(result).to include(success: true, message: "Synchronized details for 1 of 1 MLB games")
+    expect(result.dig(:data, :game_count)).to eq(1)
+    expect(MlbGameDetailsSync).to have_received(:call).with(game: played_game)
+  end
+
   it "reports progress and stops safely between games when cancellation is requested" do
     first = create_game(mlb_id: 800_011, official_date: Date.new(2026, 7, 15))
     second = create_game(mlb_id: 800_012, official_date: Date.new(2026, 7, 15))

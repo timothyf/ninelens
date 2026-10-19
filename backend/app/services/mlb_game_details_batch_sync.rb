@@ -73,7 +73,10 @@ class MlbGameDetailsBatchSync
     scope = Game.includes(:away_team, :home_team).order(:official_date, :scheduled_at, :mlb_id)
     return scope.where(mlb_id: mlb_game_id) if mlb_game_id_provided
 
-    scope.where(official_date: start_date..end_date)
+    scope
+      .where(official_date: start_date..end_date)
+      .without_cancelled
+      .without_unplayed_if_necessary
   end
 
   def validation_errors
