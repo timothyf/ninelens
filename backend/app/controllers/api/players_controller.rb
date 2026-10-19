@@ -14,7 +14,7 @@ module Api
       section_only = params[:view].to_s == "section"
       selected_sections = profile_sections
       needs_analysis_range = !%w[profile section].include?(params[:view].to_s) ||
-        (section_only && (selected_sections & %w[analytics splits]).any?)
+        (section_only && (selected_sections & %w[analytics splits benchmarks]).any?)
       analysis_range = PlayerAnalysisRange.resolve(player: player, params: analysis_params) if needs_analysis_range
       snapshot = PlayerProfileSnapshotQuery.new(
         player: player,
@@ -25,7 +25,8 @@ module Api
         compact: params[:view].to_s == "comparison",
         core: !section_only,
         comparison_benchmarks: params[:view].to_s != "profile",
-        core_analysis_range: params[:view].to_s != "profile"
+        core_analysis_range: params[:view].to_s != "profile",
+        benchmarks_in_analytics: !section_only
       )
 
       render json: {

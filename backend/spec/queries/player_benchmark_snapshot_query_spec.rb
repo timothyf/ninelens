@@ -83,6 +83,34 @@ RSpec.describe PlayerBenchmarkSnapshotQuery do
     expect(result).to eq(preview)
   end
 
+  it "uses the latest saved season snapshot for the season view" do
+    latest_end_date = end_date + 1.day
+    %w[ops batter_strikeout_percentage batter_walk_percentage].each do |metric_key|
+      benchmark = create_benchmark(
+        metric_key: metric_key,
+        source_end_date: latest_end_date,
+        display_name: metric_key,
+        peer_group_type: "mlb",
+        peer_group_key: "all",
+        average_value: 0.720
+      )
+      create_percentile(benchmark, source_end_date: latest_end_date)
+    end
+    expect(ContextualBenchmarkRefresh).not_to receive(:preview)
+
+    result = described_class.new(
+      player: player,
+      start_date: start_date,
+      end_date: end_date,
+      prefer_latest_season: true
+    ).result
+
+    expect(result).to include(cached: true, source_start_date: start_date, source_end_date: latest_end_date)
+    expect(result.fetch(:metrics).map { |metric| metric.fetch(:metric_key) }).to match_array(
+      %w[ops batter_strikeout_percentage batter_walk_percentage]
+    )
+  end
+
   def create_benchmark(attributes)
     LeagueMetricBenchmark.create!(
       {

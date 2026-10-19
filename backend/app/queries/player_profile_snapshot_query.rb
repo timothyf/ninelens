@@ -161,7 +161,7 @@ class PlayerProfileSnapshotQuery
     }
   ].freeze
   TRANSACTION_HISTORY_SOURCE_NAME = "MLB Stats API transactions"
-  DEFERRED_SECTIONS = %w[advanced_stats defensive_stats splits postseason similar_players analytics].freeze
+  DEFERRED_SECTIONS = %w[advanced_stats defensive_stats splits postseason similar_players analytics benchmarks].freeze
   NON_DEFENSIVE_POSITIONS = %w[DH].freeze
 
   def initialize(player:, on: Date.current, analysis_range: nil, similarity_options: {}, benchmark_cache: nil)
@@ -172,7 +172,7 @@ class PlayerProfileSnapshotQuery
     @benchmark_cache = benchmark_cache
   end
 
-  def result(sections: nil, compact: false, core: true, comparison_benchmarks: true, core_analysis_range: true)
+  def result(sections: nil, compact: false, core: true, comparison_benchmarks: true, core_analysis_range: true, benchmarks_in_analytics: true)
     selected_sections = sections.nil? ? DEFERRED_SECTIONS : Array(sections) & DEFERRED_SECTIONS
     payload = {}
     if core
@@ -212,7 +212,8 @@ class PlayerProfileSnapshotQuery
         position_match: similarity_options[:similar_position]
       ).result
     end
-    payload.merge!(analytics_payload) if selected_sections.include?("analytics")
+    payload.merge!(analytics_payload(include_benchmarks: benchmarks_in_analytics)) if selected_sections.include?("analytics")
+    payload[:contextual_benchmarks] ||= contextual_benchmarks if selected_sections.include?("benchmarks")
 
     payload
   end
@@ -1538,16 +1539,11 @@ class PlayerProfileSnapshotQuery
     end
   end
 
-  def analytics_payload
-    {
+  def analytics_payload(include_benchmarks: true)
+    payload = {
       recent_pitch_indicators: recent_pitch_indicators,
       batted_ball_profile: batted_ball_profile,
       pitch_arsenal: pitch_arsenal,
-      contextual_benchmarks: PlayerBenchmarkSnapshotQuery.new(
-        player: player,
-        start_date: analysis_range.start_date,
-        end_date: analysis_range.end_date
-      ).result,
       trend_events: PlayerTrendEventQuery.new(
         player: player,
         start_date: analysis_range.start_date,
@@ -1555,6 +1551,18 @@ class PlayerProfileSnapshotQuery
       ).result,
       analysis: PlayerTrendQuery.new(player: player, analysis_range: analysis_range).result
     }
+    payload[:contextual_benchmarks] = contextual_benchmarks if include_benchmarks
+    payload
+  end
+
+  def contextual_benchmarks
+    # Season snapshots can be newer than the player's last game; the payload reports their actual dates.
+    PlayerBenchmarkSnapshotQuery.new(
+      player: player,
+      start_date: analysis_range.start_date,
+      end_date: analysis_range.end_date,
+      prefer_latest_season: analysis_range.preset == "season"
+    ).result
   end
 
   def batted_ball_profile

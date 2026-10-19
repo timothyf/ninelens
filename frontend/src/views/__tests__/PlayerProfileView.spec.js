@@ -496,6 +496,30 @@ describe('PlayerProfileView', () => {
     expect(indicator.find('.contextual-benchmarks-loading__spinner').exists()).toBe(true)
   })
 
+  it('renders benchmarks while the rest of analytics is still loading', async () => {
+    const core = apiPayloadWith((payload) => { delete payload.data.contextual_benchmarks })
+    const benchmarks = apiPayload().data.contextual_benchmarks
+    const fetchMock = vi.fn((url) => {
+      if (url.includes('sections=analytics')) return new Promise(() => {})
+      if (url.includes('sections=benchmarks')) {
+        return Promise.resolve({ ok: true, json: async () => ({ data: { contextual_benchmarks: benchmarks } }) })
+      }
+      return Promise.resolve({ ok: true, json: async () => core })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const wrapper = mount(PlayerProfileView, {
+      props: { playerId: '42' },
+      global: { stubs: { RouterLink: true } },
+    })
+    await flushPromises()
+
+    expect(fetchMock.mock.calls.some(([url]) => url.includes('sections=analytics'))).toBe(true)
+    expect(fetchMock.mock.calls.some(([url]) => url.includes('sections=benchmarks'))).toBe(true)
+    expect(wrapper.get('[data-test="contextual-benchmarks"]').text()).toContain('OPS')
+    expect(wrapper.find('[data-test="contextual-benchmarks-loading"]').exists()).toBe(false)
+  })
+
   it('opens data provenance from the profile header in a modal', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => apiPayload() }))
 

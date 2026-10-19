@@ -53,6 +53,9 @@ const tabAnalysisOptions = reactive({
   'pitch-arsenal': { range: 'season', paWindow: 50, pitchWindow: 100, startDate: null, endDate: null },
 })
 const { player, loading, error, sectionLoading, loadSection, reloadSection, refresh } = usePlayerProfile(playerId, analysisOptions)
+watch(() => player.value?.id, (id) => {
+  if (id) void loadSection('benchmarks')
+}, { immediate: true })
 const trackedPlayerMlbId = ref(null)
 const trackedPlayerTabSignature = ref('')
 const {

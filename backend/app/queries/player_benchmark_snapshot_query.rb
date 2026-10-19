@@ -2,10 +2,11 @@ class PlayerBenchmarkSnapshotQuery
   CURRENT_BATTING_RATE_METRICS = %w[batter_strikeout_percentage batter_walk_percentage].freeze
   CURRENT_PITCHING_RATE_METRICS = %w[pitcher_strikeout_percentage pitcher_walk_percentage].freeze
 
-  def initialize(player:, start_date: nil, end_date: nil, calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION)
+  def initialize(player:, start_date: nil, end_date: nil, prefer_latest_season: false, calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION)
     @player = player
     @start_date = start_date
     @end_date = end_date
+    @prefer_latest_season = prefer_latest_season
     @calculation_version = calculation_version
   end
 
@@ -34,18 +35,23 @@ class PlayerBenchmarkSnapshotQuery
 
   private
 
-  attr_reader :player, :start_date, :end_date, :calculation_version
+  attr_reader :player, :start_date, :end_date, :prefer_latest_season, :calculation_version
 
   def rows
-    @rows ||= player.player_metric_percentiles
+    relation = player.player_metric_percentiles
       .for_version(calculation_version)
       .includes(:league_metric_benchmark)
-      .to_a
+    relation = relation.where(source_start_date: start_date) if start_date.present?
+    relation = relation.where(source_end_date: end_date) if end_date.present? && !prefer_latest_season
+    @rows ||= relation.to_a
   end
 
   def latest_rows
     @latest_rows ||= begin
-      if start_date.present? && end_date.present?
+      if prefer_latest_season && start_date.present?
+        latest_end_date = rows.map(&:source_end_date).max
+        rows.select { |row| row.source_end_date == latest_end_date }
+      elsif start_date.present? && end_date.present?
         rows.select { |row| row.source_start_date == start_date && row.source_end_date == end_date }
       else
         latest = rows.max_by { |row| [ row.source_end_date, row.source_start_date, row.calculated_at ] }

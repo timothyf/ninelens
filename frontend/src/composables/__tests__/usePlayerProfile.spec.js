@@ -173,6 +173,7 @@ describe('usePlayerProfile', () => {
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       '/api/players/42?sections=core&view=profile',
       '/api/players/42?range=7&pa_window=50&pitch_window=100&sections=analytics&view=section',
+      '/api/players/42?range=7&pa_window=50&pitch_window=100&sections=benchmarks&view=section',
     ])
   })
 
@@ -183,7 +184,10 @@ describe('usePlayerProfile', () => {
       if (url.includes('sections=core')) {
         return Promise.resolve({ ok: true, json: async () => ({ data: { id: 42 } }) })
       }
-      return new Promise((resolve) => pending.set(new URLSearchParams(url.split('?')[1]).get('range'), resolve))
+      return new Promise((resolve) => {
+        const params = new URLSearchParams(url.split('?')[1])
+        pending.set(`${params.get('range')}:${params.get('sections')}`, resolve)
+      })
     }))
 
     const { player } = usePlayerProfile(computed(() => '42'), analysisOptions, { loadAnalyticsAfterInitial: false })
@@ -193,9 +197,9 @@ describe('usePlayerProfile', () => {
     analysisOptions.value = { range: '14' }
     await flushPromises()
 
-    pending.get('14')({ ok: true, json: async () => ({ data: { analysis: { range: { preset: '14' } } } }) })
+    pending.get('14:analytics')({ ok: true, json: async () => ({ data: { analysis: { range: { preset: '14' } } } }) })
     await flushPromises()
-    pending.get('7')({ ok: true, json: async () => ({ data: { analysis: { range: { preset: '7' } } } }) })
+    pending.get('7:analytics')({ ok: true, json: async () => ({ data: { analysis: { range: { preset: '7' } } } }) })
     await flushPromises()
 
     expect(player.value.analysis.range.preset).toBe('14')

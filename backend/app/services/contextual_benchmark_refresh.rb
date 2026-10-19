@@ -91,7 +91,7 @@ class ContextualBenchmarkRefresh
     return preview_result([]) if end_date < start_date || calculation_version.blank?
 
     all_observations = observations(start_date, end_date)
-    current = qualified_observations
+    current = qualified_observations(all_observations)
     metrics = grouped_observations(current).filter_map do |_identity, metric_rows|
       player_row = metric_rows.find { |row| row[:player_id] == player_id }
       next if player_row.nil?
@@ -173,8 +173,8 @@ class ContextualBenchmarkRefresh
       pitch_usage_observations(range_start, range_end)
   end
 
-  def qualified_observations
-    observations(start_date, end_date).select do |row|
+  def qualified_observations(observation_rows = observations(start_date, end_date))
+    observation_rows.select do |row|
       eligible_player_ids_for(row[:metric_group]).include?(row[:player_id])
     end
   end

@@ -629,6 +629,7 @@ export function usePlayerProfile(playerIdRef, analysisOptionsRef = null, {
     watch(() => JSON.stringify(analysisOptionsRef.value), () => {
       if (!player.value || loading.value) return
       void reloadSection('analytics')
+      void reloadSection('benchmarks')
       if (loadedSections.has('splits')) void reloadSection('splits')
     })
   }
@@ -651,12 +652,12 @@ function normalizedSection(data, section) {
   if (section === 'splits') return { batterSplits: normalized.batterSplits, pitcherSplits: normalized.pitcherSplits }
   if (section === 'postseason') return { postseasonStats: normalized.postseasonStats }
   if (section === 'similar_players') return { similarPlayers: normalized.similarPlayers }
+  if (section === 'benchmarks') return { contextualBenchmarks: normalized.contextualBenchmarks }
   if (section === 'analytics') {
     return {
       pitchIndicators: normalized.pitchIndicators,
       battedBallProfile: normalized.battedBallProfile,
       pitchArsenal: normalized.pitchArsenal,
-      contextualBenchmarks: normalized.contextualBenchmarks,
       trendEvents: normalized.trendEvents,
       analysis: normalized.analysis,
     }

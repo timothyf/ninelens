@@ -56,7 +56,7 @@ const benchmarkMetrics = computed(() => player.value.contextualBenchmarks.metric
     </header>
 
     <p
-      v-if="sectionLoading('analytics').value"
+      v-if="sectionLoading('benchmarks').value"
       class="contextual-benchmarks-loading"
       role="status"
       aria-live="polite"

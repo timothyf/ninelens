@@ -168,6 +168,19 @@ RSpec.describe "Api::Players", type: :request do
     expect(json_body.fetch("data").keys).to eq([ "postseason_stats" ])
   end
 
+  it "loads benchmark context separately from the other analytics" do
+    get api_player_path(@miguel), params: { sections: "benchmarks", view: "section" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("data").keys).to eq([ "contextual_benchmarks" ])
+
+    get api_player_path(@miguel), params: { sections: "analytics", view: "section" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.fetch("data")).to have_key("analysis")
+    expect(json_body.fetch("data")).not_to have_key("contextual_benchmarks")
+  end
+
   it "supports custom profile analysis ranges and rolling windows" do
     PitchDatum.create!(
       game_pk: 900_100,
