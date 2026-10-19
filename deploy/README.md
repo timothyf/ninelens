@@ -17,21 +17,30 @@ that was tested, and checks `https://www.ninelens.com/up` and the homepage.
    deploy user's `~/.ssh/authorized_keys` on the server, and put its private key
    in the GitHub environment secret `PROD_SSH_KEY`. Limit this account's access
    to what deployment requires.
-3. Obtain the server's SSH host key through a trusted channel. Add its
-   `known_hosts` line to the GitHub environment secret `PROD_SSH_KNOWN_HOSTS`.
-   Compare its fingerprint with the server's host key before saving it; do not
-   trust a fresh `ssh-keyscan` result by itself.
-4. In **Settings → Environments**, create `production`, restrict it to `main`,
+3. Connect the production server to Tailscale with the `tag:prod-server` tag.
+   In the tailnet access policy, allow `tag:ci` to reach `tag:prod-server` on
+   `tcp:22`. Remove any broad default grant that would also give `tag:ci`
+   wider access, while preserving other access your tailnet needs. Create a
+   Tailscale OAuth client with the writable Auth Keys scope and `tag:ci`.
+   Put its client ID and secret in the GitHub `production` environment secrets
+   `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_SECRET`. The deploy job joins the tailnet
+   as an ephemeral `tag:ci` device before SSHing to the server.
+4. Obtain the server's SSH host key through a trusted channel. Add a
+   `known_hosts` line for the server's Tailscale IPv4 address to the GitHub
+   environment secret `PROD_SSH_KNOWN_HOSTS`. Compare its fingerprint with the
+   server's host key before saving it; do not trust a fresh `ssh-keyscan`
+   result by itself. The existing SSH key remains `PROD_SSH_KEY`.
+5. In **Settings → Environments**, create `production`, restrict it to `main`,
    and configure required reviewers if available for the repository. Add these
    environment variables:
 
    | Variable | Value |
    | --- | --- |
-   | `PROD_HOST` | Server's SSH hostname or IP |
+   | `PROD_HOST` | Server's Tailscale IPv4 address (`tailscale ip -4` on the server) |
    | `PROD_USER` | Dedicated deploy user's login |
    | `PROD_DIR` | Absolute path to the server's repository checkout |
 
-5. Run the workflow manually from `main`. Check the Actions log and the live
+6. Run the workflow manually from `main`. Check the Actions log and the live
    site. The job fails before building if the server checkout is dirty, is not
    on `main`, or pulls a different commit from the one the workflow tested.
 

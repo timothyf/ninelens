@@ -45,6 +45,14 @@ jobs:
       DEPLOY_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
       DEPLOY_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
     steps:
+      - name: Connect to production tailnet
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: ${{ vars.PROD_HOST }}
+
       - name: Deploy the selected commit over SSH
         shell: bash
         run: |
