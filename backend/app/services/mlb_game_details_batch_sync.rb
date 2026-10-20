@@ -47,6 +47,7 @@ class MlbGameDetailsBatchSync
     end
 
     summary[:analytics_refresh] = refresh_daily_analytics_for!(refreshed_dates)
+    expire_home_snapshot_cache! if summary[:synchronized_game_count].positive?
 
     if summary[:cancelled]
       processed = summary[:synchronized_game_count] + summary[:failed_game_count]
@@ -269,6 +270,10 @@ class MlbGameDetailsBatchSync
       message: "Game details synchronized, but daily analytics refresh failed: #{error.message}",
       data: { errors: [ error.message ] }
     }
+  end
+
+  def expire_home_snapshot_cache!
+    Rails.cache.delete_matched("home-snapshot/v2/*")
   end
 
   def success(message, data)

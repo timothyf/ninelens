@@ -11,6 +11,7 @@ function formatTime(value) {
 }
 
 function gameState(game) {
+  if (game.upcoming) return `Upcoming · ${formatDate(game.official_date)}`
   const status = String(game.status || '').toLowerCase().replace(/[-_]/g, ' ')
   if (game.home_score !== null && game.home_score !== undefined && ['final', 'completed'].some((value) => status.includes(value))) return 'Final'
   if (['live', 'in progress', 'manager challenge'].some((value) => status.includes(value))) {
@@ -19,6 +20,12 @@ function gameState(game) {
     return inning ? `${liveStatus} · ${inning}` : liveStatus
   }
   return formatTime(game.scheduled_at)
+}
+
+function formatDate(value) {
+  if (!value) return 'Date TBD'
+  return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    .format(new Date(`${value}T12:00:00`))
 }
 
 function isFutureIfNecessary(game) {

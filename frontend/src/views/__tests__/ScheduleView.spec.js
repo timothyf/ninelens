@@ -96,7 +96,7 @@ describe('ScheduleView', () => {
   it('shows empty and retry states', async () => {
     fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ data: [] }) })
     const { wrapper } = await mountView()
-    expect(wrapper.get('[data-test="schedule-games"]').text()).toContain('No games are stored for Thursday, July 16, 2026')
+    expect(wrapper.get('[data-test="schedule-games"]').text()).toContain('No games are scheduled for Thursday, July 16, 2026')
     wrapper.unmount()
 
     fetch.mockResolvedValueOnce({ ok: false, status: 503 })

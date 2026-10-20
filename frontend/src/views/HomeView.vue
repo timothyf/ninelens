@@ -102,7 +102,7 @@ function signed(value) {
       <section class="home-panel slate-panel" data-test="today-games">
         <header class="home-heading">
           <div>
-            <p class="home-eyebrow">Today’s slate</p>
+            <p class="home-eyebrow">{{ dashboard.games.some((game) => game.upcoming) ? 'Upcoming game' : 'Today’s slate' }}</p>
             <h2>Games around the league</h2>
           </div>
           <span>{{ dashboard.games.length }} {{ dashboard.games.length === 1 ? 'game' : 'games' }}</span>
@@ -110,7 +110,7 @@ function signed(value) {
         <div v-if="dashboard.games.length" class="game-grid">
           <GameScheduleCard v-for="game in dashboard.games" :key="game.id" :game="game" />
         </div>
-        <p v-else class="home-empty">No games are stored for {{ briefingDate }}.</p>
+        <p v-else class="home-empty">No games are scheduled for {{ briefingDate }}.</p>
       </section>
 
       <section class="home-panel" data-test="home-leaders">

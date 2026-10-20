@@ -80,7 +80,7 @@ function showToday() {
       <div v-else-if="games.length" class="schedule-grid">
         <GameScheduleCard v-for="game in games" :key="game.id" :game="game" />
       </div>
-      <p v-else class="schedule-empty">No games are stored for {{ headingDate }}.</p>
+      <p v-else class="schedule-empty">No games are scheduled for {{ headingDate }}.</p>
     </section>
   </main>
 </template>

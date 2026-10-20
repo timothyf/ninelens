@@ -1719,7 +1719,7 @@ async function saveLineupScenario() {
             </div>
           </div>
         </div>
-        <p v-else class="team-empty">No games are stored for the {{ team.season }} season.</p>
+        <p v-else class="team-empty">No games are scheduled for the {{ team.season }} season.</p>
       </section>
 
       <footer class="team-freshness">

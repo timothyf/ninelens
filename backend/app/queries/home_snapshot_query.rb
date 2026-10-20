@@ -52,12 +52,24 @@ class HomeSnapshotQuery
   end
 
   def games
-    Game
+    todays_games = Game
       .where(official_date: on)
       .without_unplayed_if_necessary
       .includes(:schedule, :home_team, :away_team, :home_probable_pitcher, :away_probable_pitcher)
       .order(:scheduled_at, :mlb_id)
-      .map { |game| GameSerializer.call(game) }
+      .to_a
+
+    return todays_games.map { |game| GameSerializer.call(game) } if todays_games.any?
+
+    next_game = Game
+      .where(status: %w[scheduled preview])
+      .where("official_date > ?", on)
+      .without_unplayed_if_necessary
+      .includes(:schedule, :home_team, :away_team, :home_probable_pitcher, :away_probable_pitcher)
+      .order(:official_date, :scheduled_at, :mlb_id)
+      .first
+
+    next_game ? [ GameSerializer.call(next_game).merge(upcoming: true) ] : []
   end
 
   def leaders
