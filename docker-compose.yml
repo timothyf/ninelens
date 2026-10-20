@@ -16,6 +16,9 @@ services:
   backend:
     build:
       context: ./backend
+      args:
+        DEPLOY_VERSION: ${DEPLOY_VERSION:-development}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
     environment:
       RAILS_ENV: production
       DATABASE_URL: postgres://ninelens:${POSTGRES_PASSWORD:-ninelens-local}@db:5432/ninelens_production

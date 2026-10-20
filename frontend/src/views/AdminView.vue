@@ -108,6 +108,7 @@ const {
   lastResult,
   overviewLoading,
   overviewError,
+  deployment,
   dataHealth,
   dataHealthLoading,
   dataHealthError,
@@ -377,6 +378,12 @@ async function closeDatabaseDetails() {
           <button ref="databaseDetailsButton" type="button" data-test="database-details-button" @click="openDatabaseDetails">
             View details
           </button>
+        </div>
+        <div v-if="deployment" class="deployment-info" data-test="deployment-info">
+          <span>Deployed version</span>
+          <strong>#{{ deployment.version }}</strong>
+          <small v-if="deployment.short_commit" :title="deployment.commit">Commit {{ deployment.short_commit }}</small>
+          <small v-else>Commit unavailable</small>
         </div>
         <AdminDataHealthPanel
           :report="dataHealth"
@@ -863,6 +870,7 @@ async function closeDatabaseDetails() {
 }
 
 .database-footprint,
+.deployment-info,
 .data-health-summary {
   display: grid;
   min-width: 190px;
@@ -875,6 +883,8 @@ async function closeDatabaseDetails() {
 
 .database-footprint span,
 .database-footprint small,
+.deployment-info span,
+.deployment-info small,
 .data-health-summary span,
 .data-health-summary small {
   color: #61707b;
@@ -1340,6 +1350,7 @@ async function closeDatabaseDetails() {
 }
 
 .database-footprint strong,
+.deployment-info strong,
 .data-health-summary strong {
   color: #10263d;
   font-family: 'Avenir Next Condensed', sans-serif;
@@ -1348,6 +1359,7 @@ async function closeDatabaseDetails() {
 }
 
 .database-footprint small,
+.deployment-info small,
 .data-health-summary small {
   font-size: 0.58rem;
   font-weight: 700;

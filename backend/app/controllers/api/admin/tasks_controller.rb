@@ -8,6 +8,7 @@ module Api
         render json: {
           data: AdminTaskRunner.catalog,
           meta: {
+            deployment: deployment_metadata,
             schedule_import_range: schedule_import_range,
             schedule_date_range: schedule_date_range,
             roster_coverage: roster_coverage,
@@ -38,6 +39,15 @@ module Api
       end
 
       private
+
+      def deployment_metadata
+        commit = ENV["GIT_COMMIT"].to_s
+        {
+          version: ENV["DEPLOY_VERSION"].presence || "development",
+          commit: commit,
+          short_commit: commit.first(7).presence
+        }
+      end
 
       def task_params
         params.permit(

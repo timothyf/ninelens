@@ -70,12 +70,13 @@ jobs:
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-          printf -v remote_command 'bash -se -- %q %q' "$DEPLOY_DIR" "$GITHUB_SHA"
+          printf -v remote_command 'bash -se -- %q %q %q' "$DEPLOY_DIR" "$GITHUB_SHA" "$GITHUB_RUN_NUMBER"
           ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
             -i ~/.ssh/id_ed25519 -- "$DEPLOY_USER@$DEPLOY_HOST" "$remote_command" <<'REMOTE'
           set -euo pipefail
           cd "$1"
           expected_sha="$2"
+          deploy_version="$3"
 
           test -f .env
           test "$(git branch --show-current)" = main
@@ -86,7 +87,7 @@ jobs:
 
           compose=(docker compose --env-file .env -f docker-compose.yml -f docker-compose.production.yml)
           "${compose[@]}" config --quiet
-          "${compose[@]}" build --pull
+          DEPLOY_VERSION="$deploy_version" GIT_COMMIT="$expected_sha" "${compose[@]}" build --pull
           "${compose[@]}" up -d --remove-orphans
           REMOTE
 

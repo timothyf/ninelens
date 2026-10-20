@@ -18,6 +18,7 @@ export function useAdminTask() {
   const backgroundTask = useBackgroundTaskRun(GENERIC_ADMIN_TASKS)
   const overviewLoading = ref(false)
   const overviewError = ref('')
+  const deployment = ref(null)
   const dataHealth = ref(null)
   const dataHealthLoading = ref(false)
   const dataHealthError = ref('')
@@ -73,6 +74,8 @@ export function useAdminTask() {
       if (!response.ok) {
         throw new Error(payload?.message || `Admin overview failed with status ${response.status}.`)
       }
+
+      deployment.value = payload?.meta?.deployment || null
 
       const range = payload?.meta?.schedule_date_range || {}
       const importRange = payload?.meta?.schedule_import_range || {}
@@ -254,6 +257,7 @@ export function useAdminTask() {
     }),
     overviewLoading: computed(() => overviewLoading.value),
     overviewError: computed(() => overviewError.value),
+    deployment: computed(() => deployment.value),
     dataHealth: computed(() => dataHealth.value),
     dataHealthLoading: computed(() => dataHealthLoading.value),
     dataHealthError: computed(() => dataHealthError.value),
