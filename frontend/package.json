@@ -10,6 +10,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:e2e": "playwright test",
+    "test:smoke:prod": "playwright test --config=playwright.smoke.config.js",
     "test:e2e:mobile": "playwright test mobile-ux.spec.js --project=iphone-se-portrait --project=iphone-current-portrait --project=iphone-current-landscape",
     "test:e2e:headed": "playwright test --headed"
   },

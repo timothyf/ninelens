@@ -35,6 +35,7 @@ npm run preview   # serve the production build locally
 npm test          # run Vitest in watch mode
 npm run test:run  # run the full Vitest suite once
 npm run test:e2e  # run Playwright browser tests against the Rails test database
+npm run test:smoke:prod  # run read-only smoke checks against production
 ```
 
 ## End-to-end browser tests
@@ -52,6 +53,10 @@ npm run test:e2e
 ```
 
 Set `E2E_BASE_URL` to run the tests against already-running servers; that mode does not start local servers.
+
+## Production smoke test
+
+Run `npm run test:smoke:prod` from `frontend/` to check the public `/up` readiness endpoint and visit every public frontend route, including representative player, team, game, and shared-analysis detail routes. It checks that each route returns a successful document response and renders its page shell; the home page also needs to render its dashboard data. The command targets `https://www.ninelens.com` by default; set `SMOKE_BASE_URL` to another HTTPS deployment when needed. This suite has its own Playwright config and does not run the E2E database setup or teardown. It performs read-only requests and blocks `cloud.umami.is` in the browser, so smoke-test pageviews and analytics events are not sent to Umami.
 
 ## Application areas
 
