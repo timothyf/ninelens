@@ -232,7 +232,7 @@ const scheduleTaskError = computed(() => (scheduleTask.value ? taskError.value :
 const scheduleTaskResult = computed(() => (scheduleTask.value ? lastResult.value : null))
 const scheduleOwnsTaskStatus = computed(() => Boolean(scheduleTask.value || scheduleRequestError.value))
 const headerDeployment = computed(() => {
-  const metadata = deployment.value || {}
+  const metadata = deployment?.value || {}
   const appVersion = metadata.app_version && metadata.app_version !== 'unknown' && metadata.app_version !== 'development'
     ? metadata.app_version
     : frontendConfig.applicationVersion
