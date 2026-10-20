@@ -45,6 +45,10 @@ jobs:
       DEPLOY_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
       DEPLOY_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
     steps:
+      - uses: actions/checkout@v4
+      - name: Read application version
+        shell: bash
+        run: echo "APP_VERSION=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_ENV"
       - name: Connect to production tailnet
         uses: tailscale/github-action@v4
         with:
@@ -70,13 +74,14 @@ jobs:
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
-          printf -v remote_command 'bash -se -- %q %q %q' "$DEPLOY_DIR" "$GITHUB_SHA" "$GITHUB_RUN_NUMBER"
+          printf -v remote_command 'bash -se -- %q %q %q %q' "$DEPLOY_DIR" "$GITHUB_SHA" "$GITHUB_RUN_NUMBER" "$APP_VERSION"
           ssh -o BatchMode=yes -o StrictHostKeyChecking=yes \
             -i ~/.ssh/id_ed25519 -- "$DEPLOY_USER@$DEPLOY_HOST" "$remote_command" <<'REMOTE'
           set -euo pipefail
           cd "$1"
           expected_sha="$2"
           deploy_version="$3"
+          app_version="$4"
 
           test -f .env
           test "$(git branch --show-current)" = main
@@ -87,7 +92,7 @@ jobs:
 
           compose=(docker compose --env-file .env -f docker-compose.yml -f docker-compose.production.yml)
           "${compose[@]}" config --quiet
-          DEPLOY_VERSION="$deploy_version" GIT_COMMIT="$expected_sha" "${compose[@]}" build --pull
+          APP_VERSION="$app_version" DEPLOY_VERSION="$deploy_version" GIT_COMMIT="$expected_sha" "${compose[@]}" build --pull
           "${compose[@]}" up -d --remove-orphans
           REMOTE
 

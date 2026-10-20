@@ -1,3 +1,5 @@
+require "open3"
+
 module Api
   module Admin
     class TasksController < ApplicationController
@@ -42,11 +44,31 @@ module Api
 
       def deployment_metadata
         commit = ENV["GIT_COMMIT"].to_s
+        commit = local_git_commit if commit.blank? || commit == "unknown"
+        app_version = ENV["APP_VERSION"].presence || local_app_version
         {
-          version: ENV["DEPLOY_VERSION"].presence || "development",
+          version: ENV["DEPLOY_VERSION"].presence || (Rails.env.production? ? "unknown" : "local"),
+          app_version: app_version,
           commit: commit,
           short_commit: commit.first(7).presence
         }
+      end
+
+      def local_app_version
+        return "unknown" if Rails.env.production?
+
+        File.read(Rails.root.join("..", "VERSION")).strip.presence || "development"
+      rescue Errno::ENOENT
+        "development"
+      end
+
+      def local_git_commit
+        return "unknown" if Rails.env.production?
+
+        output, status = Open3.capture2("git", "-C", Rails.root.to_s, "rev-parse", "HEAD")
+        status.success? ? output.strip : "unknown"
+      rescue Errno::ENOENT
+        "unknown"
       end
 
       def task_params

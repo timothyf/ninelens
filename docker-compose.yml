@@ -17,6 +17,7 @@ services:
     build:
       context: ./backend
       args:
+        APP_VERSION: ${APP_VERSION:-development}
         DEPLOY_VERSION: ${DEPLOY_VERSION:-development}
         GIT_COMMIT: ${GIT_COMMIT:-unknown}
     environment:

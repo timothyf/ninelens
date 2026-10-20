@@ -4,6 +4,8 @@ function numberSetting(rawValue, fallback) {
 }
 
 export const frontendConfig = Object.freeze({
+  applicationVersion: __APPLICATION_VERSION__,
+  localGitCommit: __LOCAL_GIT_COMMIT__,
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '',
   pollingIntervalMs: numberSetting(import.meta.env.VITE_POLL_INTERVAL_MS, 1500),
   searchDebounceMs: numberSetting(import.meta.env.VITE_SEARCH_DEBOUNCE_MS, 250),

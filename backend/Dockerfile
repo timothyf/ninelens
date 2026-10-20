@@ -2,18 +2,21 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
 ARG RUBY_VERSION=3.4.11
+ARG APP_VERSION=development
 ARG DEPLOY_VERSION=development
 ARG GIT_COMMIT=unknown
 FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim as base
 
 ARG DEPLOY_VERSION
 ARG GIT_COMMIT
+ARG APP_VERSION
 
 # Rails app lives here
 WORKDIR /rails
 
 # Set production environment
 ENV RAILS_ENV="production" \
+    APP_VERSION="$APP_VERSION" \
     DEPLOY_VERSION="$DEPLOY_VERSION" \
     GIT_COMMIT="$GIT_COMMIT" \
     BUNDLE_DEPLOYMENT="1" \

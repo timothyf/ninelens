@@ -217,6 +217,9 @@ Production rejects anonymous HTTP registration even when the database is empty. 
 Docker Compose runs PostgreSQL, the Rails API, and the built Vue frontend together:
 
 ```bash
+APP_VERSION="$(tr -d '[:space:]' < VERSION)" \
+GIT_COMMIT="$(git rev-parse HEAD)" \
+DEPLOY_VERSION=local \
 docker compose up --build
 ```
 

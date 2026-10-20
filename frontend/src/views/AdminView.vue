@@ -231,6 +231,25 @@ const scheduleTask = computed(() =>
 const scheduleTaskError = computed(() => (scheduleTask.value ? taskError.value : scheduleRequestError.value))
 const scheduleTaskResult = computed(() => (scheduleTask.value ? lastResult.value : null))
 const scheduleOwnsTaskStatus = computed(() => Boolean(scheduleTask.value || scheduleRequestError.value))
+const headerDeployment = computed(() => {
+  const metadata = deployment.value || {}
+  const appVersion = metadata.app_version && metadata.app_version !== 'unknown' && metadata.app_version !== 'development'
+    ? metadata.app_version
+    : frontendConfig.applicationVersion
+  const version = metadata.version && !['unknown', 'development'].includes(metadata.version)
+    ? metadata.version
+    : 'local'
+  const commit = metadata.commit && metadata.commit !== 'unknown'
+    ? metadata.commit
+    : frontendConfig.localGitCommit
+
+  return {
+    appVersion,
+    version,
+    commit,
+    shortCommit: metadata.short_commit || commit.slice(0, 7),
+  }
+})
 
 onMounted(() =>
   Promise.all([
@@ -364,7 +383,9 @@ async function closeDatabaseDetails() {
   <main class="admin-shell">
     <section class="admin-hero">
       <div>
-        <p class="eyebrow">NineLens operations</p>
+        <p class="eyebrow">
+          NineLens operations · Application v{{ headerDeployment.appVersion }} · Deploy #{{ headerDeployment.version }}<template v-if="headerDeployment.shortCommit"> · Commit <span :title="headerDeployment.commit">{{ headerDeployment.shortCommit }}</span></template>
+        </p>
         <h1>Data administration</h1>
         <p>
           Import local datasets, retrieve source data, and run MLB synchronization tasks from one operational workspace.
@@ -378,12 +399,6 @@ async function closeDatabaseDetails() {
           <button ref="databaseDetailsButton" type="button" data-test="database-details-button" @click="openDatabaseDetails">
             View details
           </button>
-        </div>
-        <div v-if="deployment" class="deployment-info" data-test="deployment-info">
-          <span>Deployed version</span>
-          <strong>#{{ deployment.version }}</strong>
-          <small v-if="deployment.short_commit" :title="deployment.commit">Commit {{ deployment.short_commit }}</small>
-          <small v-else>Commit unavailable</small>
         </div>
         <AdminDataHealthPanel
           :report="dataHealth"
@@ -870,7 +885,6 @@ async function closeDatabaseDetails() {
 }
 
 .database-footprint,
-.deployment-info,
 .data-health-summary {
   display: grid;
   min-width: 190px;
@@ -883,8 +897,6 @@ async function closeDatabaseDetails() {
 
 .database-footprint span,
 .database-footprint small,
-.deployment-info span,
-.deployment-info small,
 .data-health-summary span,
 .data-health-summary small {
   color: #61707b;
@@ -1350,7 +1362,6 @@ async function closeDatabaseDetails() {
 }
 
 .database-footprint strong,
-.deployment-info strong,
 .data-health-summary strong {
   color: #10263d;
   font-family: 'Avenir Next Condensed', sans-serif;
@@ -1359,7 +1370,6 @@ async function closeDatabaseDetails() {
 }
 
 .database-footprint small,
-.deployment-info small,
 .data-health-summary small {
   font-size: 0.58rem;
   font-weight: 700;
