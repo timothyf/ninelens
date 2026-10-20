@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test'
 
 const baseURL = process.env.E2E_BASE_URL || 'http://127.0.0.1:4173'
 const useManagedServers = !process.env.E2E_BASE_URL
@@ -7,6 +7,11 @@ const railsEnvironment = {
   ...process.env,
   PATH: `${rubyBinPath}:${process.env.PATH}`,
   RAILS_ENV: 'test',
+}
+
+function chromiumIPhone(deviceName) {
+  const { defaultBrowserType: _defaultBrowserType, ...device } = devices[deviceName]
+  return { ...device, browserName: 'chromium' }
 }
 
 export default defineConfig({
@@ -25,6 +30,28 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
+  projects: [
+    {
+      name: 'desktop-chromium',
+      testIgnore: /mobile-ux\.spec\.js/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'iphone-se-portrait',
+      testMatch: /mobile-ux\.spec\.js/,
+      use: chromiumIPhone('iPhone SE (3rd gen)'),
+    },
+    {
+      name: 'iphone-current-portrait',
+      testMatch: /mobile-ux\.spec\.js/,
+      use: chromiumIPhone('iPhone 17'),
+    },
+    {
+      name: 'iphone-current-landscape',
+      testMatch: /mobile-ux\.spec\.js/,
+      use: chromiumIPhone('iPhone 17 landscape'),
+    },
+  ],
   webServer: useManagedServers ? [
     {
       command: 'bundle exec rails server -e test -p 3001 -P tmp/pids/playwright-test-server.pid',
