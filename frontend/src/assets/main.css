@@ -452,6 +452,35 @@
   text-transform: uppercase;
 }
 
+.stat-explorer-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.stat-glossary-link {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #a93627;
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  color: #a93627;
+  font-family: 'Avenir Next', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.stat-glossary-link:hover,
+.stat-glossary-link:focus-visible {
+  background: #a93627;
+  color: #fff;
+}
+
 .lede,
 .control-deck__header p,
 .table-stage__header p,

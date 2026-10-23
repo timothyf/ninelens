@@ -670,7 +670,15 @@ function resetFilters() {
     <section class="hero-panel">
       <div class="hero-copy">
         <p class="eyebrow">Front Office Dashboard</p>
-        <h1>Stat Explorer</h1>
+        <h1 class="stat-explorer-title">
+          <span>Stat Explorer</span>
+          <a
+            class="stat-glossary-link"
+            href="https://timothyf.github.io/baseball-stat-glossary/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Stat Glossary</a>
+        </h1>
         <p class="lede">
           Search, sort, and compare player season statistics and pitch-level data.
         </p>
