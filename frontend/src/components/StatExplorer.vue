@@ -674,9 +674,7 @@ function resetFilters() {
           <span>Stat Explorer</span>
           <a
             class="stat-glossary-link"
-            href="https://timothyf.github.io/baseball-stat-glossary/"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/glossary/index.html"
           >Stat Glossary</a>
         </h1>
         <p class="lede">

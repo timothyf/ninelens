@@ -1,0 +1,225 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.8;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+}
+h1, h2 {
+    color: #333;
+    text-align: center;
+}
+h1 {
+    margin: 20px 0;
+    font-size: 2.5em;
+}
+h2 {
+    margin: 15px 0;
+    font-size: 1.5em;
+}
+nav {
+    margin: 20px auto;
+    padding: 15px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    border-radius: 5px;
+    max-width: 80%;
+    text-align: center;
+}
+.toc-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+}
+.toc-column {
+    flex: 1 0 calc(16% - 10px);
+    min-width: 120px;
+}
+ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+ul li {
+    margin: 5px 0;
+}
+ul li a {
+    text-decoration: none;
+    color: #0066cc;
+    font-weight: bold;
+}
+ul li a:hover {
+    color: #004080;
+    text-decoration: underline;
+}
+ul li a.advanced {
+    color: #AA0000;
+}
+ul li a.advanced:hover {
+    color: #660000;
+}
+.collapsible {
+    background-color: gray;
+    color: white;
+    cursor: pointer;
+    padding: 10px;
+    text-align: left;
+    border: none;
+    border-radius: 5px;
+    outline: none;
+    font-size: 16px;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+.collapsible:hover {
+    background-color: darkgray;
+}
+.collapsible.standard {
+    background-color: #0056b3;
+}
+.collapsible.standard:hover {
+    background-color: #003d99;
+}
+
+.collapsible.advanced {
+    background-color: #AA0000;
+}
+.collapsible.advanced:hover {
+    background-color: darkred;
+}
+
+.collapsible.first {
+    margin-bottom: 10px;
+}
+
+.collapsible:after {
+    content: '▼';
+    font-size: 12px;
+    float: right;
+}
+.active:after {
+    content: '▲';
+}
+.content {
+    padding: 15px;
+    display: none;
+    overflow: hidden;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 5px;
+    text-align: left;
+}
+#toc-nav .content {
+    text-align: center;
+}
+.content p {
+    margin: 10px 0;
+    line-height: 1.6;
+}
+.search-container {
+    text-align: center;
+    margin: 20px;
+}
+.search-container input {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.search-container #search-input {
+    max-width: 150px;
+    min-width: 75px;
+    width: 100%;
+    padding: 5px;
+}
+
+.search-container #full-search-input {
+    width: 220px;
+    max-width: 220px;
+    min-width: 130px;
+    width: 100%;
+    padding: 5px;
+}
+
+#search-label {
+    margin-right: 0px;
+    margin-left: 12%;
+    font-weight: bold; 
+    margin-right: 10px;
+}
+
+#search-btn-div {
+    display: flex; 
+    gap: 10px;
+    width: 500px;
+}
+
+@media (max-width: 600px) { /* Adjust 600px to your desired breakpoint */
+    .search-container #search-input {
+        width: 75px; /* Forces the minimum width on narrow screens */
+    }
+    .search-container #full-search-input {
+        width: 130px; /* Forces the minimum width on narrow screens */
+    }
+    #search-label {
+        margin-left: 5px;
+    }
+}
+
+@media (max-width: 500px) {
+    #search-label {
+        margin-left: 0px;
+    }
+    .search-container {
+        margin: 0px;
+    }
+}
+
+
+
+footer {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 0.9em;
+    color: #777;
+}
+
+.glossary {
+    margin: 20px auto;
+    padding: 15px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    border-radius: 5px;
+    max-width: 80%;
+}   
+
+.glossary button {
+    margin-bottom: 10px;
+}
+
+#toc-nav button {
+    max-width: 80%;
+}
+
+.toc-category-container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 20px;
+    justify-content: space-between;
+}
+.toc-column {
+    flex: 1;
+    min-width: 75px;
+}
+
+.alt-name {
+    font-style: italic;
+    color: #ccc;
+    padding-left: 5px;
+}
+
+.ninelens-back-link{display:inline-block;margin:1rem 2rem;color:#14613f;font-weight:700;text-decoration:none}.ninelens-back-link:hover{text-decoration:underline}
+

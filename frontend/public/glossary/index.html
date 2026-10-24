@@ -1,0 +1,3168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Baseball Stats</title>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<link rel='stylesheet' type='text/css' href='styles/main.css'>
+<script src='javascript/main.js'></script>
+</head>
+<body>
+<a class='ninelens-back-link' href='/explore'>← Back to Stat Explorer</a>
+<h1>Baseball Stats</h1>
+<nav>
+<div class='search-container' style='display: flex; align-items: center; justify-content: space-between;'>
+<label id='search-label'>SEARCH</label>
+<div id='search-btn-div'>
+<input type='text' id='search-input' placeholder='Stat name...'>
+<input type='text' id='full-search-input' placeholder='Full text search...'>
+</div>
+</div>
+</nav>
+<nav id='toc-nav'>
+<h2>Stats by Category</h2>
+<button class='collapsible first standard'>Standard Stats</button>
+<div class='content'>
+<ul>
+<li><button class='collapsible standard'>Standard Batting</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#1b'>1B</a></li>
+<li><a href='#2b'>2B</a></li>
+<li><a href='#3b'>3B</a></li>
+<li><a href='#ab'>AB</a></li>
+<li><a href='#avg'>AVG</a></li>
+<li><a href='#bb'>BB</a></li>
+<li><a href='#g'>G</a></li>
+<li><a href='#gidp'>GIDP</a></li>
+<li><a href='#go-ao'>GO/AO</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#gsh'>GSH</a></li>
+<li><a href='#h'>H</a></li>
+<li><a href='#hbp'>HBP</a></li>
+<li><a href='#hr'>HR</a></li>
+<li><a href='#ibb'>IBB</a></li>
+<li><a href='#lob'>LOB</a></li>
+<li><a href='#obp'>OBP</a></li>
+<li><a href='#ops'>OPS</a></li>
+<li><a href='#pa'>PA</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#r'>R</a></li>
+<li><a href='#rbi'>RBI</a></li>
+<li><a href='#roe'>ROE</a></li>
+<li><a href='#sf'>SF</a></li>
+<li><a href='#sh'>SH</a></li>
+<li><a href='#slg'>SLG</a></li>
+<li><a href='#tb'>TB</a></li>
+<li><a href='#wo'>WO</a></li>
+<li><a href='#xbh'>XBH</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible standard'>Standard Baserunning</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#cs'>CS</a></li>
+<li><a href='#sb'>SB</a></li>
+<li><a href='#sb'>SB%</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible standard'>Standard Pitching</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#app'>App</a></li>
+<li><a href='#bf'>BF</a></li>
+<li><a href='#bk'>BK</a></li>
+<li><a href='#bs'>BS</a></li>
+<li><a href='#cg'>CG</a></li>
+<li><a href='#er'>ER</a></li>
+<li><a href='#era'>ERA</a></li>
+<li><a href='#fo'>FO</a></li>
+<li><a href='#gf'>GF</a></li>
+<li><a href='#go'>GO</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#gs'>GS</a></li>
+<li><a href='#hld'>HLD</a></li>
+<li><a href='#ip'>IP</a></li>
+<li><a href='#ir'>IR</a></li>
+<li><a href='#l'>L</a></li>
+<li><a href='#np'>NP</a></li>
+<li><a href='#pk'>PK</a></li>
+<li><a href='#qs'>QS</a></li>
+<li><a href='#rw'>RW</a></li>
+<li><a href='#sho'>SHO</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#so'>SO</a></li>
+<li><a href='#sv'>SV</a></li>
+<li><a href='#sv'>SV%</a></li>
+<li><a href='#svo'>SVO</a></li>
+<li><a href='#uer'>UER</a></li>
+<li><a href='#w'>W</a></li>
+<li><a href='#whip'>WHIP</a></li>
+<li><a href='#wp'>WP</a></li>
+<li><a href='#wpct'>WPCT</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible standard'>Standard Fielding</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#a'>A</a></li>
+<li><a href='#cs'>CS%</a></li>
+<li><a href='#dp'>DP</a></li>
+<li><a href='#e'>E</a></li>
+<li><a href='#fpct'>FPCT</a></li>
+<li><a href='#inn'>INN</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#o'>O</a></li>
+<li><a href='#ofa'>OFA</a></li>
+<li><a href='#pb'>PB</a></li>
+<li><a href='#po'>PO</a></li>
+<li><a href='#tc'>TC</a></li>
+<li><a href='#tp'>TP</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible standard'>Standard Misc</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#rate-stats-qualifiers'>Rate Stats Qualifiers</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible standard'>Standard Team</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#diff'>DIFF</a></li>
+</ul></div>
+</div></div></li>
+</ul>
+</div>
+<button class='collapsible advanced'>Advanced Stats</button>
+<div class='content'>
+<ul>
+<li><button class='collapsible advanced'>General Stats</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#war' class='advanced'>WAR</a></li>
+<li><a href='#bwar' class='advanced'>bWAR</a></li>
+<li><a href='#fwar' class='advanced'>fWAR</a></li>
+<li><a href='#woba' class='advanced'>wOBA</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible advanced'>Batting Stats</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#babip' class='advanced'>BABIP</a></li>
+<li><a href='#barrel' class='advanced'>Barrel</a></li>
+<li><a href='#barrel' class='advanced'>Barrel%</a></li>
+<li><a href='#blasts' class='advanced'>Blasts</a></li>
+<li><a href='#contact' class='advanced'>Contact%</a></li>
+<li><a href='#ev' class='advanced'>EV</a></li>
+<li><a href='#fast-swing-rate' class='advanced'>Fast-swing Rate</a></li>
+<li><a href='#hr-dis' class='advanced'>HR-DIS</a></li>
+<li><a href='#hard-hit-rate' class='advanced'>Hard-hit Rate</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#iso' class='advanced'>ISO</a></li>
+<li><a href='#la' class='advanced'>LA</a></li>
+<li><a href='#lips' class='advanced'>LiPS</a></li>
+<li><a href='#o-swing' class='advanced'>O-Swing%</a></li>
+<li><a href='#obp' class='advanced'>OBP</a></li>
+<li><a href='#ops' class='advanced'>OPS</a></li>
+<li><a href='#ops+' class='advanced'>OPS+</a></li>
+<li><a href='#oppo' class='advanced'>Oppo%</a></li>
+<li><a href='#p-pa' class='advanced'>P/PA</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#pa-so' class='advanced'>PA/SO</a></li>
+<li><a href='#pull' class='advanced'>Pull%</a></li>
+<li><a href='#rc' class='advanced'>RC</a></li>
+<li><a href='#sweet-spot' class='advanced'>Sweet Spot</a></li>
+<li><a href='#swing-length' class='advanced'>Swing Length</a></li>
+<li><a href='#wraa' class='advanced'>wRAA</a></li>
+<li><a href='#wrc+' class='advanced'>wRC+</a></li>
+<li><a href='#xba' class='advanced'>xBA</a></li>
+<li><a href='#xslg' class='advanced'>xSLG</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible advanced'>Pitching Stats</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#bb' class='advanced'>BB%</a></li>
+<li><a href='#bb-9' class='advanced'>BB/9</a></li>
+<li><a href='#cera' class='advanced'>CERA</a></li>
+<li><a href='#csw' class='advanced'>CSW%</a></li>
+<li><a href='#era+' class='advanced'>ERA+</a></li>
+<li><a href='#era-' class='advanced'>ERA-</a></li>
+<li><a href='#fip' class='advanced'>FIP</a></li>
+<li><a href='#fip-' class='advanced'>FIP-</a></li>
+<li><a href='#gb-fb' class='advanced'>GB/FB</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#game-score' class='advanced'>Game Score</a></li>
+<li><a href='#h-9' class='advanced'>H/9</a></li>
+<li><a href='#hr-9' class='advanced'>HR/9</a></li>
+<li><a href='#hr-fb' class='advanced'>HR/FB</a></li>
+<li><a href='#ir-a' class='advanced'>IR-A</a></li>
+<li><a href='#k' class='advanced'>K%</a></li>
+<li><a href='#k-bb' class='advanced'>K-BB%</a></li>
+<li><a href='#k-9' class='advanced'>K/9</a></li>
+<li><a href='#k-bb' class='advanced'>K/BB</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#lips' class='advanced'>LiPS</a></li>
+<li><a href='#mb-9' class='advanced'>MB/9</a></li>
+<li><a href='#p-gs' class='advanced'>P/GS</a></li>
+<li><a href='#p-ip' class='advanced'>P/IP</a></li>
+<li><a href='#pitch-movement' class='advanced'>Pitch Movement</a></li>
+<li><a href='#pitch-tempo' class='advanced'>Pitch Tempo</a></li>
+<li><a href='#putaway-' class='advanced'>Putaway %</a></li>
+<li><a href='#ra9' class='advanced'>RA9</a></li>
+<li><a href='#siera' class='advanced'>SIERA</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#spin-rate' class='advanced'>Spin Rate</a></li>
+<li><a href='#swstr' class='advanced'>SwStr%</a></li>
+<li><a href='#velo' class='advanced'>VELO</a></li>
+<li><a href='#tera' class='advanced'>tERA</a></li>
+<li><a href='#xera' class='advanced'>xERA</a></li>
+<li><a href='#xfip' class='advanced'>xFIP</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible advanced'>Fielding Stats</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#arm' class='advanced'>ARM</a></li>
+<li><a href='#cfr' class='advanced'>CFR</a></li>
+<li><a href='#catch-probability' class='advanced'>Catch Probability</a></li>
+<li><a href='#catcher-framing' class='advanced'>Catcher Framing</a></li>
+<li><a href='#dcov' class='advanced'>DCOV</a></li>
+<li><a href='#der' class='advanced'>DER</a></li>
+<li><a href='#drs' class='advanced'>DRS</a></li>
+<li><a href='#def' class='advanced'>Def</a></li>
+<li><a href='#fraa' class='advanced'>FRAA</a></li>
+</ul></div>
+<div class='toc-column'><ul>
+<li><a href='#frv' class='advanced'>FRV</a></li>
+<li><a href='#jump' class='advanced'>Jump</a></li>
+<li><a href='#oaa' class='advanced'>OAA</a></li>
+<li><a href='#pop' class='advanced'>POP</a></li>
+<li><a href='#raa' class='advanced'>RAA</a></li>
+<li><a href='#rf' class='advanced'>RF</a></li>
+<li><a href='#shifts' class='advanced'>Shifts</a></li>
+<li><a href='#throwing-value' class='advanced'>Throwing Value</a></li>
+<li><a href='#uzr' class='advanced'>UZR</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible advanced'>Baserunning Stats</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#90-foot-running-splits' class='advanced'>90-foot Running Splits</a></li>
+<li><a href='#bolt' class='advanced'>Bolt</a></li>
+<li><a href='#bsr' class='advanced'>BsR</a></li>
+<li><a href='#home-to-first' class='advanced'>Home to First</a></li>
+<li><a href='#lead' class='advanced'>LEAD</a></li>
+<li><a href='#ss' class='advanced'>SS</a></li>
+<li><a href='#spd' class='advanced'>Spd</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible advanced'>Situational Stats</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#bqr' class='advanced'>BQR</a></li>
+<li><a href='#bqr-s' class='advanced'>BQR-S</a></li>
+<li><a href='#li' class='advanced'>LI</a></li>
+<li><a href='#lob' class='advanced'>LOB%</a></li>
+<li><a href='#re24' class='advanced'>RE24</a></li>
+<li><a href='#rs-9' class='advanced'>RS/9</a></li>
+<li><a href='#wpa' class='advanced'>WPA</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible advanced'>Batted Ball Stats</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#bbe' class='advanced'>BBE</a></li>
+<li><a href='#blast' class='advanced'>Blast</a></li>
+<li><a href='#dst' class='advanced'>DST</a></li>
+<li><a href='#fb' class='advanced'>FB%</a></li>
+<li><a href='#gb' class='advanced'>GB%</a></li>
+<li><a href='#ld' class='advanced'>LD%</a></li>
+<li><a href='#po' class='advanced'>PO%</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible advanced'>Team/Context Stats</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#ballpark-factor' class='advanced'>Ballpark Factor</a></li>
+<li><a href='#magic-number' class='advanced'>Magic Number</a></li>
+<li><a href='#pythagorean-winning-' class='advanced'>Pythagorean Winning %</a></li>
+<li><a href='#surplus-value' class='advanced'>Surplus Value</a></li>
+<li><a href='#we' class='advanced'>WE</a></li>
+</ul></div>
+</div></div></li>
+<li><button class='collapsible advanced'>Advanced/Experimental Stats</button>
+<div class='content'>
+<div class='toc-category-container'>
+<div class='toc-column'><ul>
+<li><a href='#active-spin' class='advanced'>Active Spin</a></li>
+<li><a href='#ext' class='advanced'>EXT</a></li>
+<li><a href='#pv' class='advanced'>PV</a></li>
+<li><a href='#squared-up-rate' class='advanced'>Squared-up Rate</a></li>
+<li><a href='#swords' class='advanced'>Swords</a></li>
+</ul></div>
+</div></div></li>
+</ul>
+</div>
+</nav>
+<nav>
+<h2>All Stats</h2>
+<div class='glossary'>
+<button class='collapsible standard' id='1b'>1B<span class='alt-name'>(Singles)</span></button>
+<div class='content'>
+<p>A base hit in which the batter safely reaches first base without any errors, fielder's choices, or other advancements caused by the defensive team's actions.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Count of the # of singles</p>
+<p><strong>Use Cases:</strong> Evaluating base-hit ability.</p>
+<p><strong>Advantages:</strong> Simple and widely used.</p>
+<p><strong>Limitations:</strong> Does not account for power.</p>
+<p><strong>Real-Life Examples:</strong> Number of singles in a player’s career.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='2b'>2B<span class='alt-name'>(Doubles)</span></button>
+<div class='content'>
+<p>A base hit in which the batter safely reaches second base without any errors, fielder's choices, or other defensive misplays.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Count of the # of doubles</p>
+<p><strong>Use Cases:</strong> Measuring extra-base hit ability.</p>
+<p><strong>Advantages:</strong> Simple and valuable measure.</p>
+<p><strong>Limitations:</strong> Does not capture full offensive value.</p>
+<p><strong>Real-Life Examples:</strong> Counting doubles hit in a season.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, histograms</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='3b'>3B<span class='alt-name'>(Triples)</span></button>
+<div class='content'>
+<p>A base hit in which the batter safely reaches third base without any errors, fielder's choices, or other defensive misplays.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Count of the # of triples</p>
+<p><strong>Use Cases:</strong> Evaluating speed and power combined.</p>
+<p><strong>Advantages:</strong> Reflects hitting for extra bases.</p>
+<p><strong>Limitations:</strong> Rare and situational.</p>
+<p><strong>Real-Life Examples:</strong> Players with 10+ triples in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='90-foot-running-splits'>90-foot Running Splits</button>
+<div class='content'>
+<p>Measures a player's speed over 90 feet, typically from home to first.</p>
+<p><strong>Applicable Roles:</strong> Runners</p>
+<p><strong>Formula:</strong> Time taken to cover 90 feet on a sprint</p>
+<p><strong>Use Cases:</strong> Analyzing in-game sprinting speed and reaction times.</p>
+<p><strong>Advantages:</strong> Offers precise in-game speed metrics for baserunning.</p>
+<p><strong>Limitations:</strong> Does not account for external factors like field conditions.</p>
+<p><strong>Real-Life Examples:</strong> A 90-foot split under 3.9 seconds is considered elite.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots or histograms comparing split times.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible standard' id='a'>A<span class='alt-name'>(Assists)</span></button>
+<div class='content'>
+<p>A fielder's contribution to a putout.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Count of the number of assists</p>
+<p><strong>Use Cases:</strong> Evaluating defensive involvement.</p>
+<p><strong>Advantages:</strong> Highlights defensive plays.</p>
+<p><strong>Limitations:</strong> Does not account for errors.</p>
+<p><strong>Real-Life Examples:</strong> Fielders with the most assists in a season.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, pie charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='ab'>AB<span class='alt-name'>(At-bats)</span></button>
+<div class='content'>
+<p>A completed batting appearance that does not result in a walk, hit-by-pitch, or sacrifice.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> PA - BB - HBP - SH - SF</p>
+<p><strong>Use Cases:</strong> Evaluating offensive contributions.</p>
+<p><strong>Advantages:</strong> Simple and widely used.</p>
+<p><strong>Limitations:</strong> Does not include all plate appearances.</p>
+<p><strong>Real-Life Examples:</strong> Number of at-bats in a season.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, line graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='active-spin'>Active Spin</button>
+<div class='content'>
+<p>Percentage of spin on a pitch that contributes to movement.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Spin Rate × Cosine of Spin Axis) / Total Spin Rate</p>
+<p><strong>Use Cases:</strong> Analyzing the effectiveness of a pitch's spin.</p>
+<p><strong>Advantages:</strong> Provides insights into how much of the spin contributes to movement.</p>
+<p><strong>Limitations:</strong> Does not account for pitch velocity or release point.</p>
+<p><strong>Real-Life Examples:</strong> Pitches with high active spin often generate more swings and misses.</p>
+<p><strong>Visualization Methods:</strong> 3D scatter plots comparing spin rates and active spin percentages.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible standard' id='app'>App<span class='alt-name'>(Appearances)</span></button>
+<div class='content'>
+<p>The number of games a pitcher appears in.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of games appeared in.</p>
+<p><strong>Use Cases:</strong> Measuring pitcher usage.</p>
+<p><strong>Advantages:</strong> Simple and clear measure.</p>
+<p><strong>Limitations:</strong> Doesn't indicate innings pitched or effectiveness.</p>
+<p><strong>Real-Life Examples:</strong> Tracking a reliever's workload across a season.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, pie charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='arm'>ARM<span class='alt-name'>(Arm Stength)</span></button>
+<div class='content'>
+<p>A measure of the strength of a fielder's throwing arm, particularly for outfielders.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Average throw velocity in mph on competitive plays</p>
+<p><strong>Use Cases:</strong> Assessing a fielder's defensive throwing capability.</p>
+<p><strong>Advantages:</strong> Highlights outfielders with strong arms for assists and base-runner deterrence.</p>
+<p><strong>Limitations:</strong> Does not account for accuracy or decision-making.</p>
+<p><strong>Real-Life Examples:</strong> A player with an ARM above 90 mph is considered elite.</p>
+<p><strong>Visualization Methods:</strong> Bar charts or scatter plots of throw velocity.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='avg'>AVG<span class='alt-name'>(Batting Average)</span></button>
+<div class='content'>
+<p>Batting Average (AVG) is a statistic that measures a batter's success rate in achieving hits during official at-bats. It is calculated as the number of hits divided by the number of at-bats.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> H ÷ AB</p>
+<p><strong>Use Cases:</strong> Evaluating a batter's hitting efficiency.</p>
+<p><strong>Advantages:</strong> Simple and intuitive.</p>
+<p><strong>Limitations:</strong> Does not account for power or walks.</p>
+<p><strong>Real-Life Examples:</strong> Comparing league-leading averages.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='babip'>BABIP<span class='alt-name'>(Batting Average on Balls in Play)</span></button>
+<div class='content'>
+<p>Indicates how often a player puts the ball in play when they make contact.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> (H - HR) ÷ (AB - K - HR + SF)</p>
+<p><strong>Use Cases:</strong> Measuring batting average on balls in play, assessing luck for hitters/pitchers</p>
+<p><strong>Advantages:</strong> Highlights luck factors in hitting and pitching</p>
+<p><strong>Limitations:</strong> Doesn't account for quality of contact</p>
+<p><strong>Real-Life Examples:</strong> Determining if a player’s high average is due to luck</p>
+<p><strong>Visualization Methods:</strong> Histograms, time-series graphs</p>
+<p><strong>Creator:</strong> Voros McCracken</p>
+<p><strong>Sources:</strong> FanGraphs, Baseball-Reference, Baseball Savant</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible advanced' id='ballpark-factor'>Ballpark Factor</button>
+<div class='content'>
+<p>A measure of how a ballpark affects offensive performance compared to the league average.</p>
+<p><strong>Applicable Roles:</strong> Teams</p>
+<p><strong>Formula:</strong> (Team's Home Stats / Team's Road Stats) * League Average</p>
+<p><strong>Use Cases:</strong> Analyzing how a ballpark influences hitting and pitching outcomes.</p>
+<p><strong>Advantages:</strong> Helps understand how park conditions affect player performance.</p>
+<p><strong>Limitations:</strong> Does not account for weather or opponent strength.</p>
+<p><strong>Real-Life Examples:</strong> A factor above 1.00 indicates a hitter-friendly park, while below 1.00 indicates a pitcher-friendly park.</p>
+<p><strong>Visualization Methods:</strong> Heatmaps showing park effects on various stats.</p>
+<p><strong>Creator:</strong> Baseball-Reference, Fangraphs</p>
+<p><strong>Sources:</strong> Baseball-Reference, Fangraphs</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='barrel'>Barrel</button>
+<div class='content'>
+<p>A well-hit ball defined by a specific combination of exit velocity and launch angle.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> EV >= 98 mph and launch angle between 26-30 degrees</p>
+<p><strong>Use Cases:</strong> Assessing the quality of a hitter's contact.</p>
+<p><strong>Advantages:</strong> Strongly correlates with offensive success.</p>
+<p><strong>Limitations:</strong> Does not account for field or defensive factors.</p>
+<p><strong>Real-Life Examples:</strong> Barrels per PA of 10% or higher indicates elite contact.</p>
+<p><strong>Visualization Methods:</strong> Barrel rate heatmaps or scatter plots.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='barrel'>Barrel%<span class='alt-name'>(Barrel Percentage)</span></button>
+<div class='content'>
+<p>Indicates the percentage of batted balls considered "barrels," or ideal hits.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Barrels ÷ Batted Ball Events</p>
+<p><strong>Use Cases:</strong> Assessing quality of contact made by a hitter</p>
+<p><strong>Advantages:</strong> High correlation with offensive success</p>
+<p><strong>Limitations:</strong> Limited to batted ball data</p>
+<p><strong>Real-Life Examples:</strong> Identifying hitters who consistently hit the ball hard</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Baseball Savant</p>
+<p><strong>Sources:</strong> Baseball Savant</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible standard' id='bb'>BB<span class='alt-name'>(Walks)</span></button>
+<div class='content'>
+<p>When a batter is awarded first base due to four balls.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Count of the # of walks</p>
+<p><strong>Use Cases:</strong> Evaluating plate discipline.</p>
+<p><strong>Advantages:</strong> Reflects patience at the plate.</p>
+<p><strong>Limitations:</strong> Ignores power or contact ability.</p>
+<p><strong>Real-Life Examples:</strong> Players with high walk totals.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, time-series plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='bb'>BB%<span class='alt-name'>(Walk Percentage)</span></button>
+<div class='content'>
+<p>Indicates how often a batter walks relative to plate appearances.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> BB ÷ PA</p>
+<p><strong>Use Cases:</strong> Walk rate evaluation for hitters and pitchers</p>
+<p><strong>Advantages:</strong> Simple, measures walk discipline</p>
+<p><strong>Limitations:</strong> Ignores context like pitch framing</p>
+<p><strong>Real-Life Examples:</strong> Comparing control of pitchers or patience of hitters</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, time-series graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> Baseball Savant, FanGraphs</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+<p><strong>Batter Excellent:</strong> 6.0% and below</p>
+<p><strong>Batter Great:</strong> 6.1% – 7.0%</p>
+<p><strong>Batter Above Avg:</strong> 7.1% – 8.0%</p>
+<p><strong>Batter Avg:</strong> 8.1% – 9.0%</p>
+<p><strong>Batter Below Avg:</strong> 9.1% – 10.0%</p>
+<p><strong>Batter Poor:</strong> 10.1% – 11.0%</p>
+<p><strong>Batter Awful:</strong> 11.1% and above</p>
+<p><strong>Pitcher Excellent:</strong> 6.0% and below</p>
+<p><strong>Pitcher Great:</strong> 6.1% – 7.0%</p>
+<p><strong>Pitcher Above Avg:</strong> 7.1% – 8.0%</p>
+<p><strong>Pitcher Avg:</strong> 8.1% – 9.0%</p>
+<p><strong>Pitcher Below Avg:</strong> 9.1% – 10.0%</p>
+<p><strong>Pitcher Poor:</strong> 10.1% – 11.0%</p>
+<p><strong>Pitcher Awful:</strong> 11.1% and above</p>
+</div>
+<button class='collapsible advanced' id='bb-9'>BB/9<span class='alt-name'>(Walks per 9 Innings)</span></button>
+<div class='content'>
+<p>Measures the average number of walks a pitcher allows per nine innings pitched.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (BB / IP) * 9</p>
+<p><strong>Use Cases:</strong> Evaluating pitcher control and ability to avoid free passes.</p>
+<p><strong>Advantages:</strong> Easy to understand; reflects control.</p>
+<p><strong>Limitations:</strong> Neglects batted ball outcomes or strikeout rate.</p>
+<p><strong>Real-Life Examples:</strong> Highlighting control artists like Greg Maddux.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> Baseball Reference, MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+<p><strong>Batter Excellent:</strong> 1.5 and below</p>
+<p><strong>Batter Great:</strong> 1.6 – 2.0</p>
+<p><strong>Batter Above Avg:</strong> 2.1 – 2.5</p>
+<p><strong>Batter Avg:</strong> 2.6 – 3.0</p>
+<p><strong>Batter Below Avg:</strong> 3.1 – 3.5</p>
+<p><strong>Batter Poor:</strong> 3.6 – 4.0</p>
+<p><strong>Batter Awful:</strong> 4.1 and above</p>
+<p><strong>Pitcher Excellent:</strong> 1.5 and below</p>
+<p><strong>Pitcher Great:</strong> 1.6 – 2.0</p>
+<p><strong>Pitcher Above Avg:</strong> 2.1 – 2.5</p>
+<p><strong>Pitcher Avg:</strong> 2.6 – 3.0</p>
+<p><strong>Pitcher Below Avg:</strong> 3.1 – 3.5</p>
+<p><strong>Pitcher Poor:</strong> 3.6 – 4.0</p>
+<p><strong>Pitcher Awful:</strong> 4.1 and above</p>
+</div>
+<button class='collapsible advanced' id='bbe'>BBE<span class='alt-name'>(Batted Ball Event)</span></button>
+<div class='content'>
+<p>Any ball put into play, including outs, hits, and errors.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Recorded on every contact made by the bat</p>
+<p><strong>Use Cases:</strong> Tracking the frequency and outcome of balls in play.</p>
+<p><strong>Advantages:</strong> Provides a base for analyzing contact quality.</p>
+<p><strong>Limitations:</strong> Does not indicate outcome quality like hits or home runs.</p>
+<p><strong>Real-Life Examples:</strong> High BBE rates can indicate an aggressive hitting style.</p>
+<p><strong>Visualization Methods:</strong> Line or bar charts tracking BBE trends.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='bf'>BF<span class='alt-name'>(Batters Faced)</span></button>
+<div class='content'>
+<p>The total number of batters a pitcher faces.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Sum of all batters faced.</p>
+<p><strong>Use Cases:</strong> Measuring pitcher workload and effectiveness.</p>
+<p><strong>Advantages:</strong> Simple, inclusive of all results.</p>
+<p><strong>Limitations:</strong> Doesn't differentiate outcomes.</p>
+<p><strong>Real-Life Examples:</strong> Evaluating a starter's endurance across innings.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, line graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='bk'>BK<span class='alt-name'>(Balk)</span></button>
+<div class='content'>
+<p>A pitching violation allowing baserunners to advance one base.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Defined by MLB rules.</p>
+<p><strong>Use Cases:</strong> Evaluating pitching discipline.</p>
+<p><strong>Advantages:</strong> Highlights rule compliance.</p>
+<p><strong>Limitations:</strong> Rare and situational.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher committing multiple balks in a critical game.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, event markers</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='blasts'>Blasts</button>
+<div class='content'>
+<p>A subset of barrels with an even higher probability of a home run.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> EV >= 100 mph and launch angle between 25-30 degrees</p>
+<p><strong>Use Cases:</strong> Identifying home run-level contact quality.</p>
+<p><strong>Advantages:</strong> Highlights elite power hitting and precision.</p>
+<p><strong>Limitations:</strong> Does not account for park effects or weather.</p>
+<p><strong>Real-Life Examples:</strong> A high percentage of blasts indicates elite slugging ability.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots comparing blasts per PA across players.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='bolt'>Bolt</button>
+<div class='content'>
+<p>Any sprint above 30 feet per second.</p>
+<p><strong>Applicable Roles:</strong> Runners</p>
+<p><strong>Formula:</strong> Sprints measured at 30+ ft/sec over a minimum distance</p>
+<p><strong>Use Cases:</strong> Identifying elite baserunning and fielding speed.</p>
+<p><strong>Advantages:</strong> Quantifies peak in-game speed effectively.</p>
+<p><strong>Limitations:</strong> Does not consider distance or game context.</p>
+<p><strong>Real-Life Examples:</strong> A player with more than 10 bolts in a season is considered elite.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots comparing bolts across games.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='bqr'>BQR<span class='alt-name'>(Bequeathed Runners)</span></button>
+<div class='content'>
+<p>Tracks the number of runners left on base by a pitcher when they leave the game.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of runners left on base upon pitcher substitution.</p>
+<p><strong>Use Cases:</strong> Evaluating a reliever's inherited situation and a starter's ability to leave clean bases.</p>
+<p><strong>Advantages:</strong> Provides a clear metric for pitchers leaving difficult situations for relievers.</p>
+<p><strong>Limitations:</strong> Does not consider the reliever's performance after substitution.</p>
+<p><strong>Real-Life Examples:</strong> Relievers entering high-leverage situations with multiple BQRs.</p>
+<p><strong>Visualization Methods:</strong> Bar charts showing bequeathed runners by pitchers.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Statcast</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='bqr-s'>BQR-S<span class='alt-name'>(Bequeathed Runners Scored)</span></button>
+<div class='content'>
+<p>Tracks the number of inherited runners who score after the original pitcher leaves the game.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of bequeathed runners who eventually score.</p>
+<p><strong>Use Cases:</strong> Evaluating reliever effectiveness at preventing inherited runners from scoring.</p>
+<p><strong>Advantages:</strong> Highlights reliever performance in high-pressure situations.</p>
+<p><strong>Limitations:</strong> Does not account for the quality of defense behind the reliever.</p>
+<p><strong>Real-Life Examples:</strong> Relievers with high BQR-S can indicate ineffective outings.</p>
+<p><strong>Visualization Methods:</strong> Bar charts comparing BQR-S to total inherited runners.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Statcast</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='bs'>BS<span class='alt-name'>(Blown Save)</span></button>
+<div class='content'>
+<p>Occurs when a reliever enters with a lead and allows it to be tied or lost.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of failed save opportunities.</p>
+<p><strong>Use Cases:</strong> Evaluating relievers' reliability.</p>
+<p><strong>Advantages:</strong> Highlights key game moments.</p>
+<p><strong>Limitations:</strong> Situational and context-dependent.</p>
+<p><strong>Real-Life Examples:</strong> A closer's struggles in high-leverage situations.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, time-series charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> 1969</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='bsr'>BsR<span class='alt-name'>(Base Running)</span></button>
+<div class='content'>
+<p>Evaluates how baserunning affects a team’s ability to score runs.</p>
+<p><strong>Applicable Roles:</strong> Base Runners</p>
+<p><strong>Formula:</strong> Evaluates baserunning contributions to run creation.</p>
+<p><strong>Use Cases:</strong> Comprehensive baserunning evaluation</p>
+<p><strong>Advantages:</strong> Captures baserunning value</p>
+<p><strong>Limitations:</strong> Ignores defensive and hitting contributions</p>
+<p><strong>Real-Life Examples:</strong> Ranking players by baserunning skill</p>
+<p><strong>Visualization Methods:</strong> Line graphs, area charts</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> 2009</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible advanced' id='bwar'>bWAR<span class='alt-name'>(Baseball-Reference WAR)</span></button>
+<div class='content'>
+<p>Measures player value using Baseball Reference methodology for WAR.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters, Fielders</p>
+<p><strong>Formula:</strong> Provided by Baseball Reference; similar to fWAR but with different weights.</p>
+<p><strong>Use Cases:</strong> Comprehensive player value evaluation based on Baseball-Reference metrics</p>
+<p><strong>Advantages:</strong> Comprehensive value measure from Baseball-Reference</p>
+<p><strong>Limitations:</strong> Relies on specific Baseball-Reference adjustments</p>
+<p><strong>Real-Life Examples:</strong> Evaluating player contributions for Hall of Fame discussions</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, bar graphs</p>
+<p><strong>Creator:</strong> Baseball-Reference</p>
+<p><strong>Sources:</strong> Baseball-Reference, FanGraphs</p>
+<p><strong>Year Introduced:</strong> 2010</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='catch-probability'>Catch Probability</button>
+<div class='content'>
+<p>The likelihood of a fielder making a play on a batted ball, based on factors such as distance, time, and direction.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Calculated using time-to-catch, ball trajectory, and fielder position</p>
+<p><strong>Use Cases:</strong> Evaluating the difficulty of defensive plays.</p>
+<p><strong>Advantages:</strong> Quantifies defensive skill and play difficulty objectively.</p>
+<p><strong>Limitations:</strong> Does not account for effort or external conditions (e.g., wind).</p>
+<p><strong>Real-Life Examples:</strong> A catch probability of 5% or less represents an "impossible play."</p>
+<p><strong>Visualization Methods:</strong> Heatmaps or play difficulty visualizations.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='catcher-framing'>Catcher Framing</button>
+<div class='content'>
+<p>Ability of a catcher to convert borderline pitches into called strikes.</p>
+<p><strong>Applicable Roles:</strong> Catchers</p>
+<p><strong>Formula:</strong> Calculated by comparing actual strike calls to expected strike calls based on pitch location</p>
+<p><strong>Use Cases:</strong> Evaluating a catcher's defensive contribution.</p>
+<p><strong>Advantages:</strong> Highly valuable in assessing catcher defense beyond blocking or throwing.</p>
+<p><strong>Limitations:</strong> Does not account for umpire bias or game context.</p>
+<p><strong>Real-Life Examples:</strong> Catchers with elite framing can save several runs per season.</p>
+<p><strong>Visualization Methods:</strong> Charts comparing catcher strike rates on borderline pitches.</p>
+<p><strong>Creator:</strong> Baseball Prospectus</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2011</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='cera'>CERA<span class='alt-name'>(Catcher ERA)</span></button>
+<div class='content'>
+<p>Measures the average earned runs allowed by a team when a specific catcher is behind the plate.</p>
+<p><strong>Applicable Roles:</strong> Catchers</p>
+<p><strong>Formula:</strong> ERA calculated for catchers</p>
+<p><strong>Use Cases:</strong> Evaluating catcher impact on team pitching performance.</p>
+<p><strong>Advantages:</strong> Highlights catcher-pitcher interaction and impact on runs.</p>
+<p><strong>Limitations:</strong> Influenced by pitcher skill; lacks contextual adjustments.</p>
+<p><strong>Real-Life Examples:</strong> Used to evaluate how much a catcher contributes to pitching success.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, tables</p>
+<p><strong>Creator:</strong> Unknown</p>
+<p><strong>Sources:</strong> Baseball Reference</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible advanced' id='cfr'>CFR<span class='alt-name'>(Catcher Framing Runs)</span></button>
+<div class='content'>
+<p>Evaluates a catcher’s framing ability and their impact on pitch outcomes.</p>
+<p><strong>Applicable Roles:</strong> Catchers</p>
+<p><strong>Formula:</strong> Estimated runs saved based on catcher framing ability.</p>
+<p><strong>Use Cases:</strong> Evaluating catchers’ ability to frame pitches for called strikes</p>
+<p><strong>Advantages:</strong> Reflects catcher pitch-framing ability</p>
+<p><strong>Limitations:</strong> Doesn't include other catcher defense skills</p>
+<p><strong>Real-Life Examples:</strong> Ranking catchers based on pitch framing ability</p>
+<p><strong>Visualization Methods:</strong> Heatmaps, scatter plots</p>
+<p><strong>Creator:</strong> Baseball Savant</p>
+<p><strong>Sources:</strong> Baseball Savant</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible standard' id='cg'>CG<span class='alt-name'>(Complete Game)</span></button>
+<div class='content'>
+<p>A game in which a pitcher pitches all innings for their team.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of complete games.</p>
+<p><strong>Use Cases:</strong> Measuring endurance and effectiveness.</p>
+<p><strong>Advantages:</strong> Simple, clear measure.</p>
+<p><strong>Limitations:</strong> Rare in modern baseball.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher throwing a complete-game shutout.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, event markers</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='contact'>Contact%<span class='alt-name'>(Contact Percentage)</span></button>
+<div class='content'>
+<p>Measures a batter's ability to make contact when swinging.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Contact ÷ Total Swings</p>
+<p><strong>Use Cases:</strong> Measuring a hitter’s ability to make contact</p>
+<p><strong>Advantages:</strong> Simple, measures contact ability</p>
+<p><strong>Limitations:</strong> Ignores quality of contact</p>
+<p><strong>Real-Life Examples:</strong> Comparing hitters who make consistent contact</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='cs'>CS<span class='alt-name'>(Caught Stealing)</span></button>
+<div class='content'>
+<p>Number of times a runner is thrown out attempting to steal a base.</p>
+<p><strong>Applicable Roles:</strong> Runners</p>
+<p><strong>Formula:</strong> Count of the # of times a runner is caught stealing.</p>
+<p><strong>Use Cases:</strong> Evaluating baserunning aggressiveness.</p>
+<p><strong>Advantages:</strong> Highlights baserunning risks.</p>
+<p><strong>Limitations:</strong> Context not considered.</p>
+<p><strong>Real-Life Examples:</strong> Players with high CS may need to adjust.</p>
+<p><strong>Visualization Methods:</strong> Pie charts, time-series graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='cs'>CS%<span class='alt-name'>(Caught Stealing Percentage)</span></button>
+<div class='content'>
+<p>Percentage of runners thrown out attempting to steal.</p>
+<p><strong>Applicable Roles:</strong> Catchers, Fielders</p>
+<p><strong>Formula:</strong> CS ÷ (CS + SB)</p>
+<p><strong>Use Cases:</strong> Measuring catcher defensive skills.</p>
+<p><strong>Advantages:</strong> Reflects catcher arm strength.</p>
+<p><strong>Limitations:</strong> Ignores game context.</p>
+<p><strong>Real-Life Examples:</strong> Catchers with a high caught stealing percentage.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='csw'>CSW%<span class='alt-name'>(Called Strikes Plus Whiff Percentage)</span></button>
+<div class='content'>
+<p>Shows how often a pitcher generates either a called strike or a whiff per pitch.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Called Strikes + Whiffs) ÷ Total Pitches</p>
+<p><strong>Use Cases:</strong> Evaluating pitchers’ ability to generate called and swinging strikes</p>
+<p><strong>Advantages:</strong> Measures pitch quality across counts</p>
+<p><strong>Limitations:</strong> Not widely adopted yet</p>
+<p><strong>Real-Life Examples:</strong> Analyzing pitchers’ ability to generate called and swinging strikes</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, bar graphs</p>
+<p><strong>Creator:</strong> Nick Pollack</p>
+<p><strong>Sources:</strong> PitcherList</p>
+<p><strong>Year Introduced:</strong> 2018</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible advanced' id='dcov'>DCOV<span class='alt-name'>(Distance Covered)</span></button>
+<div class='content'>
+<p>The distance a fielder travels to make a play on a batted ball.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Distance from initial position to where the ball is fielded</p>
+<p><strong>Use Cases:</strong> Measuring range and athleticism of fielders.</p>
+<p><strong>Advantages:</strong> Useful for identifying fielders with excellent range.</p>
+<p><strong>Limitations:</strong> Does not account for initial positioning or reaction time.</p>
+<p><strong>Real-Life Examples:</strong> A fielder covering 100+ feet to make a play showcases elite range.</p>
+<p><strong>Visualization Methods:</strong> Line graphs or field plots showing fielder movement.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='def'>Def<span class='alt-name'>(Defensive Runs Above Average)</span></button>
+<div class='content'>
+<p>A defensive metric aggregating UZR, DRS, and other advanced stats to evaluate player fielding performance.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Aggregate metrics</p>
+<p><strong>Use Cases:</strong> Evaluating overall defensive performance for players.</p>
+<p><strong>Advantages:</strong> Combines multiple metrics for comprehensive evaluation.</p>
+<p><strong>Limitations:</strong> May double-count contributions when metrics overlap.</p>
+<p><strong>Real-Life Examples:</strong> Identifying elite fielders like Andrelton Simmons.</p>
+<p><strong>Visualization Methods:</strong> Zone maps, bar graphs</p>
+<p><strong>Creator:</strong> Fangraphs</p>
+<p><strong>Sources:</strong> Fangraphs</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='der'>DER<span class='alt-name'>(Defensive Efficiency Ratio)</span></button>
+<div class='content'>
+<p>Measures the percentage of balls in play (excluding home runs) converted into outs by a team's defense. It evaluates overall team defensive performance.</p>
+<p><strong>Applicable Roles:</strong> Fielders, Teams</p>
+<p><strong>Formula:</strong> 1 - (H + ROE) / (PA - BB - SO - HBP - HR)</p>
+<p><strong>Use Cases:</strong> Evaluating team defense, comparing defensive effectiveness across teams, assessing fielding and pitching support.</p>
+<p><strong>Advantages:</strong> Simple calculation; provides a high-level view of team defense effectiveness.</p>
+<p><strong>Limitations:</strong> Does not differentiate between individual players; heavily influenced by pitching and ballpark factors.</p>
+<p><strong>Real-Life Examples:</strong> Teams with high DER are often better at converting balls in play into outs, like the 2016 Chicago Cubs.</p>
+<p><strong>Visualization Methods:</strong> Line charts over a season, comparison bar charts, or scatter plots with other defensive metrics.</p>
+<p><strong>Creator:</strong> Bill James</p>
+<p><strong>Sources:</strong> Baseball Prospectus</p>
+<p><strong>Year Introduced:</strong> 1977</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='diff'>DIFF<span class='alt-name'>(Run Differential)</span></button>
+<div class='content'>
+<p>The difference between runs scored and runs allowed by a team.</p>
+<p><strong>Applicable Roles:</strong> Teams</p>
+<p><strong>Formula:</strong> Runs Scored - Runs Allowed</p>
+<p><strong>Use Cases:</strong> Evaluating team performance and predicting success.</p>
+<p><strong>Advantages:</strong> Simple, direct measure of performance.</p>
+<p><strong>Limitations:</strong> Ignores game context and run distribution.</p>
+<p><strong>Real-Life Examples:</strong> Teams with the highest run differential often perform well.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='dp'>DP<span class='alt-name'>(Double Plays)</span></button>
+<div class='content'>
+<p>A defensive play resulting in two outs.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Count of the # of double plays executed.</p>
+<p><strong>Use Cases:</strong> Evaluating team defensive efficiency.</p>
+<p><strong>Advantages:</strong> Highlights infield coordination.</p>
+<p><strong>Limitations:</strong> Rare and situational.</p>
+<p><strong>Real-Life Examples:</strong> Teams leading the league in double plays.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='drs'>DRS<span class='alt-name'>(Defensive Runs Saved)</span></button>
+<div class='content'>
+<p>Evaluates a player’s fielding effectiveness relative to average.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Computed using advanced fielding metrics.</p>
+<p><strong>Use Cases:</strong> Defensive evaluation using run-saving ability</p>
+<p><strong>Advantages:</strong> Reliable for defense evaluation</p>
+<p><strong>Limitations:</strong> Different systems may disagree on results</p>
+<p><strong>Real-Life Examples:</strong> Assessing a player's defensive contributions</p>
+<p><strong>Visualization Methods:</strong> Defensive zone maps, bar graphs</p>
+<p><strong>Creator:</strong> John Dewan</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> 2003</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='dst'>DST<span class='alt-name'>(Hit Distance)</span></button>
+<div class='content'>
+<p>The distance a batted ball travels, measured in feet.</p>
+<p><strong>Applicable Roles:</strong> Batters, Fielders</p>
+<p><strong>Formula:</strong> Measured from home plate to where the ball lands</p>
+<p><strong>Use Cases:</strong> Analyzing power, trajectory, and fielding difficulty.</p>
+<p><strong>Advantages:</strong> Useful for evaluating a player's power and trajectory.</p>
+<p><strong>Limitations:</strong> Does not account for wind or park factors.</p>
+<p><strong>Real-Life Examples:</strong> Hit distances over 400 feet indicate elite power.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots comparing hit distances across games.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='e'>E<span class='alt-name'>(Errors)</span></button>
+<div class='content'>
+<p>A defensive misplay allowing a runner to advance or reach base.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Count of the # of errors by a fielder</p>
+<p><strong>Use Cases:</strong> Measuring defensive lapses.</p>
+<p><strong>Advantages:</strong> Identifies mistakes.</p>
+<p><strong>Limitations:</strong> Subjective scoring decisions.</p>
+<p><strong>Real-Life Examples:</strong> Players with the fewest errors in a season.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, time-series plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='er'>ER<span class='alt-name'>(Earned Runs)</span></button>
+<div class='content'>
+<p>Runs scored against a pitcher that are not due to errors or passed balls.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of earned runs allowed.</p>
+<p><strong>Use Cases:</strong> Evaluating pitcher effectiveness.</p>
+<p><strong>Advantages:</strong> Separates runs allowed from fielding errors.</p>
+<p><strong>Limitations:</strong> Doesn't factor in context or quality of opposition.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher allowing 3 earned runs over 7 innings.</p>
+<p><strong>Visualization Methods:</strong> Histograms, time-series graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Late 1800s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='era'>ERA<span class='alt-name'>(Earned Run Average)</span></button>
+<div class='content'>
+<p>A pitcher's average number of earned runs allowed per nine innings.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (ER × 9) ÷ IP</p>
+<p><strong>Use Cases:</strong> Evaluating pitching performance.</p>
+<p><strong>Advantages:</strong> Widely recognized, easy to interpret.</p>
+<p><strong>Limitations:</strong> Influenced by team defense.</p>
+<p><strong>Real-Life Examples:</strong> Comparing league-average ERA across different seasons.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Late 1800s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='era+'>ERA+<span class='alt-name'>(Adjusted ERA)</span></button>
+<div class='content'>
+<p>Adjusts a pitcher's ERA based on the league's ERA and ballpark factors, where 100 is league average and higher is better.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (ERA / League ERA) * 100</p>
+<p><strong>Use Cases:</strong> Comparing pitchers across different leagues and ballparks.</p>
+<p><strong>Advantages:</strong> Normalizes performance; easy comparison across eras.</p>
+<p><strong>Limitations:</strong> Relies on accurate park factor adjustments.</p>
+<p><strong>Real-Life Examples:</strong> Comparing pitchers across high-offense and low-offense ballparks.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Baseball Reference</p>
+<p><strong>Sources:</strong> Baseball Reference</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+<p><strong>Batter Excellent:</strong> 170 and above</p>
+<p><strong>Batter Great:</strong> 150 – 169</p>
+<p><strong>Batter Above Avg:</strong> 130 – 149</p>
+<p><strong>Batter Avg:</strong> 100 – 129</p>
+<p><strong>Batter Below Avg:</strong> 80 – 99</p>
+<p><strong>Batter Poor:</strong> 60 – 79</p>
+<p><strong>Batter Awful:</strong> 59 and below</p>
+<p><strong>Pitcher Excellent:</strong> 170 and above</p>
+<p><strong>Pitcher Great:</strong> 150 – 169</p>
+<p><strong>Pitcher Above Avg:</strong> 130 – 149</p>
+<p><strong>Pitcher Avg:</strong> 100 – 129</p>
+<p><strong>Pitcher Below Avg:</strong> 80 – 99</p>
+<p><strong>Pitcher Poor:</strong> 60 – 79</p>
+<p><strong>Pitcher Awful:</strong> 59 and below</p>
+</div>
+<button class='collapsible advanced' id='era-'>ERA-</button>
+<div class='content'>
+<p>nan</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+</div>
+<button class='collapsible advanced' id='ev'>EV<span class='alt-name'>(Exit Velocity)</span></button>
+<div class='content'>
+<p>The speed of the ball off the bat after contact.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Speed (mph) of the ball off the bat</p>
+<p><strong>Use Cases:</strong> Measuring contact quality and power.</p>
+<p><strong>Advantages:</strong> Correlates strongly with offensive production.</p>
+<p><strong>Limitations:</strong> Does not account for launch angle or outcome.</p>
+<p><strong>Real-Life Examples:</strong> An EV above 95 mph is considered elite.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots or histograms showing EV distribution.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='ext'>EXT<span class='alt-name'>(Extension)</span></button>
+<div class='content'>
+<p>Distance from the pitching rubber to the release point of the ball.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Measured in feet</p>
+<p><strong>Use Cases:</strong> Assessing how close a pitcher releases the ball to the plate.</p>
+<p><strong>Advantages:</strong> Can indicate deception or increased perceived velocity.</p>
+<p><strong>Limitations:</strong> May vary by physical attributes like height or arm length.</p>
+<p><strong>Real-Life Examples:</strong> Pitchers with longer extensions often have higher perceived velocity.</p>
+<p><strong>Visualization Methods:</strong> Heatmaps showing release points across different pitchers.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='fast-swing-rate'>Fast-swing Rate</button>
+<div class='content'>
+<p>Percentage of swings with high bat speed.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> (Swings with fast bat speed / Total swings) * 100</p>
+<p><strong>Use Cases:</strong> Assessing a player's bat speed and aggressiveness.</p>
+<p><strong>Advantages:</strong> Identifies players with quick, high-effort swings.</p>
+<p><strong>Limitations:</strong> May not correlate directly with success if swings lack control.</p>
+<p><strong>Real-Life Examples:</strong> A fast-swing rate above 25% indicates a power hitter.</p>
+<p><strong>Visualization Methods:</strong> Bar charts comparing fast-swing rates.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2016</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='fb'>FB%<span class='alt-name'>(Fly Ball Rate)</span></button>
+<div class='content'>
+<p>Percentage of batted balls hit as fly balls.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> (Fly Balls / Total Batted Balls) * 100</p>
+<p><strong>Use Cases:</strong> Evaluating hitter tendencies for fly balls or pitcher effectiveness in inducing them.</p>
+<p><strong>Advantages:</strong> Useful for analyzing power hitters or pitchers vulnerable to home runs.</p>
+<p><strong>Limitations:</strong> Does not account for ballpark factors or line drive misclassifications.</p>
+<p><strong>Real-Life Examples:</strong> Power hitters with high FB% can sustain high home run totals.</p>
+<p><strong>Visualization Methods:</strong> Pie charts or bar charts showing FB% by player.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Statcast</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='fip'>FIP<span class='alt-name'>(Fielding Independent Pitching)</span></button>
+<div class='content'>
+<p>Measures a pitcher’s effectiveness at preventing runs, independent of defense.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> ((13 × HR) + (3 × BB) - (2 × K)) ÷ IP + FIP Constant</p>
+<p><strong>Use Cases:</strong> Pitcher skill evaluation, removing defense and luck effects</p>
+<p><strong>Advantages:</strong> Focuses on outcomes pitchers control</p>
+<p><strong>Limitations:</strong> Ignores defense and sequencing</p>
+<p><strong>Real-Life Examples:</strong> Analyzing a pitcher’s effectiveness based on strikeouts, walks, and home runs</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Tom Tango</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> 1999</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible advanced' id='fip-'>FIP-<span class='alt-name'>(FIP Minus)</span></button>
+<div class='content'>
+<p>Adjusts Fielding Independent Pitching for league and ballpark factors, similar to ERA+.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (FIP / League FIP) * 100</p>
+<p><strong>Use Cases:</strong> Comparing pitcher performance adjusted for league and ballpark.</p>
+<p><strong>Advantages:</strong> Adjusts for context, improving cross-league comparisons.</p>
+<p><strong>Limitations:</strong> Assumes all pitchers have similar defensive support.</p>
+<p><strong>Real-Life Examples:</strong> Comparing pitchers across hitter-friendly and pitcher-friendly leagues.</p>
+<p><strong>Visualization Methods:</strong> Bar charts, tables</p>
+<p><strong>Creator:</strong> Fangraphs</p>
+<p><strong>Sources:</strong> Fangraphs</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible standard' id='fo'>FO<span class='alt-name'>(Flyout)</span></button>
+<div class='content'>
+<p>A batted ball caught by a fielder before touching the ground.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> Defined by game events.</p>
+<p><strong>Use Cases:</strong> Evaluating contact quality and defense.</p>
+<p><strong>Advantages:</strong> Simple, part of traditional stats.</p>
+<p><strong>Limitations:</strong> Doesn't include batted ball speed or direction.</p>
+<p><strong>Real-Life Examples:</strong> Analyzing hitters who frequently hit flyouts.</p>
+<p><strong>Visualization Methods:</strong> Pie charts, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='fpct'>FPCT<span class='alt-name'>(Fielding Percentage)</span></button>
+<div class='content'>
+<p>A percentage of plays made successfully in the field.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> (PO + A) ÷ (PO + A + E)</p>
+<p><strong>Use Cases:</strong> Evaluating defensive reliability.</p>
+<p><strong>Advantages:</strong> Simple defensive measure.</p>
+<p><strong>Limitations:</strong> Does not account for range.</p>
+<p><strong>Real-Life Examples:</strong> Fielders with high fielding percentages.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='fraa'>FRAA<span class='alt-name'>(Fielding Runs Above Average)</span></button>
+<div class='content'>
+<p>A positional adjustment for defensive runs saved (above average).</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Evaluates defensive contribution above average based on historical data.</p>
+<p><strong>Use Cases:</strong> Comprehensive defensive value for players</p>
+<p><strong>Advantages:</strong> Evaluates defensive performance comprehensively</p>
+<p><strong>Limitations:</strong> Data-intensive, harder to calculate</p>
+<p><strong>Real-Life Examples:</strong> Comparing defensive ability across positions</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Baseball Info Solutions</p>
+<p><strong>Sources:</strong> Baseball Info Solutions (via FanGraphs)</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='frv'>FRV<span class='alt-name'>(Fielding Run Value)</span></button>
+<div class='content'>
+<p>A measure of the defensive contribution of a player in terms of runs saved or prevented.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Calculated based on the impact of defensive plays on run expectancy</p>
+<p><strong>Use Cases:</strong> Evaluating the overall defensive impact of players.</p>
+<p><strong>Advantages:</strong> Comprehensive defensive metric incorporating multiple factors.</p>
+<p><strong>Limitations:</strong> Dependent on accurate game situation and batted ball data.</p>
+<p><strong>Real-Life Examples:</strong> A player with an FRV of +10 or higher is considered elite defensively.</p>
+<p><strong>Visualization Methods:</strong> Charts comparing FRV across players or teams.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='fwar'>fWAR<span class='alt-name'>(FanGraphs WAR)</span></button>
+<div class='content'>
+<p>Measures player value using FanGraphs methodology for WAR.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters, Fielders</p>
+<p><strong>Formula:</strong> Provided by FanGraphs; combines batting, fielding, and baserunning metrics.</p>
+<p><strong>Use Cases:</strong> Comprehensive player value evaluation based on FanGraphs metrics</p>
+<p><strong>Advantages:</strong> Combines all facets of player performance</p>
+<p><strong>Limitations:</strong> Relies on estimations, methodology can vary</p>
+<p><strong>Real-Life Examples:</strong> Comparing players across all aspects of performance</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, area charts</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> 2008</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible standard' id='g'>G<span class='alt-name'>(Games Played)</span></button>
+<div class='content'>
+<p>Total number of games a player appears in.</p>
+<p><strong>Applicable Roles:</strong> All</p>
+<p><strong>Use Cases:</strong> Assessing player availability and durability.</p>
+<p><strong>Advantages:</strong> Simple and universal.</p>
+<p><strong>Limitations:</strong> Doesn't measure contribution level.</p>
+<p><strong>Real-Life Examples:</strong> Comparing players’ participation.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='game-score'>Game Score</button>
+<div class='content'>
+<p>A single-game performance metric evaluating a starting pitcher’s effectiveness.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> 50 + Out Recorded + Strikeouts - (2 x Walks) - Hits Allowed - (4 x Earned Runs)</p>
+<p><strong>Use Cases:</strong> Measuring a pitcher’s dominance or struggles in a specific game.</p>
+<p><strong>Advantages:</strong> Provides a quick, holistic evaluation of a starting pitcher’s outing.</p>
+<p><strong>Limitations:</strong> Not designed for relief pitchers; ignores park effects or opponent quality.</p>
+<p><strong>Real-Life Examples:</strong> Perfect games or no-hitters will typically have high game scores.</p>
+<p><strong>Visualization Methods:</strong> Line charts tracking game scores across a season.</p>
+<p><strong>Creator:</strong> Bill James</p>
+<p><strong>Sources:</strong> MLB Advanced Media</p>
+<p><strong>Year Introduced:</strong> 1988</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='gb'>GB%<span class='alt-name'>(Ground Ball Rate)</span></button>
+<div class='content'>
+<p>Percentage of batted balls hit as ground balls.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> (Ground Balls / Total Batted Balls) * 100</p>
+<p><strong>Use Cases:</strong> Evaluating a pitcher’s ability to induce ground balls or batter tendencies to hit them.</p>
+<p><strong>Advantages:</strong> Highlights pitchers with ground-ball-heavy profiles or batters avoiding fly balls.</p>
+<p><strong>Limitations:</strong> Does not account for defensive shifts or ground ball quality.</p>
+<p><strong>Real-Life Examples:</strong> Pitchers with high GB% often rely on strong infield defense.</p>
+<p><strong>Visualization Methods:</strong> Pie charts or bar charts showing GB% by player.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Statcast</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='gb-fb'>GB/FB<span class='alt-name'>(Ground Ball to Fly Ball Ratio)</span></button>
+<div class='content'>
+<p>Shows the ratio of ground balls to fly balls for a player or team.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Ground Balls ÷ Fly Balls</p>
+<p><strong>Use Cases:</strong> Ground ball to fly ball ratio analysis for hitters and pitchers</p>
+<p><strong>Advantages:</strong> Highlights ground ball and fly ball tendencies</p>
+<p><strong>Limitations:</strong> Doesn't show outcomes of those tendencies</p>
+<p><strong>Real-Life Examples:</strong> Comparing ground ball pitchers to fly ball pitchers</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='gf'>GF<span class='alt-name'>(Games Finished)</span></button>
+<div class='content'>
+<p>A game in which a pitcher is the last to pitch for their team.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of games finished.</p>
+<p><strong>Use Cases:</strong> Measuring reliever usage in closing roles.</p>
+<p><strong>Advantages:</strong> Highlights closers and late-game relievers.</p>
+<p><strong>Limitations:</strong> Doesn't measure performance quality.</p>
+<p><strong>Real-Life Examples:</strong> A closer finishing 50 games in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, event markers</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='gidp'>GIDP<span class='alt-name'>(Ground Into Double Play)</span></button>
+<div class='content'>
+<p>A ground ball resulting in two outs.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Count of the # of times a batter has grouned into a double play.</p>
+<p><strong>Use Cases:</strong> Measuring negative offensive outcomes.</p>
+<p><strong>Advantages:</strong> Highlights situational challenges.</p>
+<p><strong>Limitations:</strong> Context-dependent.</p>
+<p><strong>Real-Life Examples:</strong> High GIDP totals for slow runners.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='go'>GO<span class='alt-name'>(Groundout)</span></button>
+<div class='content'>
+<p>A batted ball that is fielded and results in an out on the ground.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> Defined by game events.</p>
+<p><strong>Use Cases:</strong> Evaluating groundball tendencies for hitters or pitchers.</p>
+<p><strong>Advantages:</strong> Simple, part of traditional stats.</p>
+<p><strong>Limitations:</strong> Doesn't measure quality of contact.</p>
+<p><strong>Real-Life Examples:</strong> Analyzing pitchers who induce many groundouts.</p>
+<p><strong>Visualization Methods:</strong> Pie charts, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='go-ao'>GO/AO<span class='alt-name'>(Groundout-to-Airout Ratio)</span></button>
+<div class='content'>
+<p>Ratio of groundouts to airouts.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> GO ÷ AO</p>
+<p><strong>Use Cases:</strong> Evaluating pitching or hitting tendencies.</p>
+<p><strong>Advantages:</strong> Shows pitching style.</p>
+<p><strong>Limitations:</strong> Context not considered.</p>
+<p><strong>Real-Life Examples:</strong> Identifying groundball pitchers.</p>
+<p><strong>Visualization Methods:</strong> Pie charts, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='gs'>GS<span class='alt-name'>(Games Started)</span></button>
+<div class='content'>
+<p>The number of games a pitcher starts.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of games started.</p>
+<p><strong>Use Cases:</strong> Evaluating starting pitcher usage.</p>
+<p><strong>Advantages:</strong> Clear and widely recognized.</p>
+<p><strong>Limitations:</strong> Doesn't indicate innings pitched or effectiveness.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher making 30 starts in a season.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='gsh'>GSH<span class='alt-name'>(Grand Slams)</span></button>
+<div class='content'>
+<p>A home run hit with the bases loaded.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Count of a batter's Grand Slams</p>
+<p><strong>Use Cases:</strong> Highlighting clutch hitting ability.</p>
+<p><strong>Advantages:</strong> Exciting offensive stat.</p>
+<p><strong>Limitations:</strong> Rare and situational.</p>
+<p><strong>Real-Life Examples:</strong> Famous grand slams in playoff games.</p>
+<p><strong>Visualization Methods:</strong> Video clips, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='h'>H<span class='alt-name'>(Hits  )</span></button>
+<div class='content'>
+<p>A measure of how many times a batter safely reaches base by hitting the ball into play, without the aid of an error or fielder's choice. Hits can be categorized into singles, doubles, triples, and home runs.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Count of a batter's Hits.</p>
+<p><strong>Use Cases:</strong> Measuring batting success.</p>
+<p><strong>Advantages:</strong> Simple and universal.</p>
+<p><strong>Limitations:</strong> Does not measure power or context.</p>
+<p><strong>Real-Life Examples:</strong> Total hits in a player's career.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='h-9'>H/9<span class='alt-name'>(Hits per 9 innings)</span></button>
+<div class='content'>
+<p>Average number of hits allowed by a pitcher per nine innings pitched.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Hits Allowed / Innings Pitched) * 9</p>
+<p><strong>Use Cases:</strong> Measuring pitcher effectiveness in limiting hits.</p>
+<p><strong>Advantages:</strong> Helps compare pitchers’ ability to suppress hits regardless of innings pitched.</p>
+<p><strong>Limitations:</strong> Does not consider quality of defense or ballpark factors.</p>
+<p><strong>Real-Life Examples:</strong> An elite pitcher may have an H/9 under 7.</p>
+<p><strong>Visualization Methods:</strong> Line charts or scatter plots showing H/9 trends over a season.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Official Stats</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='hard-hit-rate'>Hard-hit Rate<span class='alt-name'>(HardHit%)</span></button>
+<div class='content'>
+<p>Percentage of batted balls with an exit velocity of 95+ mph.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> (Batted balls with EV >= 95 mph / Total batted balls) * 100</p>
+<p><strong>Use Cases:</strong> Measuring a hitter's ability to make hard contact.</p>
+<p><strong>Advantages:</strong> Strongly correlates with offensive production.</p>
+<p><strong>Limitations:</strong> Does not account for launch angle or direction.</p>
+<p><strong>Real-Life Examples:</strong> A hard-hit rate above 40% is elite.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots or bar charts showing hard-hit percentage.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible standard' id='hbp'>HBP<span class='alt-name'>(Hit-by-pitch)</span></button>
+<div class='content'>
+<p>A Hit By Pitch (HBP) occurs when a batter is struck by a pitched ball without swinging at it, and the batter is awarded first base as a result.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Count of a batter's HBP</p>
+<p><strong>Use Cases:</strong> Evaluating player toughness and on-base rate.</p>
+<p><strong>Advantages:</strong> Adds value to OBP.</p>
+<p><strong>Limitations:</strong> Rare and potentially dangerous.</p>
+<p><strong>Real-Life Examples:</strong> Players with high HBP totals like Craig Biggio.</p>
+<p><strong>Visualization Methods:</strong> Histograms, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='hld'>HLD<span class='alt-name'>(Hold)</span></button>
+<div class='content'>
+<p>A statistic awarded to a reliever who protects a lead without finishing the game.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Defined by MLB rules.</p>
+<p><strong>Use Cases:</strong> Evaluating middle relievers' contributions.</p>
+<p><strong>Advantages:</strong> Highlights setup pitchers' importance.</p>
+<p><strong>Limitations:</strong> Situational and context-dependent.</p>
+<p><strong>Real-Life Examples:</strong> A setup pitcher earning 20+ holds in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, event markers</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> 1986</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='home-to-first'>Home to First</button>
+<div class='content'>
+<p>The time taken to run from home plate to first base.</p>
+<p><strong>Applicable Roles:</strong> Runners</p>
+<p><strong>Formula:</strong> Measured in seconds</p>
+<p><strong>Use Cases:</strong> Assessing speed and quickness out of the batter's box.</p>
+<p><strong>Advantages:</strong> Provides a metric for in-game baserunning speed.</p>
+<p><strong>Limitations:</strong> Does not consider external factors like field conditions.</p>
+<p><strong>Real-Life Examples:</strong> A home-to-first time under 4 seconds is elite.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots or line graphs tracking trends over time.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='hr'>HR<span class='alt-name'>(Home Runs)</span></button>
+<div class='content'>
+<p>A home run is a hit in which the batter rounds all the bases and scores, along with any runners on base, without being put out or the benefit of a defensive error.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Count of a batter's home runs.</p>
+<p><strong>Use Cases:</strong> Measuring power and offensive production.</p>
+<p><strong>Advantages:</strong> Highlights top power hitters.</p>
+<p><strong>Limitations:</strong> Ignores situational importance.</p>
+<p><strong>Real-Life Examples:</strong> Players with 40+ HR in a season.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='hr-dis'>HR-DIS<span class='alt-name'>(Projected Home Run Distance)</span></button>
+<div class='content'>
+<p>Projected distance a home run would travel in neutral conditions.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Calculated using launch angle, exit velocity, and air resistance</p>
+<p><strong>Use Cases:</strong> Evaluating the power of a home run hitter.</p>
+<p><strong>Advantages:</strong> Accounts for environmental factors to provide consistent metrics.</p>
+<p><strong>Limitations:</strong> Does not reflect actual in-game conditions or situational hitting.</p>
+<p><strong>Real-Life Examples:</strong> Home runs with HR-DIS above 450 feet indicate elite power.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots or bar charts of projected HR distances.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='hr-9'>HR/9<span class='alt-name'>(Home Runs per 9 innings)</span></button>
+<div class='content'>
+<p>Average number of home runs allowed by a pitcher per nine innings pitched.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Home Runs Allowed / Innings Pitched) * 9</p>
+<p><strong>Use Cases:</strong> Measuring pitcher susceptibility to giving up home runs.</p>
+<p><strong>Advantages:</strong> Highlights pitchers prone to long balls or excelling at suppressing them.</p>
+<p><strong>Limitations:</strong> Does not account for ballpark dimensions or weather conditions.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher with an HR/9 under 1 is considered excellent.</p>
+<p><strong>Visualization Methods:</strong> Bar charts comparing HR/9 across pitchers or teams.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Official Stats</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='hr-fb'>HR/FB<span class='alt-name'>(Home Runs per Fly Ball)</span></button>
+<div class='content'>
+<p>Indicates the percentage of fly balls that result in home runs.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> HR ÷ FB</p>
+<p><strong>Use Cases:</strong> Evaluating home run rate consistency for pitchers</p>
+<p><strong>Advantages:</strong> Measures home run frequency</p>
+<p><strong>Limitations:</strong> Small sample sizes can skew results</p>
+<p><strong>Real-Life Examples:</strong> Understanding the percentage of fly balls that result in home runs</p>
+<p><strong>Visualization Methods:</strong> Pie charts, histograms</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> 2005</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='ibb'>IBB<span class='alt-name'>(Intentional Walk)</span></button>
+<div class='content'>
+<p>A walk issued deliberately by the pitcher.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Use Cases:</strong> Evaluating strategic pitching decisions.</p>
+<p><strong>Advantages:</strong> Context-driven stat.</p>
+<p><strong>Limitations:</strong> Rare and situational.</p>
+<p><strong>Real-Life Examples:</strong> Players frequently intentionally walked.</p>
+<p><strong>Visualization Methods:</strong> Pie charts, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='inn'>INN<span class='alt-name'>(Innings Played)</span></button>
+<div class='content'>
+<p>The number of defensive innings a player has been in the field.</p>
+<p><strong>Applicable Roles:</strong> Fielders, Pitchers</p>
+<p><strong>Use Cases:</strong> Measuring defensive workload.</p>
+<p><strong>Advantages:</strong> Reflects time on the field.</p>
+<p><strong>Limitations:</strong> Does not reflect performance quality.</p>
+<p><strong>Real-Life Examples:</strong> Players with the most innings played.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, pie charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='ip'>IP<span class='alt-name'>(Innings Pitched)</span></button>
+<div class='content'>
+<p>The total number of innings a pitcher has pitched.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Sum of all innings pitched.</p>
+<p><strong>Use Cases:</strong> Measuring workload and endurance for pitchers.</p>
+<p><strong>Advantages:</strong> Clear, easy to track.</p>
+<p><strong>Limitations:</strong> Doesn't reflect quality of innings pitched.</p>
+<p><strong>Real-Life Examples:</strong> A starter pitching 200 innings in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, time-series charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='ir'>IR<span class='alt-name'>(Inherited Runner)</span></button>
+<div class='content'>
+<p>A baserunner already on base when a reliever enters the game.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of runners inherited.</p>
+<p><strong>Use Cases:</strong> Evaluating relievers' performance in high-pressure situations.</p>
+<p><strong>Advantages:</strong> Highlights relievers' ability to prevent inherited runs.</p>
+<p><strong>Limitations:</strong> Doesn't account for context like number of outs.</p>
+<p><strong>Real-Life Examples:</strong> A reliever entering with bases loaded and no outs.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='ir-a'>IR-A<span class='alt-name'>(Inherited Runners Allowed)</span></button>
+<div class='content'>
+<p>Number of inherited baserunners allowed to score by a relief pitcher.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Inherited Runners Scored / Total Inherited Runners</p>
+<p><strong>Use Cases:</strong> Evaluating relief pitchers’ effectiveness in preventing inherited runners from scoring.</p>
+<p><strong>Advantages:</strong> Highlights relievers who excel in high-pressure situations.</p>
+<p><strong>Limitations:</strong> Does not account for defensive support or inherited base state.</p>
+<p><strong>Real-Life Examples:</strong> A dominant reliever may have an IR-A close to 0.</p>
+<p><strong>Visualization Methods:</strong> Pie charts showing percentage of inherited runners allowed to score.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Official Stats</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='iso'>ISO<span class='alt-name'>(Isolated Power)</span></button>
+<div class='content'>
+<p>Shows how much power a player generates from their hits.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> SLG - AVG</p>
+<p><strong>Use Cases:</strong> Measuring a player’s raw power through isolated power calculation</p>
+<p><strong>Advantages:</strong> Isolates power from batting average</p>
+<p><strong>Limitations:</strong> Misses context, like base-out states</p>
+<p><strong>Real-Life Examples:</strong> Identifying power hitters</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, bar graphs</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Mid-1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='jump'>Jump</button>
+<div class='content'>
+<p>The fielder's reaction, burst, and route efficiency on batted balls.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Reaction time + burst speed + route efficiency</p>
+<p><strong>Use Cases:</strong> Analyzing defensive instincts and speed to field batted balls.</p>
+<p><strong>Advantages:</strong> Breaks down defensive performance into measurable components.</p>
+<p><strong>Limitations:</strong> Does not account for environmental factors like wind or field conditions.</p>
+<p><strong>Real-Life Examples:</strong> A jump rating above 2.0 feet is considered elite.</p>
+<p><strong>Visualization Methods:</strong> Line or bar charts showing reaction and movement efficiency.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='k'>K%<span class='alt-name'>(Strikeout Percentage)</span></button>
+<div class='content'>
+<p>Indicates how often a batter strikes out relative to plate appearances.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> K ÷ PA</p>
+<p><strong>Use Cases:</strong> Strikeout evaluation for hitters and pitchers</p>
+<p><strong>Advantages:</strong> Simple, measures strikeout ability</p>
+<p><strong>Limitations:</strong> Doesn't include situational factors</p>
+<p><strong>Real-Life Examples:</strong> Evaluating pitchers who rely on strikeouts</p>
+<p><strong>Visualization Methods:</strong> Line graphs, pie charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> Baseball Savant, FanGraphs</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='k-bb'>K-BB%<span class='alt-name'>(Strikeout Minus Walk Percentage)</span></button>
+<div class='content'>
+<p>Measures the difference between strikeout percentage and walk percentage, highlighting plate discipline and command for pitchers.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> K% - BB%</p>
+<p><strong>Use Cases:</strong> Evaluating pitcher effectiveness and command.</p>
+<p><strong>Advantages:</strong> Simple to calculate; highlights critical control aspects.</p>
+<p><strong>Limitations:</strong> Overlooks batted ball outcomes and contextual factors.</p>
+<p><strong>Real-Life Examples:</strong> Used to differentiate elite pitchers from average ones in MLB.</p>
+<p><strong>Visualization Methods:</strong> Line charts, bar graphs</p>
+<p><strong>Creator:</strong> Unknown</p>
+<p><strong>Sources:</strong> Fangraphs</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='k-9'>K/9<span class='alt-name'>(Strikeouts per 9 Innings)</span></button>
+<div class='content'>
+<p>Average number of strikeouts a pitcher records per nine innings pitched.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Total Strikeouts / Innings Pitched) * 9</p>
+<p><strong>Use Cases:</strong> Evaluating a pitcher’s ability to generate strikeouts.</p>
+<p><strong>Advantages:</strong> Highlights strikeout proficiency without defensive factors.</p>
+<p><strong>Limitations:</strong> Does not consider walks, hits, or situational pitching.</p>
+<p><strong>Real-Life Examples:</strong> A K/9 above 10 is often considered elite for modern pitchers.</p>
+<p><strong>Visualization Methods:</strong> Bar charts comparing K/9 across pitchers or seasons.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Official Stats</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='k-bb'>K/BB<span class='alt-name'>(Strikeout-to-Walk Ratio)</span></button>
+<div class='content'>
+<p>Number of strikeouts per walk issued by a pitcher.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Total Strikeouts / Total Walks)</p>
+<p><strong>Use Cases:</strong> Evaluating a pitcher’s control and dominance on the mound.</p>
+<p><strong>Advantages:</strong> Provides a balanced view of strikeouts and walk prevention.</p>
+<p><strong>Limitations:</strong> Does not directly consider hits or run prevention.</p>
+<p><strong>Real-Life Examples:</strong> A K/BB above 4 is considered excellent.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots showing K/BB trends over time.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Official Stats</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='l'>L<span class='alt-name'>(Losses)</span></button>
+<div class='content'>
+<p>A game in which a pitcher is charged with a loss.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Defined by MLB rules.</p>
+<p><strong>Use Cases:</strong> Measuring pitchers' win-loss records.</p>
+<p><strong>Advantages:</strong> Simple, part of traditional stats.</p>
+<p><strong>Limitations:</strong> Context-dependent, team-based stat.</p>
+<p><strong>Real-Life Examples:</strong> A starter losing 10 games despite a low ERA.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, event markers</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='la'>LA<span class='alt-name'>(Launch Angle)</span></button>
+<div class='content'>
+<p>Measures the vertical angle at which the ball leaves the bat after contact, critical for understanding batted ball trajectories.</p>
+<p><strong>Applicable Roles:</strong> Hitters, Pitchers</p>
+<p><strong>Formula:</strong> Measured in degrees</p>
+<p><strong>Use Cases:</strong> Analyzing optimal hitting strategies (e.g., line drives, fly balls) and identifying pitcher tendencies.</p>
+<p><strong>Advantages:</strong> Correlates directly with hitting outcomes like home runs or line drives.</p>
+<p><strong>Limitations:</strong> Context-dependent; high angles may not always result in productive hits.</p>
+<p><strong>Real-Life Examples:</strong> Launch angles between 10-25 degrees are optimal for extra-base hits.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, bar charts, heatmaps</p>
+<p><strong>Creator:</strong> MLB Statcast</p>
+<p><strong>Sources:</strong> Statcast, Baseball Savant</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='ld'>LD%<span class='alt-name'>(Line-Drive Rate)</span></button>
+<div class='content'>
+<p>Percentage of batted balls classified as line drives.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> (Line Drives / Balls in Play) * 100</p>
+<p><strong>Use Cases:</strong> Evaluating a batter's ability to hit line drives or a pitcher’s susceptibility to giving them up.</p>
+<p><strong>Advantages:</strong> Line drives often result in higher batting averages and slugging percentages.</p>
+<p><strong>Limitations:</strong> Does not account for batted ball speed or direction.</p>
+<p><strong>Real-Life Examples:</strong> A batter with an LD% above 20% is considered an excellent line-drive hitter.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots comparing LD% across players or teams.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='lead'>LEAD<span class='alt-name'>(Lead Distance)</span></button>
+<div class='content'>
+<p>Distance a baserunner leads off the base before a pitch.</p>
+<p><strong>Applicable Roles:</strong> Runners</p>
+<p><strong>Formula:</strong> Measured in feet</p>
+<p><strong>Use Cases:</strong> Analyzing a runner's aggressiveness and risk-taking on the bases.</p>
+<p><strong>Advantages:</strong> Helps identify baserunners with strong steal potential.</p>
+<p><strong>Limitations:</strong> Does not account for a pitcher's pick-off skill or defensive positioning.</p>
+<p><strong>Real-Life Examples:</strong> A lead distance above 10 feet is considered aggressive.</p>
+<p><strong>Visualization Methods:</strong> Heatmaps showing lead distances for different runners.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='lips'>LiPS<span class='alt-name'>(Late Inning Pressure Situation)</span></button>
+<div class='content'>
+<p>A metric evaluating player performance in high-pressure late-inning situations, such as close games in the 7th inning or later.</p>
+<p><strong>Applicable Roles:</strong> Batters, Pitchers</p>
+<p><strong>Formula:</strong> Performance metrics (e.g., batting average, slugging percentage, or strikeout rate) weighted by game leverage index.</p>
+<p><strong>Use Cases:</strong> Evaluating clutch performance, in-game decision-making, and situational effectiveness.</p>
+<p><strong>Advantages:</strong> Highlights players who excel under pressure, providing insights for late-game strategies.</p>
+<p><strong>Limitations:</strong> Small sample sizes can lead to variability; not predictive for future performance.</p>
+<p><strong>Real-Life Examples:</strong> Players like David Ortiz excelling in high-leverage playoff moments; Mariano Rivera's postseason dominance.</p>
+<p><strong>Visualization Methods:</strong> Line charts of performance trends in late innings, tables comparing clutch vs. non-clutch performance.</p>
+<p><strong>Creator:</strong> Baseball analysts (varies by implementation)</p>
+<p><strong>Sources:</strong> MLB game logs, Baseball-Reference, FanGraphs</p>
+<p><strong>Year Introduced:</strong> 2010</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible standard' id='lob'>LOB<span class='alt-name'>(Left On Base)</span></button>
+<div class='content'>
+<p>Number of runners left on base at the end of an inning.</p>
+<p><strong>Applicable Roles:</strong> Batters, Teams</p>
+<p><strong>Use Cases:</strong> Evaluating offensive efficiency.</p>
+<p><strong>Advantages:</strong> Measures scoring opportunities.</p>
+<p><strong>Limitations:</strong> Doesn't capture full offensive context.</p>
+<p><strong>Real-Life Examples:</strong> Comparing team LOB totals in a game.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='lob'>LOB%<span class='alt-name'>(Left On Base Percentage)</span></button>
+<div class='content'>
+<p>Evaluates team offensive efficiency by excluding non-scoring contributions.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (H + BB + HBP - R) ÷ (H + BB + HBP)</p>
+<p><strong>Use Cases:</strong> Evaluating pitchers’ ability to strand baserunners</p>
+<p><strong>Advantages:</strong> Indicates strand rate for pitchers</p>
+<p><strong>Limitations:</strong> Influenced by sequencing luck</p>
+<p><strong>Real-Life Examples:</strong> Measuring pitchers’ ability to prevent baserunners from scoring</p>
+<p><strong>Visualization Methods:</strong> Line graphs, time-series graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> 1980s</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible advanced' id='magic-number'>Magic Number</button>
+<div class='content'>
+<p>The number of wins needed by a team (or losses by their closest rival) to clinch a playoff berth or division title.</p>
+<p><strong>Applicable Roles:</strong> Teams</p>
+<p><strong>Formula:</strong> Games Remaining + 1 - (Team's Wins - Closest Rival's Losses)</p>
+<p><strong>Use Cases:</strong> Tracking a team's progress toward securing playoff qualification.</p>
+<p><strong>Advantages:</strong> Simple and widely used for fan engagement and playoff tracking.</p>
+<p><strong>Limitations:</strong> Does not reflect a team's likelihood of winning specific games.</p>
+<p><strong>Real-Life Examples:</strong> A magic number of 1 means a team is one win away from clinching.</p>
+<p><strong>Visualization Methods:</strong> Simple tables showing team standings and remaining games.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Official Stats</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='mb-9'>MB/9<span class='alt-name'>(Baserunners Per 9 Innings Pitched)</span></button>
+<div class='content'>
+<p>Measures how many baserunners a pitcher allows per nine innings pitched.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Hits + Walks + Hit Batters) / Innings Pitched * 9</p>
+<p><strong>Use Cases:</strong> Evaluating a pitcher’s effectiveness at preventing baserunners.</p>
+<p><strong>Advantages:</strong> Provides insight into pitcher control and efficiency.</p>
+<p><strong>Limitations:</strong> Does not account for quality of defense or luck factors like BABIP.</p>
+<p><strong>Real-Life Examples:</strong> Greg Maddux consistently posted low MB/9 values.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots comparing MB/9 with ERA or WHIP.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> Baseball-Reference</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='np'>NP<span class='alt-name'>(Number of Pitches)</span></button>
+<div class='content'>
+<p>The total number of pitches thrown by a pitcher in a game or season.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of pitches thrown.</p>
+<p><strong>Use Cases:</strong> Evaluating pitcher workload and efficiency.</p>
+<p><strong>Advantages:</strong> Simple, widely tracked.</p>
+<p><strong>Limitations:</strong> Doesn't include pitch types or outcomes.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher throwing 100 pitches in a complete game.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Mid-1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='o'>O<span class='alt-name'>(Outs)</span></button>
+<div class='content'>
+<p>A defensive action that results in a batter or runner being put out.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Use Cases:</strong> Measuring defensive contribution.</p>
+<p><strong>Advantages:</strong> Simple and direct metric.</p>
+<p><strong>Limitations:</strong> Ignores play difficulty.</p>
+<p><strong>Real-Life Examples:</strong> Out totals for defensive leaders.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='o-swing'>O-Swing%<span class='alt-name'>(Outside-Zone Swing Percentage)</span></button>
+<div class='content'>
+<p>Measures how often a batter swings at pitches outside the strike zone.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Swings Outside Zone ÷ Pitches Outside Zone</p>
+<p><strong>Use Cases:</strong> Measuring how often hitters swing at pitches outside the strike zone</p>
+<p><strong>Advantages:</strong> Reflects plate discipline outside the zone</p>
+<p><strong>Limitations:</strong> Limited to approach, not outcomes</p>
+<p><strong>Real-Life Examples:</strong> Comparing hitters’ tendency to swing at pitches outside the strike zone</p>
+<p><strong>Visualization Methods:</strong> Zone charts, scatter plots</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='oaa'>OAA<span class='alt-name'>(Outs Above Average)</span></button>
+<div class='content'>
+<p>Measures defensive effectiveness using Statcast metrics for range and ability.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Computed using Statcast's fielding play evaluation.</p>
+<p><strong>Use Cases:</strong> Evaluating defensive contributions using Statcast data</p>
+<p><strong>Advantages:</strong> Comprehensive defensive metric</p>
+<p><strong>Limitations:</strong> Limited to Statcast-equipped parks</p>
+<p><strong>Real-Life Examples:</strong> Comparing infielders and outfielders by defensive performance</p>
+<p><strong>Visualization Methods:</strong> Zone charts, scatter plots</p>
+<p><strong>Creator:</strong> Baseball Savant</p>
+<p><strong>Sources:</strong> Baseball Savant</p>
+<p><strong>Year Introduced:</strong> 2016</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible standard' id='obp'>OBP<span class='alt-name'>(On-Base Percentage)</span></button>
+<div class='content'>
+<p>Indicates how often a player gets on base via hits, walks, or hit-by-pitches.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> (H + BB + HBP) ÷ (AB + BB + HBP + SF)</p>
+<p><strong>Use Cases:</strong> Evaluating a player’s ability to get on base</p>
+<p><strong>Advantages:</strong> Simple, measures on-base ability</p>
+<p><strong>Limitations:</strong> Doesn't consider power</p>
+<p><strong>Real-Life Examples:</strong> Identifying players who get on base frequently</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, pie charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> Baseball-Reference, FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+<p><strong>Batter Excellent:</strong> .390 and above</p>
+<p><strong>Batter Great:</strong> .370 – .389</p>
+<p><strong>Batter Above Avg:</strong> .340 – .369</p>
+<p><strong>Batter Avg:</strong> .320 – .339</p>
+<p><strong>Batter Below Avg:</strong> .310 – .319</p>
+<p><strong>Batter Poor:</strong> .300 – .309</p>
+<p><strong>Batter Awful:</strong> .299 and below</p>
+<p><strong>Pitcher Excellent:</strong> .390 and above</p>
+<p><strong>Pitcher Great:</strong> .370 – .389</p>
+<p><strong>Pitcher Above Avg:</strong> .340 – .369</p>
+<p><strong>Pitcher Avg:</strong> .320 – .339</p>
+<p><strong>Pitcher Below Avg:</strong> .310 – .319</p>
+<p><strong>Pitcher Poor:</strong> .300 – .309</p>
+<p><strong>Pitcher Awful:</strong> .299 and below</p>
+</div>
+<button class='collapsible standard' id='ofa'>OFA<span class='alt-name'>(Outfield Assist)</span></button>
+<div class='content'>
+<p>An assist recorded by an outfielder.</p>
+<p><strong>Applicable Roles:</strong> Outfielders</p>
+<p><strong>Use Cases:</strong> Evaluating outfielder arm strength.</p>
+<p><strong>Advantages:</strong> Highlights defensive value.</p>
+<p><strong>Limitations:</strong> Rare and situational.</p>
+<p><strong>Real-Life Examples:</strong> Outfielders with the most assists.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='oppo'>Oppo%<span class='alt-name'>(Opposite Field Percentage)</span></button>
+<div class='content'>
+<p>Shows the percentage of batted balls hit to the opposite field.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Opposite Field Balls ÷ Total Batted Balls</p>
+<p><strong>Use Cases:</strong> Evaluating a hitter’s tendency to hit the ball to the opposite field</p>
+<p><strong>Advantages:</strong> Identifies opposite-field hitters</p>
+<p><strong>Limitations:</strong> Limited to batted ball direction</p>
+<p><strong>Real-Life Examples:</strong> Comparing opposite-field hitters</p>
+<p><strong>Visualization Methods:</strong> Spray charts, heatmaps</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='ops'>OPS<span class='alt-name'>(On-Base Plus Slugging)</span></button>
+<div class='content'>
+<p>Measures a player's overall offensive productivity, combining OBP and SLG.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> OBP + SLG</p>
+<p><strong>Use Cases:</strong> Combining OBP and SLG for overall offensive performance evaluation</p>
+<p><strong>Advantages:</strong> Combines on-base and slugging</p>
+<p><strong>Limitations:</strong> Treats OBP and SLG equally, despite different impacts</p>
+<p><strong>Real-Life Examples:</strong> Ranking players by offensive performance</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, heatmaps</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> Baseball-Reference, FanGraphs</p>
+<p><strong>Year Introduced:</strong> 1980s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='ops+'>OPS+<span class='alt-name'>(Adjusted OPS)</span></button>
+<div class='content'>
+<p>Contextualizes OPS by accounting for league averages and ballpark effects.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> 100 × (OPS ÷ league OPS) ÷ park factor</p>
+<p><strong>Use Cases:</strong> League- and park-adjusted comparison of OPS</p>
+<p><strong>Advantages:</strong> Normalized for league and park effects</p>
+<p><strong>Limitations:</strong> Still limited to hitting stats</p>
+<p><strong>Real-Life Examples:</strong> Comparing hitters across different ballparks and eras</p>
+<p><strong>Visualization Methods:</strong> Indexed bar charts, scatter plots</p>
+<p><strong>Creator:</strong> Baseball-Reference</p>
+<p><strong>Sources:</strong> Baseball-Reference</p>
+<p><strong>Year Introduced:</strong> 2002</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible advanced' id='p-gs'>P/GS<span class='alt-name'>(Pitches per Game Started)</span></button>
+<div class='content'>
+<p>Average number of pitches thrown per game started by a pitcher.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Total Pitches Thrown as Starter / Games Started</p>
+<p><strong>Use Cases:</strong> Measuring a starting pitcher’s durability and workload per game.</p>
+<p><strong>Advantages:</strong> Highlights pitchers capable of sustaining high pitch counts.</p>
+<p><strong>Limitations:</strong> Does not consider pitch effectiveness or fatigue factors.</p>
+<p><strong>Real-Life Examples:</strong> A durable starter averages around 90-100 P/GS.</p>
+<p><strong>Visualization Methods:</strong> Bar charts comparing P/GS across starting pitchers.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Official Stats</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='p-ip'>P/IP<span class='alt-name'>(Pitches per Inning Pitched)</span></button>
+<div class='content'>
+<p>Average number of pitches thrown per inning pitched.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Total Pitches / Innings Pitched</p>
+<p><strong>Use Cases:</strong> Measuring a pitcher’s efficiency in managing pitch counts.</p>
+<p><strong>Advantages:</strong> Highlights pitchers capable of working deeper into games.</p>
+<p><strong>Limitations:</strong> Does not account for quality of opponents or game situations.</p>
+<p><strong>Real-Life Examples:</strong> A highly efficient pitcher averages fewer than 15 P/IP.</p>
+<p><strong>Visualization Methods:</strong> Line charts tracking P/IP trends over a season.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Official Stats</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='p-pa'>P/PA<span class='alt-name'>(Pitches Per Plate Appearance)</span></button>
+<div class='content'>
+<p>Average number of pitches a batter sees per plate appearance.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Total Pitches Seen / Plate Appearances</p>
+<p><strong>Use Cases:</strong> Evaluating plate discipline and ability to work counts.</p>
+<p><strong>Advantages:</strong> Helps identify patient hitters; provides insights into batting strategy.</p>
+<p><strong>Limitations:</strong> Does not account for the outcome of plate appearances or specific situations.</p>
+<p><strong>Real-Life Examples:</strong> Joey Votto’s ability to see many pitches in each plate appearance.</p>
+<p><strong>Visualization Methods:</strong> Line charts showing P/PA trends over seasons.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> Fangraphs, Baseball-Reference</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='pa'>PA<span class='alt-name'>(Plate Appearances)</span></button>
+<div class='content'>
+<p>A completed turn at bat, including hits, walks, and outs.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Use Cases:</strong> Evaluating offensive opportunities.</p>
+<p><strong>Advantages:</strong> Includes all batting events.</p>
+<p><strong>Limitations:</strong> Does not measure quality of results.</p>
+<p><strong>Real-Life Examples:</strong> Total PAs in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='pa-so'>PA/SO<span class='alt-name'>(Plate Appearances Per Strikeout)</span></button>
+<div class='content'>
+<p>Average number of plate appearances before a batter strikes out.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Plate Appearances / Strikeouts</p>
+<p><strong>Use Cases:</strong> Measuring a batter’s strikeout avoidance.</p>
+<p><strong>Advantages:</strong> Simple to calculate; helps identify contact-oriented players.</p>
+<p><strong>Limitations:</strong> Ignores other outcomes like walks, hits, or quality of contact.</p>
+<p><strong>Real-Life Examples:</strong> Tony Gwynn’s low strikeout rate relative to his plate appearances.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs comparing PA/SO across players in the same league.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> Fangraphs, Baseball-Reference</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='pb'>PB<span class='alt-name'>(Passed Balls)</span></button>
+<div class='content'>
+<p>A pitch that gets past the catcher and allows runners to advance.</p>
+<p><strong>Applicable Roles:</strong> Catchers</p>
+<p><strong>Use Cases:</strong> Measuring defensive lapses by catchers.</p>
+<p><strong>Advantages:</strong> Highlights catcher performance.</p>
+<p><strong>Limitations:</strong> Rare and situational.</p>
+<p><strong>Real-Life Examples:</strong> Catchers with the fewest passed balls.</p>
+<p><strong>Visualization Methods:</strong> Time-series plots, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='pitch-movement'>Pitch Movement</button>
+<div class='content'>
+<p>Horizontal and vertical movement of a pitch due to spin.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Measured in inches</p>
+<p><strong>Use Cases:</strong> Assessing the effectiveness and uniqueness of a pitch's trajectory.</p>
+<p><strong>Advantages:</strong> Crucial for pitch design and evaluating deception.</p>
+<p><strong>Limitations:</strong> Does not account for pitch location or release point.</p>
+<p><strong>Real-Life Examples:</strong> High-movement pitches often generate weak contact or swings and misses.</p>
+<p><strong>Visualization Methods:</strong> 3D visualizations of pitch movement trajectories.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='pitch-tempo'>Pitch Tempo</button>
+<div class='content'>
+<p>Time between pitch releases.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Measured in seconds</p>
+<p><strong>Use Cases:</strong> Analyzing a pitcher's pace and rhythm.</p>
+<p><strong>Advantages:</strong> Can impact batter timing and defensive readiness.</p>
+<p><strong>Limitations:</strong> Does not account for game situations or external delays.</p>
+<p><strong>Real-Life Examples:</strong> Pitchers with faster tempos often maintain better defensive alignment.</p>
+<p><strong>Visualization Methods:</strong> Timelines showing pitch tempos across games or innings.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='pk'>PK<span class='alt-name'>(Pickoff)</span></button>
+<div class='content'>
+<p>A successful throw to a base to get a baserunner out.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of successful pickoffs.</p>
+<p><strong>Use Cases:</strong> Highlighting pitchers' control of the running game.</p>
+<p><strong>Advantages:</strong> Simple, game-impacting stat.</p>
+<p><strong>Limitations:</strong> Rare and situational.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher with a high number of pickoffs in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, event markers</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='po'>PO<span class='alt-name'>(Putout)</span></button>
+<div class='content'>
+<p>A defensive action that completes an out.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Use Cases:</strong> Measuring defensive involvement.</p>
+<p><strong>Advantages:</strong> Reflects positioning skill.</p>
+<p><strong>Limitations:</strong> Ignores defensive range.</p>
+<p><strong>Real-Life Examples:</strong> Fielders with the most putouts.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='po'>PO%<span class='alt-name'>(Pop-up Rate)</span></button>
+<div class='content'>
+<p>Percentage of batted balls resulting in infield fly balls.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> (Pop-ups / Total Batted Balls) * 100</p>
+<p><strong>Use Cases:</strong> Measuring a batter's tendency to produce weak contact or a pitcher's ability to induce it.</p>
+<p><strong>Advantages:</strong> Indicates poor contact quality for hitters or strong contact management for pitchers.</p>
+<p><strong>Limitations:</strong> Does not account for fielding or outcomes beyond weak contact.</p>
+<p><strong>Real-Life Examples:</strong> A high PO% might be around 10-15% for pitchers.</p>
+<p><strong>Visualization Methods:</strong> Bar charts comparing PO% across players or teams.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='pop'>POP<span class='alt-name'>(Pop Time)</span></button>
+<div class='content'>
+<p>The time it takes for a catcher to deliver the ball to second base during a stolen base attempt.</p>
+<p><strong>Applicable Roles:</strong> Catchers</p>
+<p><strong>Formula:</strong> Time from glove to throw completion at second base</p>
+<p><strong>Use Cases:</strong> Evaluating catcher quickness and throwing efficiency.</p>
+<p><strong>Advantages:</strong> Useful for assessing a catcher's ability to prevent stolen bases.</p>
+<p><strong>Limitations:</strong> Does not account for pitch type or pitcher's delivery time.</p>
+<p><strong>Real-Life Examples:</strong> A pop time under 1.9 seconds is considered elite.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots comparing pop times across catchers.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='pull'>Pull%<span class='alt-name'>(Pull Percentage)</span></button>
+<div class='content'>
+<p>Shows the percentage of batted balls hit to the pull side.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Pulled Balls ÷ Total Batted Balls</p>
+<p><strong>Use Cases:</strong> Evaluating a hitter’s tendency to pull the ball</p>
+<p><strong>Advantages:</strong> Identifies pull hitters</p>
+<p><strong>Limitations:</strong> Doesn't differentiate productive or unproductive pull tendencies</p>
+<p><strong>Real-Life Examples:</strong> Identifying pull hitters</p>
+<p><strong>Visualization Methods:</strong> Spray charts, bar graphs</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='putaway-'>Putaway %</button>
+<div class='content'>
+<p>Percentage of two-strike pitches resulting in a strikeout.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Number of Two-Strike Strikeouts / Total Two-Strike Pitches) × 100</p>
+<p><strong>Use Cases:</strong> Evaluating a pitcher's ability to finish off hitters with two strikes.</p>
+<p><strong>Advantages:</strong> Highlights the effectiveness of a pitcher's strikeout pitches.</p>
+<p><strong>Limitations:</strong> Does not account for pitch count or context of the strikeout.</p>
+<p><strong>Real-Life Examples:</strong> Pitchers with high putaway percentages often excel in strikeouts.</p>
+<p><strong>Visualization Methods:</strong> Bar charts showing putaway percentages by pitch type.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='pv'>PV<span class='alt-name'>(Perceived Velocity)</span></button>
+<div class='content'>
+<p>How fast a pitch appears to a batter based on release point and velocity.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Calculated based on release extension and actual velocity</p>
+<p><strong>Use Cases:</strong> Evaluating a pitch's effectiveness from a batter's perspective.</p>
+<p><strong>Advantages:</strong> Useful for understanding how a pitch plays above its velocity.</p>
+<p><strong>Limitations:</strong> Does not consider spin or movement.</p>
+<p><strong>Real-Life Examples:</strong> Pitches with high perceived velocity often generate more swings and misses.</p>
+<p><strong>Visualization Methods:</strong> Graphs showing perceived velocity compared to actual velocity for various pitches.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='pythagorean-winning-'>Pythagorean Winning %<span class='alt-name'>(Pythagorean Expectation)</span></button>
+<div class='content'>
+<p>A formula predicting a team's winning percentage based on runs scored and runs allowed.</p>
+<p><strong>Applicable Roles:</strong> Teams</p>
+<p><strong>Formula:</strong> (Runs Scored^2) / (Runs Scored^2 + Runs Allowed^2)</p>
+<p><strong>Use Cases:</strong> Evaluating how well a team is performing relative to its run differential.</p>
+<p><strong>Advantages:</strong> Provides an objective measure of team performance.</p>
+<p><strong>Limitations:</strong> Does not account for situational hitting, bullpen usage, or luck.</p>
+<p><strong>Real-Life Examples:</strong> A team with a Pythagorean Winning Percentage above .600 is considered strong.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots comparing actual vs. expected winning percentage.</p>
+<p><strong>Creator:</strong> Bill James</p>
+<p><strong>Sources:</strong> Baseball-Reference</p>
+<p><strong>Year Introduced:</strong> 1980s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='qs'>QS<span class='alt-name'>(Quality Starts)</span></button>
+<div class='content'>
+<p>A start in which a pitcher completes at least six innings and allows three or fewer earned runs.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Defined by MLB rules.</p>
+<p><strong>Use Cases:</strong> Evaluating starting pitcher consistency.</p>
+<p><strong>Advantages:</strong> Simple, clear benchmark.</p>
+<p><strong>Limitations:</strong> Doesn't account for situational context.</p>
+<p><strong>Real-Life Examples:</strong> A starter with 20+ quality starts in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> 1985</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='r'>R<span class='alt-name'>(Runs)</span></button>
+<div class='content'>
+<p>A player scores by safely crossing home plate.</p>
+<p><strong>Applicable Roles:</strong> Batters, Teams</p>
+<p><strong>Use Cases:</strong> Measuring offensive production.</p>
+<p><strong>Advantages:</strong> Simple and universal.</p>
+<p><strong>Limitations:</strong> Does not account for individual contribution.</p>
+<p><strong>Real-Life Examples:</strong> Total runs scored by a team in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='ra9'>RA9<span class='alt-name'>(Runs Allowed per 9 Innings Pitched)</span></button>
+<div class='content'>
+<p>Average number of runs allowed by a pitcher per nine innings pitched.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Total Runs Allowed / Innings Pitched) * 9</p>
+<p><strong>Use Cases:</strong> Measuring overall pitching performance in preventing runs.</p>
+<p><strong>Advantages:</strong> A simpler metric compared to ERA but includes unearned runs.</p>
+<p><strong>Limitations:</strong> Does not separate earned from unearned runs or account for defensive factors.</p>
+<p><strong>Real-Life Examples:</strong> A solid RA9 might be around 3.50 for a strong pitcher.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots comparing RA9 across teams or seasons.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Official Stats</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='raa'>RAA<span class='alt-name'>(Runs Above Average)</span></button>
+<div class='content'>
+<p>Evaluates a player's contribution to run scoring above average.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Runs Above Average (RAA) = Runs Produced - Average Runs</p>
+<p><strong>Use Cases:</strong> Run contribution above average for players</p>
+<p><strong>Advantages:</strong> Measures total runs above average for a player</p>
+<p><strong>Limitations:</strong> Focused, but doesn't account for league differences</p>
+<p><strong>Real-Life Examples:</strong> Quantifying offensive runs above average</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Baseball Prospectus</p>
+<p><strong>Sources:</strong> Baseball Prospectus</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible standard' id='rate-stats-qualifiers'>Rate Stats Qualifiers</button>
+<div class='content'>
+<p>A set of criteria defining eligibility for rate stats like ERA or OBP.</p>
+<p><strong>Applicable Roles:</strong> Batters, Pitchers</p>
+<p><strong>Use Cases:</strong> Ensuring statistical fairness.</p>
+<p><strong>Advantages:</strong> Standardizes comparisons.</p>
+<p><strong>Limitations:</strong> Can exclude players with fewer appearances.</p>
+<p><strong>Real-Life Examples:</strong> Minimum PAs to qualify for batting title.</p>
+<p><strong>Visualization Methods:</strong> Histograms, bar graphs</p>
+<p><strong>Creator:</strong> MLB</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Mid-1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='rbi'>RBI<span class='alt-name'>(Runs Batted In)</span></button>
+<div class='content'>
+<p>Number of runs scored due to a batter's at-bat.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Use Cases:</strong> Evaluating clutch hitting ability.</p>
+<p><strong>Advantages:</strong> Measures offensive contribution.</p>
+<p><strong>Limitations:</strong> Influenced by teammates’ performance.</p>
+<p><strong>Real-Life Examples:</strong> RBIs by cleanup hitters in a lineup.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='rc'>RC<span class='alt-name'>(Runs Created)</span></button>
+<div class='content'>
+<p>A statistic estimating a player's total contribution to their team’s run production.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> ((Hits + Walks) * Total Bases) / (At-Bats + Walks)</p>
+<p><strong>Use Cases:</strong> Measuring a batter’s offensive contribution.</p>
+<p><strong>Advantages:</strong> Simple and widely understood; evaluates offensive value holistically.</p>
+<p><strong>Limitations:</strong> Ignores context, such as the quality of opposing pitching or defense.</p>
+<p><strong>Real-Life Examples:</strong> Babe Ruth’s legendary offensive seasons showcase high RC values.</p>
+<p><strong>Visualization Methods:</strong> Bar charts comparing RC across players or teams in a season.</p>
+<p><strong>Creator:</strong> Bill James</p>
+<p><strong>Sources:</strong> Baseball-Reference, Fangraphs</p>
+<p><strong>Year Introduced:</strong> 1979</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='re24'>RE24<span class='alt-name'>(Run Expectancy Based on 24 States)</span></button>
+<div class='content'>
+<p>Estimates run creation based on base-out situations.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> Expected runs for each base/out situation before and after an event.</p>
+<p><strong>Use Cases:</strong> Context-neutral evaluation of offensive contribution</p>
+<p><strong>Advantages:</strong> Contextualizes contributions based on base-out state</p>
+<p><strong>Limitations:</strong> Situational, not park or league adjusted</p>
+<p><strong>Real-Life Examples:</strong> Evaluating a player’s situational hitting</p>
+<p><strong>Visualization Methods:</strong> Heatmaps, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> 2005</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='rf'>RF<span class='alt-name'>(Range Factor)</span></button>
+<div class='content'>
+<p>A defensive statistic measuring the number of plays a fielder participates in per game.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> (Innings Played × (Putouts + Assists)) / Defensive Games</p>
+<p><strong>Use Cases:</strong> Comparing defensive effectiveness, identifying players who make more plays than average for their position.</p>
+<p><strong>Advantages:</strong> Simple and easy to calculate; highlights defensive activity levels.</p>
+<p><strong>Limitations:</strong> Does not account for defensive positioning, quality of opponents, or ballpark effects.</p>
+<p><strong>Real-Life Examples:</strong> Ozzie Smith's consistently high RF values as a shortstop.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs comparing RF among players at the same position.</p>
+<p><strong>Creator:</strong> Bill James</p>
+<p><strong>Sources:</strong> MLB game logs, Baseball-Reference</p>
+<p><strong>Year Introduced:</strong> 1980</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='roe'>ROE<span class='alt-name'>(Reached On Error)</span></button>
+<div class='content'>
+<p>A batter reaches base due to a defensive error.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Use Cases:</strong> Evaluating defensive mistakes.</p>
+<p><strong>Advantages:</strong> Highlights fielding errors.</p>
+<p><strong>Limitations:</strong> Situational and rare.</p>
+<p><strong>Real-Life Examples:</strong> Comparing ROE trends among teams.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='rs-9'>RS/9<span class='alt-name'>(Run Support per 9 Innings)</span></button>
+<div class='content'>
+<p>Average number of runs scored by a pitcher's team per nine innings pitched.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Total Runs Scored While Pitcher Was Active / Innings Pitched) * 9</p>
+<p><strong>Use Cases:</strong> Measuring the offensive support a pitcher receives during their starts.</p>
+<p><strong>Advantages:</strong> Helps evaluate team contributions to a pitcher’s win potential.</p>
+<p><strong>Limitations:</strong> Does not measure pitching quality or defensive performance.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher with strong team support might have RS/9 above 5.</p>
+<p><strong>Visualization Methods:</strong> Line graphs showing RS/9 trends for pitchers over a season.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB Official Stats</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='rw'>RW<span class='alt-name'>(Relief Wins)</span></button>
+<div class='content'>
+<p>A win awarded to a reliever who enters the game in a non-starting role.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Defined by MLB rules.</p>
+<p><strong>Use Cases:</strong> Highlighting relievers' contributions to team wins.</p>
+<p><strong>Advantages:</strong> Simple, easy to track.</p>
+<p><strong>Limitations:</strong> Context-dependent, team-based stat.</p>
+<p><strong>Real-Life Examples:</strong> A reliever earning 10+ wins in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, event markers</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='sb'>SB<span class='alt-name'>(Stolen Bases)</span></button>
+<div class='content'>
+<p>When a runner advances a base without a hit.</p>
+<p><strong>Applicable Roles:</strong> Runners</p>
+<p><strong>Use Cases:</strong> Evaluating baserunning ability.</p>
+<p><strong>Advantages:</strong> Highlights speed and skill.</p>
+<p><strong>Limitations:</strong> Does not account for opportunities.</p>
+<p><strong>Real-Life Examples:</strong> Total stolen bases in a player’s career.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='sb'>SB%<span class='alt-name'>(Stolen-base Percentage)</span></button>
+<div class='content'>
+<p>The percentage of successful stolen base attempts.</p>
+<p><strong>Applicable Roles:</strong> Runners</p>
+<p><strong>Formula:</strong> SB ÷ (SB + CS)</p>
+<p><strong>Use Cases:</strong> Measuring efficiency of stolen bases.</p>
+<p><strong>Advantages:</strong> Reflects baserunning skill.</p>
+<p><strong>Limitations:</strong> Ignores other baserunning metrics.</p>
+<p><strong>Real-Life Examples:</strong> High SB% among elite base stealers.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, pie charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='sf'>SF<span class='alt-name'>(Sacrifice Fly)</span></button>
+<div class='content'>
+<p>A fly ball out that allows a runner to score.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Use Cases:</strong> Evaluating situational hitting.</p>
+<p><strong>Advantages:</strong> Highlights team-oriented plays.</p>
+<p><strong>Limitations:</strong> Rare and situational.</p>
+<p><strong>Real-Life Examples:</strong> Successful sacrifice flies in a season.</p>
+<p><strong>Visualization Methods:</strong> Pie charts, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='sh'>SH<span class='alt-name'>(Sacrifice Bunt)</span></button>
+<div class='content'>
+<p>A bunt intended to advance runners and sacrifice the batter.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Use Cases:</strong> Evaluating situational hitting.</p>
+<p><strong>Advantages:</strong> Highlights team-oriented plays.</p>
+<p><strong>Limitations:</strong> Context-dependent and rare.</p>
+<p><strong>Real-Life Examples:</strong> Successful sacrifice bunts in a season.</p>
+<p><strong>Visualization Methods:</strong> Pie charts, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='shifts'>Shifts</button>
+<div class='content'>
+<p>The defensive alignment adjustments made based on batter tendencies.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Based on player positioning and ball-in-play data</p>
+<p><strong>Use Cases:</strong> Assessing team strategy and its impact on defensive outcomes.</p>
+<p><strong>Advantages:</strong> Quantifies the effectiveness of defensive positioning.</p>
+<p><strong>Limitations:</strong> Does not account for unpredictable batter behavior or errors.</p>
+<p><strong>Real-Life Examples:</strong> A shift success rate above 70% indicates strategic efficiency.</p>
+<p><strong>Visualization Methods:</strong> Heatmaps showing shifted vs. standard positioning.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Fangraphs, Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='sho'>SHO<span class='alt-name'>(Shutouts)</span></button>
+<div class='content'>
+<p>A complete game in which the pitcher allows no runs.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of complete games with zero runs allowed.</p>
+<p><strong>Use Cases:</strong> Evaluating dominant pitching performances.</p>
+<p><strong>Advantages:</strong> Reflects single-game dominance.</p>
+<p><strong>Limitations:</strong> Rare, requires strong defensive support.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher throwing 5 shutouts in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='siera'>SIERA<span class='alt-name'>(Skill Interactive Earned Run Average)</span></button>
+<div class='content'>
+<p>An advanced pitching metric estimating run prevention while accounting for defense and park factors.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Complex regression model based on strikeouts, walks, and ground balls.</p>
+<p><strong>Use Cases:</strong> Evaluating a pitcher’s skill-based effectiveness in preventing runs.</p>
+<p><strong>Advantages:</strong> Accounts for defense-independent performance better than ERA or FIP.</p>
+<p><strong>Limitations:</strong> Requires advanced data and modeling; complex to calculate manually.</p>
+<p><strong>Real-Life Examples:</strong> A SIERA around 3.00 indicates elite performance.</p>
+<p><strong>Visualization Methods:</strong> Heatmaps or comparative charts for SIERA values among pitchers.</p>
+<p><strong>Creator:</strong> TangoTiger, Matt Swartz</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> 2011</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible standard' id='slg'>SLG<span class='alt-name'>(Slugging Percentage)</span></button>
+<div class='content'>
+<p>Calculates a player's power by weighting different hit types (e.g., singles, doubles, etc.).</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> (1B + 2 × 2B + 3 × 3B + 4 × HR) ÷ AB</p>
+<p><strong>Use Cases:</strong> Measuring a player’s power contribution through extra-base hits</p>
+<p><strong>Advantages:</strong> Reflects power hitting</p>
+<p><strong>Limitations:</strong> Overvalues extra-base hits</p>
+<p><strong>Real-Life Examples:</strong> Measuring a player's power-hitting ability</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> Baseball-Reference, FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+<p><strong>Batter Excellent:</strong> .550 and above</p>
+<p><strong>Batter Great:</strong> .500 – .549</p>
+<p><strong>Batter Above Avg:</strong> .450 – .499</p>
+<p><strong>Batter Avg:</strong> .400 – .449</p>
+<p><strong>Batter Below Avg:</strong> .350 – .399</p>
+<p><strong>Batter Poor:</strong> .300 – .349</p>
+<p><strong>Batter Awful:</strong> .299 and below</p>
+<p><strong>Pitcher Excellent:</strong> .550 and above</p>
+<p><strong>Pitcher Great:</strong> .500 – .549</p>
+<p><strong>Pitcher Above Avg:</strong> .450 – .499</p>
+<p><strong>Pitcher Avg:</strong> .400 – .449</p>
+<p><strong>Pitcher Below Avg:</strong> .350 – .399</p>
+<p><strong>Pitcher Poor:</strong> .300 – .349</p>
+<p><strong>Pitcher Awful:</strong> .299 and below</p>
+</div>
+<button class='collapsible standard' id='so'>SO<span class='alt-name'>(Strikeout, K)</span></button>
+<div class='content'>
+<p>Occurs when a pitcher gets three strikes on a batter.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> Count of strikeouts.</p>
+<p><strong>Use Cases:</strong> Measuring pitchers' dominance or hitters' struggles.</p>
+<p><strong>Advantages:</strong> Simple, widely tracked.</p>
+<p><strong>Limitations:</strong> Doesn't account for pitch quality.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher striking out 300 batters in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='spd'>Spd<span class='alt-name'>(Speed Score)</span></button>
+<div class='content'>
+<p>Evaluates a player's raw speed and baserunning contributions.</p>
+<p><strong>Applicable Roles:</strong> Batters, Base Runners</p>
+<p><strong>Formula:</strong> Combines stolen base data, triples, and speed score components.</p>
+<p><strong>Use Cases:</strong> Evaluating player speed and baserunning ability</p>
+<p><strong>Advantages:</strong> Quantifies base running ability</p>
+<p><strong>Limitations:</strong> Ignores situational baserunning context</p>
+<p><strong>Real-Life Examples:</strong> Evaluating baserunning ability</p>
+<p><strong>Visualization Methods:</strong> Time-series graphs, scatter plots</p>
+<p><strong>Creator:</strong> Bill James</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible advanced' id='spin-rate'>Spin Rate</button>
+<div class='content'>
+<p>Below </p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Measured using advanced tracking tools</p>
+<p><strong>Use Cases:</strong> Used to evaluate pitch effectiveness, especially breaking pitches.</p>
+<p><strong>Advantages:</strong> Provides insights into pitch movement and deception.</p>
+<p><strong>Limitations:</strong> Doesn't account for factors like arm angle, release point, or environmental conditions.</p>
+<p><strong>Real-Life Examples:</strong> High-spin fastballs often appear to "rise" to hitters; low-spin fastballs drop more dramatically.</p>
+<p><strong>Visualization Methods:</strong> RPM distribution charts; comparisons by pitch type</p>
+<p><strong>Creator:</strong> TrackMan</p>
+<p><strong>Sources:</strong> MLB Advanced Media; Baseball Savant; Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='squared-up-rate'>Squared-up Rate</button>
+<div class='content'>
+<p>Percentage of batted balls hit with an ideal combination of exit velocity and launch angle.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Calculated based on Statcast data</p>
+<p><strong>Use Cases:</strong> Identifying hitters with consistent hard and optimal contact.</p>
+<p><strong>Advantages:</strong> Helps highlight players with elite bat-to-ball skills.</p>
+<p><strong>Limitations:</strong> Does not account for situational hitting or pitch quality.</p>
+<p><strong>Real-Life Examples:</strong> A squared-up rate above 10% is considered strong.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots showing squared-up balls by players.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='ss'>SS<span class='alt-name'>(Sprint Speed)</span></button>
+<div class='content'>
+<p>Feet per second in a runner’s fastest one-second window.</p>
+<p><strong>Applicable Roles:</strong> Runners</p>
+<p><strong>Formula:</strong> Measured in feet per second</p>
+<p><strong>Use Cases:</strong> Measuring a player's peak running speed.</p>
+<p><strong>Advantages:</strong> Useful for evaluating baserunning and defensive range.</p>
+<p><strong>Limitations:</strong> Does not account for reaction time or route efficiency.</p>
+<p><strong>Real-Life Examples:</strong> A sprint speed above 30 ft/s is considered elite.</p>
+<p><strong>Visualization Methods:</strong> Line graphs tracking trends in sprint speed over time.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='surplus-value'>Surplus Value</button>
+<div class='content'>
+<p>Measures the difference between a player's market value and their actual cost.</p>
+<p><strong>Applicable Roles:</strong> Front Office</p>
+<p><strong>Formula:</strong> Player Value - Salary</p>
+<p><strong>Use Cases:</strong> Evaluating trades, free-agent signings, budget allocation</p>
+<p><strong>Advantages:</strong> Highlights cost-efficiency; aids in roster planning</p>
+<p><strong>Limitations:</strong> Relies on accurate player valuation methods and salary projections</p>
+<p><strong>Real-Life Examples:</strong> Calculating the value of a young player on a cost-controlled contract compared to a free agent</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots, tables</p>
+<p><strong>Creator:</strong> Fangraphs</p>
+<p><strong>Sources:</strong> Fangraphs, MLB front offices</p>
+<p><strong>Year Introduced:</strong> 2010</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible standard' id='sv'>SV<span class='alt-name'>(Saves)</span></button>
+<div class='content'>
+<p>Awarded to a pitcher who preserves a win while meeting specific conditions.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Defined by MLB rules.</p>
+<p><strong>Use Cases:</strong> Evaluating closers' effectiveness.</p>
+<p><strong>Advantages:</strong> Highlights impact of late-game pitching.</p>
+<p><strong>Limitations:</strong> Context-dependent, team-based stat.</p>
+<p><strong>Real-Life Examples:</strong> A closer earning 40 saves in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, bar charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> 1969</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='sv'>SV%<span class='alt-name'>(Save Percentage)</span></button>
+<div class='content'>
+<p>The percentage of save opportunities converted into saves.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Saves ÷ Save Opportunities) × 100</p>
+<p><strong>Use Cases:</strong> Evaluating efficiency of closers.</p>
+<p><strong>Advantages:</strong> Highlights consistent late-game pitching.</p>
+<p><strong>Limitations:</strong> Doesn't measure quality of saves.</p>
+<p><strong>Real-Life Examples:</strong> A closer converting 90% of save opportunities.</p>
+<p><strong>Visualization Methods:</strong> Pie charts, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> 1969</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='svo'>SVO<span class='alt-name'>(Save Opportunities)</span></button>
+<div class='content'>
+<p>Tracks every instance in which a pitcher has a chance to earn a save.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of save opportunities.</p>
+<p><strong>Use Cases:</strong> Measuring save chances for closers.</p>
+<p><strong>Advantages:</strong> Reflects opportunities provided by team.</p>
+<p><strong>Limitations:</strong> Context-dependent, doesn't measure performance.</p>
+<p><strong>Real-Life Examples:</strong> Analyzing closers with high save opportunity rates.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> 1969</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='sweet-spot'>Sweet Spot</button>
+<div class='content'>
+<p>Percentage of batted balls with a launch angle between 8-32 degrees.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Measured directly by Statcast data</p>
+<p><strong>Use Cases:</strong> Assessing a hitter's ability to hit balls in the optimal range for power and average.</p>
+<p><strong>Advantages:</strong> Correlates well with offensive production.</p>
+<p><strong>Limitations:</strong> Does not reflect pitch quality or defensive positioning.</p>
+<p><strong>Real-Life Examples:</strong> A sweet spot percentage above 35% is considered elite.</p>
+<p><strong>Visualization Methods:</strong> Bar charts comparing sweet spot percentages across hitters.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='swing-length'>Swing Length</button>
+<div class='content'>
+<p>Distance covered by the bat head during the swing.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Measured in feet or inches</p>
+<p><strong>Use Cases:</strong> Analyzing swing mechanics and efficiency.</p>
+<p><strong>Advantages:</strong> Helps evaluate swing tendencies and potential contact quality.</p>
+<p><strong>Limitations:</strong> Does not account for pitch speed or location.</p>
+<p><strong>Real-Life Examples:</strong> Shorter swing lengths are often associated with higher contact rates.</p>
+<p><strong>Visualization Methods:</strong> Visualization of swing paths overlaid with pitch trajectories.</p>
+<p><strong>Creator:</strong> Biomechanics Labs</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='swords'>Swords</button>
+<div class='content'>
+<p>A term for swings and misses that result in a batter being badly fooled.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> No formal formula; a qualitative measure</p>
+<p><strong>Use Cases:</strong> Evaluating pitch deception and effectiveness.</p>
+<p><strong>Advantages:</strong> Highlights the dominance of certain pitches or sequences.</p>
+<p><strong>Limitations:</strong> Subjective and not formally quantified.</p>
+<p><strong>Real-Life Examples:</strong> Used as an anecdotal measure of pitch dominance.</p>
+<p><strong>Visualization Methods:</strong> Video highlights showing swings and misses labeled as "swords."</p>
+<p><strong>Creator:</strong> Informal</p>
+<p><strong>Year Introduced:</strong> Informal</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='swstr'>SwStr%<span class='alt-name'>(Swinging Strike Percentage)</span></button>
+<div class='content'>
+<p>Indicates how often a pitcher generates swinging strikes.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Swinging Strikes ÷ Total Pitches</p>
+<p><strong>Use Cases:</strong> Evaluating how often pitchers generate swinging strikes</p>
+<p><strong>Advantages:</strong> Highlights swing-and-miss frequency</p>
+<p><strong>Limitations:</strong> Doesn't show count or situation context</p>
+<p><strong>Real-Life Examples:</strong> Analyzing pitchers’ ability to induce swings and misses</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, line graphs</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='tb'>TB<span class='alt-name'>(Total Bases)</span></button>
+<div class='content'>
+<p>Total number of bases achieved from hits.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> 1B + (2 × 2B) + (3 × 3B) + (4 × HR)</p>
+<p><strong>Use Cases:</strong> Evaluating offensive contribution.</p>
+<p><strong>Advantages:</strong> Simple and comprehensive.</p>
+<p><strong>Limitations:</strong> Ignores walks and HBP.</p>
+<p><strong>Real-Life Examples:</strong> Total bases in a slugger’s season.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='tc'>TC<span class='alt-name'>(Total Chances)</span></button>
+<div class='content'>
+<p>Total number of defensive opportunities.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> PO + A + E</p>
+<p><strong>Use Cases:</strong> Evaluating defensive workload.</p>
+<p><strong>Advantages:</strong> Comprehensive defensive metric.</p>
+<p><strong>Limitations:</strong> Does not reflect difficulty.</p>
+<p><strong>Real-Life Examples:</strong> Fielders with the most total chances.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, pie charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='tera'>tERA<span class='alt-name'>(True Earned Run Average)</span></button>
+<div class='content'>
+<p>A metric estimating earned runs while accounting for batted ball types and outcomes.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Calculated using batted ball data (line drives, fly balls, ground balls).</p>
+<p><strong>Use Cases:</strong> Measuring pitching performance based on batted ball profiles.</p>
+<p><strong>Advantages:</strong> Accounts for defense-independent factors, providing a realistic ERA estimate.</p>
+<p><strong>Limitations:</strong> Requires advanced data and is not as widely available as FIP or xERA.</p>
+<p><strong>Real-Life Examples:</strong> A tERA near 3.50 suggests above-average pitching.</p>
+<p><strong>Visualization Methods:</strong> Comparative charts for tERA vs. ERA across pitchers.</p>
+<p><strong>Creator:</strong> StatCorner</p>
+<p><strong>Sources:</strong> StatCorner</p>
+<p><strong>Year Introduced:</strong> 2009</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='throwing-value'>Throwing Value</button>
+<div class='content'>
+<p>Quantifies the run value added or lost by a fielder's throws.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Calculated using the impact of throws on run expectancy</p>
+<p><strong>Use Cases:</strong> Evaluating the quality and impact of defensive throws.</p>
+<p><strong>Advantages:</strong> Provides an objective measure of throwing effectiveness.</p>
+<p><strong>Limitations:</strong> Does not account for fielder positioning or external factors.</p>
+<p><strong>Real-Life Examples:</strong> A player with a throwing value above +5 is considered above average.</p>
+<p><strong>Visualization Methods:</strong> Charts comparing throwing value across fielders or positions.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible standard' id='tp'>TP<span class='alt-name'>(Triple Play)</span></button>
+<div class='content'>
+<p>A defensive play resulting in three outs.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Use Cases:</strong> Highlighting rare defensive feats.</p>
+<p><strong>Advantages:</strong> Extremely rare.</p>
+<p><strong>Limitations:</strong> Limited to a single play.</p>
+<p><strong>Real-Life Examples:</strong> Teams achieving triple plays in a season.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='uer'>UER<span class='alt-name'>(Unearned Runs)</span></button>
+<div class='content'>
+<p>A run scored due to an error or passed ball.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of runs scored due to defensive errors.</p>
+<p><strong>Use Cases:</strong> Highlighting defensive impact on pitchers' stats.</p>
+<p><strong>Advantages:</strong> Separates pitching and defensive performance.</p>
+<p><strong>Limitations:</strong> Situational, depends on official scoring.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher allowing multiple unearned runs in a game.</p>
+<p><strong>Visualization Methods:</strong> Pie charts, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='uzr'>UZR<span class='alt-name'>(Ultimate Zone Rating)</span></button>
+<div class='content'>
+<p>Measures a player's ability to generate hits in high-value situations.</p>
+<p><strong>Applicable Roles:</strong> Fielders</p>
+<p><strong>Formula:</strong> Computed using hit location and defensive play data.</p>
+<p><strong>Use Cases:</strong> Defensive performance evaluation for fielders</p>
+<p><strong>Advantages:</strong> Measures defensive value</p>
+<p><strong>Limitations:</strong> Requires multiple years for reliability</p>
+<p><strong>Real-Life Examples:</strong> Comparing defensive value of outfielders</p>
+<p><strong>Visualization Methods:</strong> Zone charts, scatter plots</p>
+<p><strong>Creator:</strong> Mitchel Lichtman</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='velo'>VELO<span class='alt-name'>(Pitch Velocity)</span></button>
+<div class='content'>
+<p>Speed of a pitch as it crosses home plate.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Measured in miles per hour (MPH)</p>
+<p><strong>Use Cases:</strong> Evaluating the raw speed of pitches.</p>
+<p><strong>Advantages:</strong> Crucial for determining pitch effectiveness, especially fastballs.</p>
+<p><strong>Limitations:</strong> Does not account for movement or deception.</p>
+<p><strong>Real-Life Examples:</strong> Pitches with high velocity often generate late swings or misses.</p>
+<p><strong>Visualization Methods:</strong> Line graphs comparing velocity trends over a season.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible standard' id='w'>W<span class='alt-name'>(Wins)</span></button>
+<div class='content'>
+<p>Awarded to a pitcher on the winning team who meets certain conditions.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Defined by MLB rules.</p>
+<p><strong>Use Cases:</strong> Evaluating pitcher contributions to team success.</p>
+<p><strong>Advantages:</strong> Simple, part of traditional stats.</p>
+<p><strong>Limitations:</strong> Context-dependent, team-based stat.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher earning 20+ wins in a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, event markers</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='war'>WAR<span class='alt-name'>(Wins Above Replacement)</span></button>
+<div class='content'>
+<p>A comprehensive stat evaluating overall player contribution to their team’s success, combining batting, baserunning, and fielding.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters, Fielders</p>
+<p><strong>Formula:</strong> Varies by provider; combines offensive, defensive, and pitching contributions.</p>
+<p><strong>Use Cases:</strong> Overall player value comparison, free agent market evaluation, MVP debates</p>
+<p><strong>Advantages:</strong> Comprehensive measure of player value</p>
+<p><strong>Limitations:</strong> Complex calculation, different methodologies across sources</p>
+<p><strong>Real-Life Examples:</strong> Comparing Mike Trout's all-around value to other players</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Baseball-Reference, FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs, Baseball-Reference</p>
+<p><strong>Year Introduced:</strong> 2008</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='we'>WE<span class='alt-name'>(Win Expectancy)</span></button>
+<div class='content'>
+<p>The probability of a team winning at any point in a game based on the current game state.</p>
+<p><strong>Applicable Roles:</strong> Teams, Players</p>
+<p><strong>Formula:</strong> Calculated using historical data for similar situations</p>
+<p><strong>Use Cases:</strong> Analyzing in-game decisions and player contributions to wins.</p>
+<p><strong>Advantages:</strong> Provides context to plays, especially in high-leverage situations.</p>
+<p><strong>Limitations:</strong> Depends heavily on accurate historical data and game state modeling.</p>
+<p><strong>Real-Life Examples:</strong> A Win Expectancy shift of 20% indicates a significant play.</p>
+<p><strong>Visualization Methods:</strong> Line graphs showing Win Expectancy changes during a game.</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> Baseball Savant, Fangraphs</p>
+<p><strong>Year Introduced:</strong> Not Widely Established</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible standard' id='whip'>WHIP<span class='alt-name'>(Walks And Hits Per Inning Pitched)</span></button>
+<div class='content'>
+<p>Measures the number of baserunners a pitcher allows per inning.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> (Walks + Hits) ÷ Innings Pitched</p>
+<p><strong>Use Cases:</strong> Evaluating pitcher efficiency and control.</p>
+<p><strong>Advantages:</strong> Simple, easy to calculate.</p>
+<p><strong>Limitations:</strong> Doesn't account for defensive quality.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher maintaining a WHIP under 1.00 for a season.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> 1979</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+<p><strong>Batter Excellent:</strong> 1.00 and below</p>
+<p><strong>Batter Great:</strong> 1.01 – 1.10</p>
+<p><strong>Batter Above Avg:</strong> 1.11 – 1.20</p>
+<p><strong>Batter Avg:</strong> 1.21 – 1.30</p>
+<p><strong>Batter Below Avg:</strong> 1.31 – 1.40</p>
+<p><strong>Batter Poor:</strong> 1.41 – 1.50</p>
+<p><strong>Batter Awful:</strong> 1.51 and above</p>
+<p><strong>Pitcher Excellent:</strong> 1.00 and below</p>
+<p><strong>Pitcher Great:</strong> 1.01 – 1.10</p>
+<p><strong>Pitcher Above Avg:</strong> 1.11 – 1.20</p>
+<p><strong>Pitcher Avg:</strong> 1.21 – 1.30</p>
+<p><strong>Pitcher Below Avg:</strong> 1.31 – 1.40</p>
+<p><strong>Pitcher Poor:</strong> 1.41 – 1.50</p>
+<p><strong>Pitcher Awful:</strong> 1.51 and above</p>
+</div>
+<button class='collapsible standard' id='wo'>WO<span class='alt-name'>(Walk-off)</span></button>
+<div class='content'>
+<p>A hit or event that ends a game with a win for the home team.</p>
+<p><strong>Applicable Roles:</strong> Batters, Teams</p>
+<p><strong>Use Cases:</strong> Measuring clutch performance.</p>
+<p><strong>Advantages:</strong> Highlights dramatic game endings.</p>
+<p><strong>Limitations:</strong> Rare and situational.</p>
+<p><strong>Real-Life Examples:</strong> Walk-off home runs in postseason play.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, pie charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='woba'>wOBA<span class='alt-name'>(Weighted On-Base Average)</span></button>
+<div class='content'>
+<p>Measures overall offensive productivity per plate appearance using linear weights.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> ((0.69 × uBB) + (0.72 × HBP) + (0.88 × 1B) + (1.24 × 2B) + (1.56 × 3B) + (2.01 × HR)) ÷ PA</p>
+<p><strong>Use Cases:</strong> Offensive player evaluation, understanding overall hitting contribution</p>
+<p><strong>Advantages:</strong> Weighted for run value of events</p>
+<p><strong>Limitations:</strong> Ignores baserunning and defensive value</p>
+<p><strong>Real-Life Examples:</strong> Evaluating a player’s offensive production compared to league average</p>
+<p><strong>Visualization Methods:</strong> Heatmaps, scatter plots</p>
+<p><strong>Creator:</strong> Tom Tango</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> 2007</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible standard' id='wp'>WP<span class='alt-name'>(Wild Pitches)</span></button>
+<div class='content'>
+<p>A pitch that the catcher cannot catch, allowing baserunners to advance.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Count of wild pitches.</p>
+<p><strong>Use Cases:</strong> Highlighting control issues in pitchers.</p>
+<p><strong>Advantages:</strong> Reflects pitchers' command.</p>
+<p><strong>Limitations:</strong> Context-dependent, relies on catcher’s framing.</p>
+<p><strong>Real-Life Examples:</strong> A pitcher with high wild pitch totals in a season.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, bar graphs</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='wpa'>WPA<span class='alt-name'>(Win Probability Added)</span></button>
+<div class='content'>
+<p>A stat measuring how much a player contributes to their team's chances of winning, based on game context.</p>
+<p><strong>Applicable Roles:</strong> Batters, Pitchers</p>
+<p><strong>Formula:</strong> Change in win probability before and after a player's plate appearance or pitch.</p>
+<p><strong>Use Cases:</strong> Evaluating a player’s situational impact on games.</p>
+<p><strong>Advantages:</strong> Accounts for high-leverage situations; captures clutch performance.</p>
+<p><strong>Limitations:</strong> Can overvalue small sample sizes; situational and context-dependent.</p>
+<p><strong>Real-Life Examples:</strong> David Ortiz’s postseason heroics showcase high WPA values.</p>
+<p><strong>Visualization Methods:</strong> Win probability graphs highlighting key moments in games.</p>
+<p><strong>Creator:</strong> Tom Tango</p>
+<p><strong>Sources:</strong> Fangraphs, Baseball-Reference</p>
+<p><strong>Year Introduced:</strong> 2004</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible standard' id='wpct'>WPCT<span class='alt-name'>(Winning Percentage)</span></button>
+<div class='content'>
+<p>Measures the proportion of games won by a pitcher or team.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Teams</p>
+<p><strong>Formula:</strong> Wins ÷ (Wins + Losses)</p>
+<p><strong>Use Cases:</strong> Evaluating team or pitcher performance.</p>
+<p><strong>Advantages:</strong> Simple, widely understood.</p>
+<p><strong>Limitations:</strong> Context-dependent, doesn't measure quality.</p>
+<p><strong>Real-Life Examples:</strong> A team maintaining a winning percentage above .600.</p>
+<p><strong>Visualization Methods:</strong> Line graphs, pie charts</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='wraa'>wRAA<span class='alt-name'>(Weighted Runs Above Average)</span></button>
+<div class='content'>
+<p>A measure of a batter’s offensive value relative to league average.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> ((wOBA - League wOBA) / wOBA Scale) * Plate Appearances</p>
+<p><strong>Use Cases:</strong> Measuring offensive contribution compared to the league average.</p>
+<p><strong>Advantages:</strong> Accounts for league and park effects; precise and widely used.</p>
+<p><strong>Limitations:</strong> Requires advanced metrics like wOBA; less intuitive than traditional stats.</p>
+<p><strong>Real-Life Examples:</strong> Mike Trout consistently ranks highly in wRAA across seasons.</p>
+<p><strong>Visualization Methods:</strong> Line charts comparing wRAA across players or tracking it over time.</p>
+<p><strong>Creator:</strong> TangoTiger</p>
+<p><strong>Sources:</strong> Fangraphs, Baseball-Reference</p>
+<p><strong>Year Introduced:</strong> 2002</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='wrc+'>wRC+<span class='alt-name'>(Weighted Runs Created Plus)</span></button>
+<div class='content'>
+<p>A context-neutral offensive statistic scaled to league average of 100.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> (wRAA + (league R/PA) × PA) ÷ (league R/PA × PA) × 100</p>
+<p><strong>Use Cases:</strong> Weighted runs created, adjusted for league and park factors</p>
+<p><strong>Advantages:</strong> Park and league adjusted hitting value</p>
+<p><strong>Limitations:</strong> Doesn't include baserunning or defense</p>
+<p><strong>Real-Life Examples:</strong> Comparing offensive contributions across leagues</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, heatmaps</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> 2010</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible advanced' id='xba'>xBA<span class='alt-name'>(Expected Batting Average)</span></button>
+<div class='content'>
+<p>Expected batting average based on quality of contact and outcomes.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Calculated using exit velocity, launch angle, and on-field data</p>
+<p><strong>Use Cases:</strong> Evaluating how well a hitter should perform based on contact quality.</p>
+<p><strong>Advantages:</strong> Accounts for quality of contact, independent of defense.</p>
+<p><strong>Limitations:</strong> Does not consider situational hitting or baserunning.</p>
+<p><strong>Real-Life Examples:</strong> An xBA above .300 is elite.</p>
+<p><strong>Visualization Methods:</strong> Heatmaps or scatter plots comparing xBA to actual BA.</p>
+<p><strong>Creator:</strong> Statcast</p>
+<p><strong>Sources:</strong> Statcast</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible standard' id='xbh'>XBH<span class='alt-name'>(Extra-base Hits)</span></button>
+<div class='content'>
+<p>Any hit that is a double, triple, or home run.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> 2B + 3B + HR</p>
+<p><strong>Use Cases:</strong> Evaluating power-hitting ability.</p>
+<p><strong>Advantages:</strong> Highlights offensive strength.</p>
+<p><strong>Limitations:</strong> Misses context, like RBIs.</p>
+<p><strong>Real-Life Examples:</strong> Players with many extra-base hits.</p>
+<p><strong>Visualization Methods:</strong> Bar graphs, scatter plots</p>
+<p><strong>Creator:</strong> Traditional Statistic</p>
+<p><strong>Sources:</strong> MLB</p>
+<p><strong>Year Introduced:</strong> Early 1900s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible advanced' id='xera'>xERA<span class='alt-name'>(Expected ERA)</span></button>
+<div class='content'>
+<p>Predicts future ERA based on a pitcher's strikeout, walk, and home run rates.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> Modeled using batted ball quality and strikeout/walk data.</p>
+<p><strong>Use Cases:</strong> Expected ERA based on Statcast data</p>
+<p><strong>Advantages:</strong> Accounts for quality of contact</p>
+<p><strong>Limitations:</strong> Predictive but not descriptive</p>
+<p><strong>Real-Life Examples:</strong> Identifying overperforming or underperforming pitchers</p>
+<p><strong>Visualization Methods:</strong> Line graphs, scatter plots</p>
+<p><strong>Creator:</strong> Baseball Savant</p>
+<p><strong>Sources:</strong> Baseball Savant</p>
+<p><strong>Year Introduced:</strong> 2020</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible advanced' id='xfip'>xFIP<span class='alt-name'>(Expected Fielding Independent Pitching)</span></button>
+<div class='content'>
+<p>A predictive stat measuring a pitcher's performance based on strikeouts, walks, and expected home run rate.</p>
+<p><strong>Applicable Roles:</strong> Pitchers</p>
+<p><strong>Formula:</strong> FIP formula, replacing home runs with league-average HR/FB rate.</p>
+<p><strong>Use Cases:</strong> Evaluating and predicting future pitcher performance independent of defense.</p>
+<p><strong>Advantages:</strong> Provides better predictive value than FIP; accounts for luck in home runs allowed.</p>
+<p><strong>Limitations:</strong> Still relies on assumptions about league-average HR/FB rates.</p>
+<p><strong>Real-Life Examples:</strong> Pitchers with low xFIP often sustain high performance over time.</p>
+<p><strong>Visualization Methods:</strong> Scatter plots comparing xFIP with ERA or FIP.</p>
+<p><strong>Creator:</strong> Dave Studenmund</p>
+<p><strong>Sources:</strong> Fangraphs</p>
+<p><strong>Year Introduced:</strong> 2006</p>
+<p><strong>Formula Complexity:</strong> Moderate</p>
+</div>
+<button class='collapsible advanced' id='xslg'>xSLG<span class='alt-name'>(Expected Slugging Percentage)</span></button>
+<div class='content'>
+<p>Predicts offensive performance using batted ball quality and plate discipline.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Based on expected outcomes from batted ball quality.</p>
+<p><strong>Use Cases:</strong> Expected slugging percentage from Statcast metrics</p>
+<p><strong>Advantages:</strong> Predictive, based on quality of contact</p>
+<p><strong>Limitations:</strong> Ignores baserunning</p>
+<p><strong>Real-Life Examples:</strong> Predicting future slugging percentages</p>
+<p><strong>Visualization Methods:</strong> Line graphs, heatmaps</p>
+<p><strong>Creator:</strong> Baseball Savant</p>
+<p><strong>Sources:</strong> Baseball Savant</p>
+<p><strong>Year Introduced:</strong> 2020</p>
+<p><strong>Formula Complexity:</strong> Medium</p>
+</div>
+<button class='collapsible' id='xwoba'>xwOBA<span class='alt-name'>(Expected Weighted On-Base Average)</span></button>
+<div class='content'>
+<p>Predicts batting outcomes using Statcast’s expected metrics.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Predicted using Statcast's expected batted ball data.</p>
+<p><strong>Use Cases:</strong> Expected offensive performance based on Statcast inputs</p>
+<p><strong>Advantages:</strong> Predictive, combines contact quality and discipline</p>
+<p><strong>Limitations:</strong> Ignores sequencing and baserunning</p>
+<p><strong>Real-Life Examples:</strong> Predicting expected offensive production</p>
+<p><strong>Visualization Methods:</strong> Heatmaps, bar graphs</p>
+<p><strong>Creator:</strong> Baseball Savant</p>
+<p><strong>Sources:</strong> Baseball Savant</p>
+<p><strong>Year Introduced:</strong> 2015</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible' id='xwobacon'>xwOBAcon<span class='alt-name'>(Expected wOBA on Contact)</span></button>
+<div class='content'>
+<p>Measures the expected weighted on-base average for balls in play, based on quality of contact (exit velocity and launch angle).</p>
+<p><strong>Applicable Roles:</strong> Batters, Pitchers</p>
+<p><strong>Formula:</strong> Expected value</p>
+<p><strong>Use Cases:</strong> Evaluating hitter and pitcher performance based on contact quality.</p>
+<p><strong>Advantages:</strong> Accounts for quality of contact; removes randomness from analysis.</p>
+<p><strong>Limitations:</strong> Does not include strikeouts or walks; context-specific.</p>
+<p><strong>Real-Life Examples:</strong> Highlighting hitters who excel at generating hard contact.</p>
+<p><strong>Visualization Methods:</strong> Heatmaps, scatter plots</p>
+<p><strong>Creator:</strong> Baseball Savant</p>
+<p><strong>Sources:</strong> Baseball Savant</p>
+<p><strong>Year Introduced:</strong> Unknown</p>
+<p><strong>Formula Complexity:</strong> High</p>
+</div>
+<button class='collapsible' id='z-swing'>Z-Swing%<span class='alt-name'>(Zone Swing Percentage)</span></button>
+<div class='content'>
+<p>Measures how often a batter swings at pitches inside the strike zone.</p>
+<p><strong>Applicable Roles:</strong> Batters</p>
+<p><strong>Formula:</strong> Swings Inside Zone ÷ Pitches Inside Zone</p>
+<p><strong>Use Cases:</strong> Measuring how often hitters swing at pitches in the strike zone</p>
+<p><strong>Advantages:</strong> Reflects aggression on strikes</p>
+<p><strong>Limitations:</strong> Doesn't show quality of contact</p>
+<p><strong>Real-Life Examples:</strong> Analyzing hitters’ aggression on strikes</p>
+<p><strong>Visualization Methods:</strong> Zone charts, bar graphs</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+<button class='collapsible' id='zone'>Zone%<span class='alt-name'>(Zone Percentage)</span></button>
+<div class='content'>
+<p>Indicates how often a pitcher throws pitches within the strike zone.</p>
+<p><strong>Applicable Roles:</strong> Pitchers, Batters</p>
+<p><strong>Formula:</strong> Pitches Inside Strike Zone ÷ Total Pitches</p>
+<p><strong>Use Cases:</strong> Evaluating pitchers’ ability to throw strikes</p>
+<p><strong>Advantages:</strong> Simple, shows pitch location frequency</p>
+<p><strong>Limitations:</strong> Contextless, doesn't show results</p>
+<p><strong>Real-Life Examples:</strong> Evaluating pitchers’ ability to throw strikes</p>
+<p><strong>Visualization Methods:</strong> Scatter plots, heatmaps</p>
+<p><strong>Creator:</strong> FanGraphs</p>
+<p><strong>Sources:</strong> FanGraphs</p>
+<p><strong>Year Introduced:</strong> Early 2000s</p>
+<p><strong>Formula Complexity:</strong> Low</p>
+</div>
+</div>
+<footer>Generated by Baseball Stats Glossary Tool</footer>
+</body>
+</html>
