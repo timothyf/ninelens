@@ -312,8 +312,8 @@ describe('useAdminTask', () => {
     expect(dataHealthLoading.value).toBe(false)
     expect(dataHealthError.value).toBe('')
     expect(fetch).toHaveBeenCalledWith(
-      '/api/admin/data_health?include_postseason=false',
-      expect.objectContaining({ headers: expect.any(Object) }),
+      expect.stringMatching(/^\/api\/admin\/data_health\?include_postseason=false&cancellation_key=[0-9a-f-]{36}$/),
+      expect.objectContaining({ headers: expect.any(Object), signal: expect.any(AbortSignal) }),
     )
   })
 

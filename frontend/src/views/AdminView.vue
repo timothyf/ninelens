@@ -124,6 +124,7 @@ const {
   loadOverview,
   loadLatestTask,
   loadDataHealth,
+  cancelDataHealth,
   runTask,
 } = useAdminTask()
 const {
@@ -405,6 +406,7 @@ async function closeDatabaseDetails() {
           :loading="dataHealthLoading"
           :error="dataHealthError"
           @refresh="loadDataHealth"
+          @cancel="cancelDataHealth"
         />
         <div class="admin-hero__status" :class="{ 'admin-hero__status--busy': anyActionRunning }">
           <span aria-hidden="true"></span>

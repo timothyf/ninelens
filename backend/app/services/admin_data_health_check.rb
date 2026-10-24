@@ -2,16 +2,23 @@ class AdminDataHealthCheck
   CALCULATION_VERSION = DailyAnalyticsRefresh::CALCULATION_VERSION
   NON_COMPLETED_GAME_STATUSES = %w[canceled cancelled].freeze
   POSTSEASON_GAME_TYPES = %w[F D L W].freeze
+  CANCELLATION_CACHE_NAMESPACE = "admin_data_health_check/backend_pid".freeze
 
-  def self.call(include_postseason: true)
-    new(include_postseason:).call
+  def self.cancellation_cache_key(key)
+    "#{CANCELLATION_CACHE_NAMESPACE}/#{key}"
   end
 
-  def initialize(include_postseason: true)
+  def self.call(include_postseason: true, cancellation_key: nil)
+    new(include_postseason:, cancellation_key:).call
+  end
+
+  def initialize(include_postseason: true, cancellation_key: nil)
     @include_postseason = include_postseason
+    @cancellation_key = cancellation_key
   end
 
   def call
+    register_cancellation_backend
     checks = [
       final_games_missing_scores,
       final_games_missing_details,
@@ -46,11 +53,21 @@ class AdminDataHealthCheck
       },
       checks: checks
     }
+  ensure
+    Rails.cache.delete(self.class.cancellation_cache_key(cancellation_key)) if cancellation_key.present?
   end
 
   private
 
   attr_reader :include_postseason
+  attr_reader :cancellation_key
+
+  def register_cancellation_backend
+    return if cancellation_key.blank?
+
+    backend_pid = ActiveRecord::Base.connection.select_value("SELECT pg_backend_pid()")
+    Rails.cache.write(self.class.cancellation_cache_key(cancellation_key), backend_pid, expires_in: 15.minutes)
+  end
 
   def games_scope
     @games_scope ||= include_postseason ? Game.all : Game.where.not(game_type: POSTSEASON_GAME_TYPES)

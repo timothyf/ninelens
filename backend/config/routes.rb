@@ -6,7 +6,9 @@ Rails.application.routes.draw do
     patch "auth/password", to: "auth#update_password"
     delete "auth/logout", to: "auth#logout"
     namespace :admin do
-      resource :data_health, only: :show
+      resource :data_health, only: :show do
+        post :cancel, on: :collection
+      end
       resources :users, only: [ :index, :create, :update ] do
         member do
           post :reset_access

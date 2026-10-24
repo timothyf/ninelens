@@ -7,7 +7,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
   error: { type: String, default: '' },
 })
-const emit = defineEmits(['refresh'])
+const emit = defineEmits(['refresh', 'cancel'])
 const open = ref(false)
 const dialog = ref(null)
 const button = ref(null)
@@ -71,6 +71,7 @@ function runHealthCheck() {
         <button type="button" :disabled="loading" data-test="data-health-refresh" @click="runHealthCheck">
           {{ loading ? 'Checking…' : report ? 'Run check again' : 'Run health check' }}
         </button>
+        <button v-if="loading" type="button" data-test="data-health-cancel" @click="emit('cancel')">Cancel check</button>
       </div>
 
       <template v-if="report">

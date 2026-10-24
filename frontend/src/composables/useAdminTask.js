@@ -22,6 +22,7 @@ export function useAdminTask() {
   const dataHealth = ref(null)
   const dataHealthLoading = ref(false)
   const dataHealthError = ref('')
+  let dataHealthRequest = null
   const scheduleImportRange = ref({ earliestImportDate: null, latestImportDate: null })
   const scheduleDateRange = ref({ earliestGameDate: null, latestGameDate: null })
   const rosterCoverage = ref({ earliestDate: null, latestDate: null })
@@ -191,13 +192,17 @@ export function useAdminTask() {
   }
 
   async function loadDataHealth(includePostseason = true) {
+    const cancellationKey = crypto.randomUUID()
+    const controller = new AbortController()
+    dataHealthRequest = { cancellationKey, controller }
     dataHealthLoading.value = true
     dataHealthError.value = ''
 
     try {
-      const query = new URLSearchParams({ include_postseason: String(includePostseason) })
+      const query = new URLSearchParams({ include_postseason: String(includePostseason), cancellation_key: cancellationKey })
       const response = await fetch(`${API_BASE_URL}/api/admin/data_health?${query}`, {
         headers: adminRequestHeaders({ Accept: 'application/json' }),
+        signal: controller.signal,
       })
       const payload = await response.json()
 
@@ -232,10 +237,33 @@ export function useAdminTask() {
       }
       return dataHealth.value
     } catch (healthError) {
-      dataHealthError.value = healthError.message || 'Unable to run the data health check.'
+      if (healthError.name !== 'AbortError') dataHealthError.value = healthError.message || 'Unable to run the data health check.'
       return null
     } finally {
+      if (dataHealthRequest?.cancellationKey === cancellationKey) dataHealthRequest = null
       dataHealthLoading.value = false
+    }
+  }
+
+  async function cancelDataHealth() {
+    const request = dataHealthRequest
+    if (!request) return
+
+    try {
+      await fetch(`${API_BASE_URL}/api/admin/data_health/cancel`, {
+        method: 'POST',
+        headers: adminRequestHeaders({
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        }),
+        body: JSON.stringify({ cancellation_key: request.cancellationKey }),
+      })
+    } finally {
+      request.controller.abort()
+      if (dataHealthRequest === request) {
+        dataHealthRequest = null
+        dataHealthLoading.value = false
+      }
     }
   }
 
@@ -274,6 +302,7 @@ export function useAdminTask() {
     loadLatestTask: backgroundTask.loadLatest,
     cancelCurrentTask: backgroundTask.cancel,
     loadDataHealth,
+    cancelDataHealth,
     runTask,
   }
 }
