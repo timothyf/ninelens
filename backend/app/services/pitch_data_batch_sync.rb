@@ -69,13 +69,16 @@ class PitchDataBatchSync
       )
       unless download_result[:success]
         summary[:errors] << { chunk: "#{chunk_start.iso8601} — #{chunk_end.iso8601}", message: download_result[:message], errors: Array(download_result.dig(:data, :errors)) }
-        progress_tracker&.chunk_finished!(
-          success: false,
-          processed_game_count: targeted_games.length,
-          result_data: { progress_unit: "games" },
-          message: download_result[:message]
-        )
-        next
+        failed_games, targeted_games = targeted_games.partition { |game| game.status.to_s.downcase != "live" }
+        if failed_games.any?
+          progress_tracker&.chunk_finished!(
+            success: false,
+            processed_game_count: failed_games.length,
+            result_data: { progress_unit: "games" },
+            message: download_result[:message]
+          )
+        end
+        next if targeted_games.empty?
       end
 
       rows_by_game_pk = group_rows_by_game_pk(download_result.dig(:data, :rows) || [])
@@ -106,7 +109,7 @@ class PitchDataBatchSync
         summary[:duplicate_count] += result_data[:duplicate_count].to_i
         summary[:skipped_count] += result_data[:skipped_count].to_i
         analytics_dates.concat(importable_games.flat_map { |entry| entry[:rows].filter_map { |row| row["game_date"] || row[:game_date] } })
-        mark_games_complete!(importable_games.map { |entry| entry[:game] })
+        update_game_pitch_coverage!(importable_games.map { |entry| entry[:game] })
 
         importable_games.each do |entry|
           progress_tracker&.chunk_finished!(
@@ -190,14 +193,15 @@ class PitchDataBatchSync
     )
   end
 
-  def mark_games_complete!(games)
+  def update_game_pitch_coverage!(games)
     return if games.empty?
 
-    timestamp = Time.current
-    Game.where(id: games.map(&:id)).update_all(
-      pitch_data_complete_at: timestamp,
+    scope = Game.where(id: games.map(&:id))
+    scope.update_all(
       pitch_data_row_count: Arel.sql("(SELECT COUNT(*) FROM pitch_data WHERE pitch_data.game_id = games.id)")
     )
+    scope.where(status: %w[final complete]).update_all(pitch_data_complete_at: Time.current)
+    scope.where.not(status: %w[final complete]).update_all(pitch_data_complete_at: nil)
   end
 
   def refresh_daily_analytics(dates)
@@ -238,11 +242,11 @@ class PitchDataBatchSync
   end
 
   def selected_games
-    @selected_games ||= (replace_existing ? base_games : base_games.where(pitch_data_complete_at: nil)).to_a
+    @selected_games ||= (replace_existing ? base_games : base_games.where(pitch_data_complete_at: nil).or(base_games.where(status: "live"))).to_a
   end
 
   def already_complete_games
-    @already_complete_games ||= replace_existing ? Game.none : base_games.where.not(pitch_data_complete_at: nil)
+    @already_complete_games ||= replace_existing ? Game.none : base_games.where.not(pitch_data_complete_at: nil).where.not(status: "live")
   end
 
   def base_games

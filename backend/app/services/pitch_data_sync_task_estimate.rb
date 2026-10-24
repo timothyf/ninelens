@@ -84,13 +84,13 @@ class PitchDataSyncTaskEstimate
 
   def selected_games(attributes)
     scope = base_games(attributes)
-    attributes.fetch("replace_existing") ? scope : scope.where(pitch_data_complete_at: nil)
+    attributes.fetch("replace_existing") ? scope : scope.where(pitch_data_complete_at: nil).or(scope.where(status: "live"))
   end
 
   def already_complete_games(attributes)
     return Game.none if attributes.fetch("replace_existing")
 
-    base_games(attributes).where.not(pitch_data_complete_at: nil)
+    base_games(attributes).where.not(pitch_data_complete_at: nil).where.not(status: "live")
   end
 
   def base_games(attributes)

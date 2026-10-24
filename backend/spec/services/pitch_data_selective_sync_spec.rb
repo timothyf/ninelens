@@ -24,7 +24,7 @@ RSpec.describe "selective Statcast pitch synchronization" do
 
   it "includes completed games when replacement is explicitly requested" do
     game = game_for(date: Date.new(2026, 7, 2), mlb_id: 700_002)
-    game.update!(pitch_data_complete_at: 1.day.ago, pitch_data_row_count: 120)
+    game.update!(status: "final", pitch_data_complete_at: 1.day.ago, pitch_data_row_count: 120)
     PitchDatum.create!(game: game, game_pk: game.mlb_id, at_bat_number: 1, pitch_number: 1, raw_data: { "old" => true })
     allow(PitchDataDownloader).to receive(:call).and_return(
       success: true,
@@ -51,7 +51,7 @@ RSpec.describe "selective Statcast pitch synchronization" do
     expect(game.pitch_data_row_count).to eq(1)
   end
 
-  it "uses the live feed when a live game has no historical pitch rows" do
+  it "uses the MLB feed when a final game has no Baseball Savant rows" do
     game = game_for(date: Date.new(2026, 7, 3), mlb_id: 700_003)
     game.update!(status: "final")
     allow(PitchDataDownloader).to receive(:call).and_return(success: false, message: "No pitch data rows returned from Baseball Savant", data: {})
@@ -73,6 +73,43 @@ RSpec.describe "selective Statcast pitch synchronization" do
     expect(result).to include(success: true)
     expect(PitchDatum.where(game_id: game.id).pluck(:game_pk, :pitch_type)).to eq([[ game.mlb_id, "FF" ]])
     expect(MlbLivePitchDataDownloader).to have_received(:call).with(game: game)
+  end
+
+  it "keeps an in-progress game eligible for repeated pitch imports until it is final" do
+    game = game_for(date: Date.new(2026, 7, 3), mlb_id: 700_006)
+    game.update!(status: "live")
+    allow(PitchDataDownloader).to receive(:call) do
+      message = game.reload.status == "live" ? "Failed to download pitch data: HTTP 403: Forbidden" : "No pitch data rows returned from Baseball Savant"
+      { success: false, message: message, data: {} }
+    end
+    allow(DailyAnalyticsRefresh).to receive(:call).and_return(success: true)
+    live_rows = [ { "game_pk" => game.mlb_id.to_s, "game_date" => "2026-07-03", "at_bat_number" => "1", "pitch_number" => "1", "pitch_type" => "FF" } ]
+    allow(MlbLivePitchDataDownloader).to receive(:call).with(game: game) { { success: true, rows: live_rows } }
+
+    first_result = PitchDataBatchSync.call(start_date: "2026-07-03", end_date: "2026-07-03", game_types: "R", chunk_days: 1)
+
+    expect(first_result[:success]).to be(true)
+    expect(game.reload.pitch_data_complete_at).to be_nil
+    expect(game.pitch_data_row_count).to eq(1)
+    expect(PitchDataSyncTaskEstimate.call(start_date: "2026-07-03", end_date: "2026-07-03", game_types: "R", chunk_days: 1)[:game_count]).to eq(1)
+
+    live_rows = [
+      live_rows.first.merge("pitch_type" => "SI"),
+      { "game_pk" => game.mlb_id.to_s, "game_date" => "2026-07-03", "at_bat_number" => "1", "pitch_number" => "2", "pitch_type" => "FF" }
+    ]
+    second_result = PitchDataBatchSync.call(start_date: "2026-07-03", end_date: "2026-07-03", game_types: "R", chunk_days: 1)
+
+    expect(second_result[:success]).to be(true)
+    expect(PitchDatum.where(game_id: game.id).order(:pitch_number).pluck(:pitch_type)).to eq(%w[SI FF])
+    expect(game.reload.pitch_data_complete_at).to be_nil
+    expect(game.pitch_data_row_count).to eq(2)
+
+    game.update!(status: "final")
+    final_result = PitchDataBatchSync.call(start_date: "2026-07-03", end_date: "2026-07-03", game_types: "R", chunk_days: 1)
+
+    expect(final_result[:success]).to be(true)
+    expect(game.reload.pitch_data_complete_at).to be_present
+    expect(PitchDataSyncTaskEstimate.call(start_date: "2026-07-03", end_date: "2026-07-03", game_types: "R", chunk_days: 1)[:game_count]).to eq(0)
   end
 
   it "excludes cancelled games from estimates and replacement syncs" do

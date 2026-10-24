@@ -1,8 +1,7 @@
 require "json"
-require "net/http"
 
 class MlbLivePitchDataDownloader
-  COMPLETED_STATUSES = %w[final complete].freeze
+  AVAILABLE_STATUSES = %w[live final complete].freeze
 
   def self.call(game:)
     new(game: game).call
@@ -14,15 +13,15 @@ class MlbLivePitchDataDownloader
 
   def call
     return failure("Game must be a persisted Game record") unless game.is_a?(Game) && game.mlb_id.present?
-    return success([], "Game is not complete") unless COMPLETED_STATUSES.include?(game.status.to_s.downcase)
+    return success([], "Game has not started") unless AVAILABLE_STATUSES.include?(game.status.to_s.downcase)
 
     live_feed = fetch_json(live_feed_url)
     rows = build_rows(live_feed)
     success(rows, "Downloaded #{rows.length} live Statcast pitch rows for #{game.mlb_id}")
   rescue JSON::ParserError => e
-    failure("Failed to parse live MLB game #{game.mlb_id} pitch data: #{e.message}")
+    cached_result_or_failure("Failed to parse live MLB game #{game.mlb_id} pitch data: #{e.message}")
   rescue StandardError => e
-    failure("Failed to download live MLB game #{game.mlb_id} pitch data: #{e.message}")
+    cached_result_or_failure("Failed to download live MLB game #{game.mlb_id} pitch data: #{e.message}")
   end
 
   private
@@ -34,19 +33,17 @@ class MlbLivePitchDataDownloader
   end
 
   def fetch_json(url)
-    uri = URI(url)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = uri.scheme == "https"
-    http.open_timeout = service_config.fetch(:timeout_seconds).to_i
-    http.read_timeout = service_config.fetch(:timeout_seconds).to_i
+    MlbStatsApiClient.get_json(url, user_agent: service_config.fetch(:user_agents).fetch(:game_details))
+  end
 
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request["User-Agent"] = service_config.fetch(:user_agents).fetch(:game_details)
-    request["Accept"] = "application/json"
-    response = http.request(request)
-    raise "HTTP #{response.code}: #{response.message}" unless response.is_a?(Net::HTTPSuccess)
+  def cached_result_or_failure(message)
+    cached_feed = game.live_feed_raw_data.to_h
+    if Integer(cached_feed["gamePk"], exception: false) == game.mlb_id
+      rows = build_rows(cached_feed)
+      return success(rows, "Loaded #{rows.length} pitch rows from saved MLB live feed for #{game.mlb_id}") if rows.any?
+    end
 
-    JSON.parse(response.body)
+    failure(message)
   end
 
   def build_rows(live_feed)

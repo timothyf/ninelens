@@ -84,11 +84,41 @@ RSpec.describe MlbLivePitchDataDownloader do
     expect(downloader.call).to include(success: true, rows: [])
   end
 
-  it "does not query the live feed for an in-progress game" do
+  it "downloads pitch events for an in-progress game" do
     game = create_game(status: "live")
     downloader = described_class.new(game: game)
-    expect(downloader).not_to receive(:fetch_json)
+    allow(downloader).to receive(:fetch_json).and_return(
+      "liveData" => { "plays" => { "allPlays" => [
+        {
+          "about" => { "atBatIndex" => 0, "inning" => 1, "halfInning" => "top" },
+          "matchup" => { "batter" => { "id" => 8001 }, "pitcher" => { "id" => 9001 } },
+          "playEvents" => [ { "isPitch" => true, "pitchNumber" => 1, "details" => { "type" => { "code" => "FF" } } } ]
+        }
+      ] } }
+    )
 
-    expect(downloader.call).to include(success: true, rows: [])
+    expect(downloader.call).to include(success: true, rows: [ hash_including("game_pk" => game.mlb_id.to_s, "pitch_type" => "FF") ])
+    expect(downloader).to have_received(:fetch_json).with(end_with("/api/v1.1/game/#{game.mlb_id}/feed/live"))
+  end
+
+  it "uses the saved game-details feed when a fresh live request fails" do
+    game = create_game(status: "live")
+    game.update!(live_feed_raw_data: {
+      "gamePk" => game.mlb_id,
+      "liveData" => { "plays" => { "allPlays" => [
+        {
+          "about" => { "atBatIndex" => 0 },
+          "matchup" => { "batter" => { "id" => 8001 }, "pitcher" => { "id" => 9001 } },
+          "playEvents" => [ { "isPitch" => true, "pitchNumber" => 1 } ]
+        }
+      ] } }
+    })
+    downloader = described_class.new(game: game)
+    allow(downloader).to receive(:fetch_json).and_raise("HTTP 403: Forbidden")
+
+    result = downloader.call
+
+    expect(result).to include(success: true, rows: [ hash_including("game_pk" => game.mlb_id.to_s) ])
+    expect(result[:message]).to include("saved MLB live feed")
   end
 end
