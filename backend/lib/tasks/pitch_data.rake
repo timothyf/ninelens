@@ -91,4 +91,33 @@ namespace :pitch_data do
     puts "Skipped rows: #{data[:skipped_count]}"
     puts "Duplicate rows collapsed: #{data[:duplicate_count]}"
   end
+
+  desc "Report dates with completed games missing Statcast pitches. Usage: bin/rails 'pitch_data:missing_dates[2026]'"
+  task :missing_dates, [:season] => :environment do |_task, args|
+    season = Integer(args[:season].presence || ENV["SEASON"], exception: false)
+    abort "Usage: bin/rails 'pitch_data:missing_dates[2026]' or SEASON=2026 bin/rails pitch_data:missing_dates" unless season
+
+    rows = Game.joins(:schedule)
+      .joins("LEFT JOIN pitch_data ON pitch_data.game_pk = games.mlb_id")
+      .where(schedules: { season: season })
+      .where(status: %w[final complete])
+      .without_cancelled
+      .group("games.official_date")
+      .having("COUNT(DISTINCT CASE WHEN pitch_data.id IS NULL THEN games.id END) > 0")
+      .order("games.official_date")
+      .pluck(
+        "games.official_date",
+        Arel.sql("COUNT(DISTINCT games.id)"),
+        Arel.sql("COUNT(DISTINCT CASE WHEN pitch_data.id IS NULL THEN games.id END)")
+      )
+
+    if rows.empty?
+      puts "No completed games missing Statcast pitches found for #{season}."
+    else
+      puts "Dates with completed games missing Statcast pitches for #{season}:"
+      puts "DATE       GAMES  MISSING"
+      rows.each { |date, game_count, missing_count| puts "#{date}  #{game_count.to_s.rjust(5)}  #{missing_count.to_s.rjust(7)}" }
+      puts "Total affected dates: #{rows.length}"
+    end
+  end
 end

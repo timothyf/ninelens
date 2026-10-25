@@ -377,6 +377,22 @@ Download and import from Baseball Savant:
 bin/rails 'pitch_data:download[2026-04-01,2026-04-07]'
 ```
 
+To find season dates with completed games that have no imported Statcast pitches, run:
+
+```bash
+bin/rails 'pitch_data:missing_dates[2026]'
+```
+
+The report includes the number of completed games and how many are missing pitches on each date. It checks all game types in the selected season.
+
+To list final games in a season that have not had game details synchronized:
+
+```bash
+bin/rails 'mlb_game_details:missing[2026]'
+```
+
+The report includes each game's MLB ID and matchup; synchronize a listed game with `MLB_GAME_ID=823443 bin/rails mlb_game_details:sync`.
+
 Optional controls:
 
 ```bash

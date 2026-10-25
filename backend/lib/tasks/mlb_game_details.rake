@@ -31,4 +31,29 @@ namespace :mlb_game_details do
     puts "Statcast pitches linked: #{data[:linked_pitch_count]}"
     puts "Failures: #{data[:failed_game_count]}"
   end
+
+  desc "List final games in a season missing game details. Usage: bin/rails 'mlb_game_details:missing[2026]'"
+  task :missing, [:season] => :environment do |_task, args|
+    season = Integer(args[:season].presence || ENV["SEASON"], exception: false)
+    abort "Usage: bin/rails 'mlb_game_details:missing[2026]' or SEASON=2026 bin/rails mlb_game_details:missing" unless season
+
+    games = Game.joins(:schedule)
+      .includes(:home_team, :away_team)
+      .where(schedules: { season: season }, status: "final", details_last_synced_at: nil)
+      .where("games.official_date <= ?", Date.current)
+      .without_cancelled
+      .order(:official_date, :scheduled_at, :mlb_id)
+
+    if games.empty?
+      puts "No final games missing details found for #{season}."
+    else
+      puts "Final games missing details for #{season}:"
+      puts "DATE       MLB_GAME_ID  MATCHUP"
+      games.each do |game|
+        matchup = "#{game.away_team.abbreviation} @ #{game.home_team.abbreviation}"
+        puts "#{game.official_date}  #{game.mlb_id.to_s.rjust(11)}  #{matchup}"
+      end
+      puts "Total games: #{games.length}"
+    end
+  end
 end

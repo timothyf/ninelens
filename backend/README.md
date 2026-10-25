@@ -63,11 +63,13 @@ Most imports and synchronization jobs can be launched from the Admin page, which
 # Schedule and game details
 bin/rails 'mlb_schedule:sync[2026-04-01,2026-04-30]'
 bin/rails 'mlb_game_details:sync[2026-04-01,2026-04-07]'
+bin/rails 'mlb_game_details:missing[2026]'
 
 # Player season statistics and Statcast pitch data
 bin/rails 'player_stats:download[batting,2026,2026]'
 bin/rails 'player_stats:download[pitching,2026,2026]'
 bin/rails 'pitch_data:download[2026-04-01,2026-04-07]'
+bin/rails 'pitch_data:missing_dates[2026]'
 
 # Roster snapshots and player profiles
 bin/rails 'mlb_roster:sync[116,2026]'
