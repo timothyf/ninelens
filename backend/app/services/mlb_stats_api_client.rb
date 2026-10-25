@@ -18,7 +18,7 @@ class MlbStatsApiClient
 
   def self.get_json(url, user_agent:)
     upstream_uri = URI(url)
-    request_uri = relay_request_uri(upstream_uri) || upstream_uri
+    request_uri = relay_request_uri(upstream_uri)
     http = Net::HTTP.new(request_uri.host, request_uri.port)
     http.use_ssl = request_uri.scheme == "https"
     http.open_timeout = timeout_seconds
@@ -53,7 +53,7 @@ class MlbStatsApiClient
   end
 
   def self.relay_request_uri(upstream_uri)
-    return unless relay_enabled?
+    raise "MLB_STATS_API_RELAY_URL is required" unless relay_enabled?
     raise "MLB_STATS_API_RELAY_TOKEN is required when MLB_STATS_API_RELAY_URL is set" if relay_token.empty?
 
     uri = URI(ENV.fetch("MLB_STATS_API_RELAY_URL"))

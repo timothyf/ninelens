@@ -101,6 +101,24 @@ test("allows league-wide team stats requests", async () => {
   assert.equal(fetchedUrl.searchParams.get("sportIds"), "1")
 })
 
+test("allows official standings and player season totals requests", async () => {
+  const fetchedPaths = []
+  const handler = createMlbRelayHandler({
+    getSecret: () => secret,
+    fetchImpl: async (url) => {
+      fetchedPaths.push(url.pathname)
+      return Response.json({ stats: [], records: [] }, { status: 200 })
+    },
+  })
+
+  const standings = await handler(request("/api/v1/standings?leagueId=103%2C104&season=2026&standingsTypes=regularSeason&hydrate=team"))
+  const playerTotals = await handler(request("/api/v1/people/682985/stats?stats=season&group=hitting&season=2026&gameType=R"))
+
+  assert.equal(standings.status, 200)
+  assert.equal(playerTotals.status, 200)
+  assert.deepEqual(fetchedPaths, ["/api/v1/standings", "/api/v1/people/682985/stats"])
+})
+
 test("passes an MLB upstream failure through to NineLens", async () => {
   const handler = createMlbRelayHandler({
     getSecret: () => secret,

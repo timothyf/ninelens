@@ -4,8 +4,8 @@ RSpec.describe MlbStatsApiClient do
   let(:http) { instance_double(Net::HTTP) }
 
   before do
-    ENV.delete("MLB_STATS_API_RELAY_URL")
-    ENV.delete("MLB_STATS_API_RELAY_TOKEN")
+    ENV["MLB_STATS_API_RELAY_URL"] = "https://relay.example/.netlify/functions/mlb-relay"
+    ENV["MLB_STATS_API_RELAY_TOKEN"] = "shared-secret"
     allow(NineLensConfig).to receive(:fetch).and_call_original
     allow(NineLensConfig).to receive(:fetch)
       .with(:external_services, :mlb_stats_api, :timeout_seconds)
@@ -21,7 +21,7 @@ RSpec.describe MlbStatsApiClient do
     ENV.delete("MLB_STATS_API_RELAY_TOKEN")
   end
 
-  it "configures HTTPS, timeouts, and common JSON request headers" do
+  it "routes through the relay and configures HTTPS, timeouts, and common JSON request headers" do
     response = Net::HTTPOK.new("1.1", "200", "OK")
     allow(response).to receive(:body).and_return('{"dates":[]}')
     request = nil
@@ -36,7 +36,7 @@ RSpec.describe MlbStatsApiClient do
     )
 
     expect(payload).to eq("dates" => [])
-    expect(Net::HTTP).to have_received(:new).with("statsapi.mlb.com", 443)
+    expect(Net::HTTP).to have_received(:new).with("relay.example", 443)
     expect(http).to have_received(:use_ssl=).with(true)
     expect(http).to have_received(:open_timeout=).with(17)
     expect(http).to have_received(:read_timeout=).with(17)
@@ -45,18 +45,7 @@ RSpec.describe MlbStatsApiClient do
     expect(request["Accept-Encoding"]).to eq("identity")
     expect(request["Referer"]).to eq("https://www.mlb.com/")
     expect(request["Connection"]).to eq("close")
-    expect(request.path).to eq("/api/v1/schedule?sportId=1")
-  end
-
-  it "derives non-SSL requests from the URL scheme" do
-    response = Net::HTTPOK.new("1.1", "200", "OK")
-    allow(response).to receive(:body).and_return("{}")
-    allow(http).to receive(:request).and_return(response)
-
-    described_class.get_json("http://example.test/api/v1/teams", user_agent: "NineLens")
-
-    expect(Net::HTTP).to have_received(:new).with("example.test", 80)
-    expect(http).to have_received(:use_ssl=).with(false)
+    expect(URI.decode_www_form(URI(request.path).query).to_h.fetch("upstream")).to eq("/api/v1/schedule?sportId=1")
   end
 
   it "routes MLB requests through the authenticated relay when configured" do
@@ -84,6 +73,7 @@ RSpec.describe MlbStatsApiClient do
 
   it "requires a relay token and an HTTPS relay URL" do
     ENV["MLB_STATS_API_RELAY_URL"] = "https://relay.example/.netlify/functions/mlb-relay"
+    ENV.delete("MLB_STATS_API_RELAY_TOKEN")
     expect do
       described_class.get_json("https://statsapi.mlb.com/api/v1/schedule", user_agent: "NineLens")
     end.to raise_error(RuntimeError, "MLB_STATS_API_RELAY_TOKEN is required when MLB_STATS_API_RELAY_URL is set")
@@ -93,6 +83,15 @@ RSpec.describe MlbStatsApiClient do
     expect do
       described_class.get_json("https://statsapi.mlb.com/api/v1/schedule", user_agent: "NineLens")
     end.to raise_error(RuntimeError, "MLB_STATS_API_RELAY_URL must use HTTPS")
+  end
+
+  it "refuses to make a direct MLB request when the relay is not configured" do
+    ENV.delete("MLB_STATS_API_RELAY_URL")
+
+    expect do
+      described_class.get_json("https://statsapi.mlb.com/api/v1/schedule", user_agent: "NineLens")
+    end.to raise_error(RuntimeError, "MLB_STATS_API_RELAY_URL is required")
+    expect(Net::HTTP).not_to have_received(:new)
   end
 
   it "raises a descriptive error for unsuccessful responses" do
