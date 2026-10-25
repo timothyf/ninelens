@@ -82,6 +82,7 @@ jobs:
           expected_sha="$2"
           deploy_version="$3"
           app_version="$4"
+          deployed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
           test -f .env
           test "$(git branch --show-current)" = main
@@ -93,7 +94,7 @@ jobs:
           compose=(docker compose --env-file .env -f docker-compose.yml -f docker-compose.production.yml)
           "${compose[@]}" config --quiet
           APP_VERSION="$app_version" DEPLOY_VERSION="$deploy_version" GIT_COMMIT="$expected_sha" "${compose[@]}" build --pull
-          "${compose[@]}" up -d --remove-orphans
+          DEPLOYED_AT="$deployed_at" "${compose[@]}" up -d --remove-orphans
           REMOTE
 
       - name: Check production health

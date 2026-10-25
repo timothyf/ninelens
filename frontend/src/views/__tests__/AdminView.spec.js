@@ -30,6 +30,7 @@ const loadActiveRosterSync = vi.fn()
 const estimateRosterSync = vi.fn()
 const rosterTask = ref(null)
 const rosterSnapshots = ref([])
+const adminDeployment = ref(null)
 
 vi.mock('../../composables/useAdminTask', () => ({
   useAdminTask: () => ({
@@ -39,6 +40,7 @@ vi.mock('../../composables/useAdminTask', () => ({
     lastResult: computed(() => adminTaskLastResult.value),
     overviewLoading: computed(() => false),
     overviewError: computed(() => ''),
+    deployment: computed(() => adminDeployment.value),
     dataHealth: computed(() => ({
       status: 'critical',
       checkedAt: '2026-07-17T18:00:00Z',
@@ -311,6 +313,22 @@ describe('AdminView', () => {
     pitchDataTask.value = null
     rosterTask.value = null
     rosterSnapshots.value = []
+    adminDeployment.value = null
+  })
+
+  it('shows the last deployment date and time from deployment metadata', async () => {
+    adminDeployment.value = {
+      version: '42',
+      app_version: '1.2.3',
+      commit: 'abcdef1234567890',
+      short_commit: 'abcdef1',
+      deployed_at: '2026-10-25T14:32:00Z',
+    }
+
+    const wrapper = mount(AdminView)
+
+    expect(wrapper.get('[data-test="deployment-time"]').attributes('datetime')).toBe('2026-10-25T14:32:00Z')
+    expect(wrapper.get('[data-test="deployment-time"]').text()).toMatch(/Oct 25, 2026/)
   })
 
   it('centralizes imports, downloads, and Rake-backed synchronization features', async () => {

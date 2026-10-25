@@ -50,7 +50,8 @@ module Api
           version: ENV["DEPLOY_VERSION"].presence || (Rails.env.production? ? "unknown" : "local"),
           app_version: app_version,
           commit: commit,
-          short_commit: commit.first(7).presence
+          short_commit: commit.first(7).presence,
+          deployed_at: ENV["DEPLOYED_AT"].presence
         }
       end
 

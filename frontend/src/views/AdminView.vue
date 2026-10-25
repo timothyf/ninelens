@@ -248,6 +248,7 @@ const headerDeployment = computed(() => {
     appVersion,
     version,
     commit,
+    deployedAt: metadata.deployed_at || null,
     shortCommit: metadata.short_commit || commit.slice(0, 7),
   }
 })
@@ -385,7 +386,7 @@ async function closeDatabaseDetails() {
     <section class="admin-hero">
       <div>
         <p class="eyebrow">
-          NineLens operations · Application v{{ headerDeployment.appVersion }} · Deploy #{{ headerDeployment.version }}<template v-if="headerDeployment.shortCommit"> · Commit <span :title="headerDeployment.commit">{{ headerDeployment.shortCommit }}</span></template>
+          NineLens operations · Application v{{ headerDeployment.appVersion }} · Deploy #{{ headerDeployment.version }}<template v-if="headerDeployment.shortCommit"> · Commit <span :title="headerDeployment.commit">{{ headerDeployment.shortCommit }}</span></template> · Deployed <time v-if="headerDeployment.deployedAt" data-test="deployment-time" :datetime="headerDeployment.deployedAt">{{ formatTimestamp(headerDeployment.deployedAt) }}</time><span v-else>time unavailable</span>
         </p>
         <h1>Data administration</h1>
         <p>

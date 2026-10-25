@@ -25,6 +25,7 @@ services:
       DATABASE_URL: postgres://ninelens:${POSTGRES_PASSWORD:-ninelens-local}@db:5432/ninelens_production
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:-ninelens-local-secret-key-base-change-me}
       ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:-}
+      DEPLOYED_AT: ${DEPLOYED_AT:-}
       MLB_STATS_API_RELAY_URL: ${MLB_STATS_API_RELAY_URL:-}
       MLB_STATS_API_RELAY_TOKEN: ${MLB_STATS_API_RELAY_TOKEN:-}
       FORCE_SSL: "false"
