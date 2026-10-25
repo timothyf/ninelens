@@ -948,7 +948,8 @@
   font-size: 0.7rem;
 }
 
-.season-cell {
+.season-cell,
+.age-cell {
   color: #f9f5e8;
   font-weight: 700;
 }

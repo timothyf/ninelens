@@ -24,6 +24,7 @@ const filters = reactive({
   league: '',
   seasonStart: '',
   seasonEnd: '',
+  ageRange: '',
   category: 'batting',
 })
 
@@ -89,6 +90,7 @@ const query = computed(() => ({
     league: filters.league,
     season_start: filters.seasonStart,
     season_end: filters.seasonEnd,
+    age_range: filters.ageRange,
     category: filters.category,
   },
 }))
@@ -142,6 +144,7 @@ watch(
     filters.league,
     filters.seasonStart,
     filters.seasonEnd,
+    filters.ageRange,
     pagination.page,
     pagination.perPage,
     sort.value,
@@ -172,6 +175,7 @@ watch(
     league: filters.league,
     seasonStart: filters.seasonStart,
     seasonEnd: filters.seasonEnd,
+    ageRange: filters.ageRange,
     gameDateStart: pitchDataFilters.gameDateStart,
     gameDateEnd: pitchDataFilters.gameDateEnd,
     gamePk: pitchDataFilters.gamePk,
@@ -201,6 +205,7 @@ watch(
             filters.league,
             filters.seasonStart,
             filters.seasonEnd,
+            filters.ageRange,
           ]
       const season = pitchMode
         ? 'not-applicable'
@@ -231,7 +236,7 @@ onBeforeUnmount(() => {
 })
 
 watch(
-  () => [filters.playerName, filters.teamId, filters.positionId, filters.league, filters.seasonStart, filters.seasonEnd, filters.category, pagination.perPage, sort.value],
+  () => [filters.playerName, filters.teamId, filters.positionId, filters.league, filters.seasonStart, filters.seasonEnd, filters.ageRange, filters.category, pagination.perPage, sort.value],
   () => {
     pagination.page = 1
   },
@@ -414,6 +419,13 @@ const filterSummary = computed(() => {
         : filters.seasonEnd
           ? `Season through: ${filters.seasonEnd}`
           : null
+  const ageRangeLabels = {
+    under_25: 'Under 25',
+    '25_29': '25–29',
+    '30_34': '30–34',
+    '35_39': '35–39',
+    '40_plus': '40+',
+  }
 
   const activeFilters = [
     filters.playerName && `Player: ${filters.playerName}`,
@@ -423,6 +435,7 @@ const filterSummary = computed(() => {
     filters.league === 'national' && 'League: National League',
     selectedPosition.value && `Position: ${selectedPosition.value.abbreviation || selectedPosition.value.name}`,
     seasonRangeLabel,
+    filters.ageRange && `Age: ${ageRangeLabels[filters.ageRange]}`,
     filters.category && `Category: ${filters.category}`,
   ].filter(Boolean)
 
@@ -453,6 +466,9 @@ function applyUrlState() {
   filters.league = ['american', 'national'].includes(searchParams.get('league')) ? searchParams.get('league') : filters.league
   filters.seasonStart = searchParams.get('season_start') || filters.seasonStart
   filters.seasonEnd = searchParams.get('season_end') || filters.seasonEnd
+  filters.ageRange = ['under_25', '25_29', '30_34', '35_39', '40_plus'].includes(searchParams.get('age_range'))
+    ? searchParams.get('age_range')
+    : filters.ageRange
 
   pitchDataFilters.gameDateStart = searchParams.get('game_date_start') || pitchDataFilters.gameDateStart
   pitchDataFilters.gameDateEnd = searchParams.get('game_date_end') || pitchDataFilters.gameDateEnd
@@ -492,6 +508,7 @@ function syncUrlState() {
     setSearchParam(searchParams, 'league', filters.league)
     setSearchParam(searchParams, 'season_start', filters.seasonStart)
     setSearchParam(searchParams, 'season_end', filters.seasonEnd)
+    setSearchParam(searchParams, 'age_range', filters.ageRange)
     setSearchParam(searchParams, 'page', pagination.page === 1 ? '' : pagination.page)
     setSearchParam(searchParams, 'per_page', pagination.perPage === frontendConfig.defaultStatsPerPage ? '' : pagination.perPage)
     setSearchParam(searchParams, 'sort', sort.value === defaultSort ? '' : sort.value)
@@ -648,6 +665,7 @@ function resetFilters() {
   filters.league = ''
   filters.seasonStart = ''
   filters.seasonEnd = ''
+  filters.ageRange = ''
   pagination.page = 1
   pitchDataOptions.page = 1
   pitchDataOptions.perPage = DEFAULT_PITCH_DATA_PER_PAGE
@@ -790,6 +808,19 @@ function resetFilters() {
               {{ seasonOption }}
             </option>
           </select>
+        </label>
+
+        <label v-if="filters.category !== 'pitchData'" class="field">
+          <span>Age during season</span>
+          <select v-model="filters.ageRange" data-test="age-range-filter">
+            <option value="">All ages</option>
+            <option value="under_25">Under 25</option>
+            <option value="25_29">25–29</option>
+            <option value="30_34">30–34</option>
+            <option value="35_39">35–39</option>
+            <option value="40_plus">40 and over</option>
+          </select>
+          <small>Calculated on July 1 of each season.</small>
         </label>
 
         <label v-if="filters.category !== 'pitchData'" class="field">

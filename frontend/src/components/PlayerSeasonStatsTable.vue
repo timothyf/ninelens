@@ -43,6 +43,7 @@ const PITCHING_INTEGER_STAT_KEYS = new Set(['W', 'L', 'G', 'GS', 'CG', 'ShO', 'S
 const fixedColumns = [
   { key: 'rank', label: '#', align: 'numeric', sortable: false },
   { key: 'player_name', label: 'Player' },
+  { key: 'age', label: 'Age', align: 'numeric' },
   { key: 'season', label: 'Season', align: 'numeric' },
   { key: 'team_name', label: 'Team' },
 ]
@@ -61,7 +62,7 @@ const dataRangeLabel = computed(() => {
 })
 
 function toggleSort(columnKey) {
-  if (columnKey === 'rank') return
+  if (fixedColumns.some((column) => column.key === columnKey && column.sortable === false)) return
 
   if (props.sort === columnKey) {
     emit('sort-change', `-${columnKey}`)
@@ -167,6 +168,7 @@ function formatStatValue(columnKey, value) {
                 <a class="player-profile-link" :href="`/players/${row.player.id}`">{{ row.player.full_name }}</a>
               </div>
             </td>
+            <td class="age-cell is-numeric">{{ row.player.age ?? '—' }}</td>
             <td class="season-cell is-numeric">{{ row.season }}</td>
             <td class="team-cell">
               <div class="primary-cell">

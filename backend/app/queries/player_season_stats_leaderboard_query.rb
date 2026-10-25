@@ -5,10 +5,18 @@ class PlayerSeasonStatsLeaderboardQuery
   DEFAULT_CATEGORY = "batting"
   FIXED_SORT_FIELDS = {
     "player_name" => "players.last_name",
+    "age" => "MAX(EXTRACT(YEAR FROM age(make_date(player_season_stats.season, 7, 1), player_profiles.birth_date)))",
     "team_name" => "teams.team_name",
     "season" => "player_season_stats.season"
   }.freeze
   SCOPE_TYPES = %w[team combined league].freeze
+  AGE_RANGE_BOUNDS = {
+    "under_25" => [nil, 25],
+    "25_29" => [25, 30],
+    "30_34" => [30, 35],
+    "35_39" => [35, 40],
+    "40_plus" => [40, nil]
+  }.freeze
   COLUMN_DEFINITIONS_BY_CATEGORY = {
     "batting" => [
       { key: "gamesPlayed", label: "G", aliases: %w[gamesPlayed G] },
@@ -124,6 +132,7 @@ class PlayerSeasonStatsLeaderboardQuery
 
   def base_relation
     @base_relation ||= relation.joins(:player).left_outer_joins(:team)
+      .joins("LEFT OUTER JOIN player_profiles ON player_profiles.player_id = players.id")
   end
 
   def filtered_relation
@@ -219,7 +228,8 @@ class PlayerSeasonStatsLeaderboardQuery
       "teams.short_name AS team_short_name",
       "player_season_stats.scope_type AS scope_type",
       "player_season_stats.scope_key AS scope_key",
-      "player_season_stats.season AS season"
+      "player_season_stats.season AS season",
+      "MAX(EXTRACT(YEAR FROM age(make_date(player_season_stats.season, 7, 1), player_profiles.birth_date))) AS player_age"
     ]
   end
 
@@ -421,7 +431,7 @@ class PlayerSeasonStatsLeaderboardQuery
   def normalized_filters
     @normalized_filters ||= begin
       filters = raw_filters
-        .slice("season", "season_start", "season_end", "team_id", "position_id", "league", "scope_type", "scope_key", "player_id", "team_name", "player_name", "category")
+        .slice("season", "season_start", "season_end", "team_id", "position_id", "league", "scope_type", "scope_key", "player_id", "team_name", "player_name", "category", "age_range")
         .transform_values { |value| value.is_a?(String) ? value.strip : value }
         .compact_blank
 
@@ -432,6 +442,7 @@ class PlayerSeasonStatsLeaderboardQuery
       integer_filter!(filters, "position_id")
       integer_filter!(filters, "player_id")
       filters.delete("league") unless %w[american national].include?(filters["league"])
+      filters.delete("age_range") unless AGE_RANGE_BOUNDS.key?(filters["age_range"])
       normalize_scope_type!(filters)
       normalize_season_bounds!(filters)
       filters["category"] = normalize_category(filters["category"])
@@ -484,6 +495,13 @@ class PlayerSeasonStatsLeaderboardQuery
 
   def apply_filters(scope, include_season:, include_team:, stat_names: available_alias_names, position_filter: true)
     filtered_scope = scope.where(player_season_stats: { stat_type_id: stat_type_ids_for_names(stat_names) })
+
+    if (age_bounds = AGE_RANGE_BOUNDS[normalized_filters[:age_range]])
+      age_on_july_first = "EXTRACT(YEAR FROM age(make_date(player_season_stats.season, 7, 1), player_profiles.birth_date))"
+      minimum_age, maximum_age = age_bounds
+      filtered_scope = filtered_scope.where("#{age_on_july_first} >= ?", minimum_age) if minimum_age
+      filtered_scope = filtered_scope.where("#{age_on_july_first} < ?", maximum_age) if maximum_age
+    end
 
     if position_filter && normalized_filters[:position_id].present?
       filtered_scope = filtered_scope.joins(player: { player_positions: :position })
@@ -561,7 +579,8 @@ class PlayerSeasonStatsLeaderboardQuery
         mlb_id: row["player_mlb_id"].to_i,
         first_name: row["player_first_name"],
         last_name: row["player_last_name"],
-        full_name: [ row["player_first_name"], row["player_last_name"] ].compact.join(" ")
+        full_name: [ row["player_first_name"], row["player_last_name"] ].compact.join(" "),
+        age: row["player_age"]&.to_i
       },
       team: {
         id: row["team_id"]&.to_i,
