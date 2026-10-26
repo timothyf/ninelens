@@ -39,6 +39,44 @@ RSpec.describe SeasonReviewQuery do
     expect(leaders.fetch("ERA").fetch(:entries).map { |entry| entry.fetch(:player) }).to eq([ qualified_pitcher.full_name ])
   end
 
+  it "counts complete games once per pitcher and includes saves leaders" do
+    first_team = create_team
+    second_team = create_team
+    first_pitcher = create_player(team: first_team)
+    second_pitcher = create_player(team: second_team)
+    complete_games = create_stat_type(category: "pitching", name: "CG", label: "CG")
+    saves = create_stat_type(category: "pitching", name: "SV", label: "SV")
+
+    season_stat(first_pitcher, complete_games, 3, scope_type: "combined", team: nil, scope_key: "TOT")
+    season_stat(first_pitcher, complete_games, 1, team: first_team)
+    season_stat(first_pitcher, complete_games, 2, team: second_team)
+    season_stat(second_pitcher, complete_games, 2)
+    season_stat(first_pitcher, saves, 7)
+    season_stat(second_pitcher, saves, 3)
+
+    review = described_class.new(season: 2026).result
+    saves_leaders = review.fetch(:leaders).find { |leader| leader.fetch(:category) == "Saves" }
+
+    expect(review.fetch(:complete_games)).to eq(5)
+    expect(saves_leaders.fetch(:entries).map { |entry| [ entry.fetch(:player), entry.fetch(:value) ] })
+      .to eq([ [ first_pitcher.full_name, 7.0 ], [ second_pitcher.full_name, 3.0 ] ])
+  end
+
+  it "loads only regular-season pitches from the selected year" do
+    [
+      [ 900_001, Date.new(2026, 7, 1), "R", 101.2 ],
+      [ 900_002, Date.new(2026, 10, 1), "D", 105.0 ],
+      [ 900_003, Date.new(2025, 7, 1), "R", 104.0 ]
+    ].each do |game_pk, game_date, game_type, speed|
+      PitchDatum.create!(game_pk: game_pk, game_date: game_date, game_type: game_type,
+        at_bat_number: 1, pitch_number: 1, release_speed: speed, raw_data: { "source" => "spec" })
+    end
+
+    pitches = described_class.new(season: 2026).send(:fastest_pitches)
+
+    expect(pitches.map { |pitch| pitch.fetch(:speed) }).to eq([ 101.2 ])
+  end
+
   def season_stat(player, stat_type, value, team: player.team, scope_type: "team", scope_key: nil)
     create_player_season_stat(player: player, stat_type: stat_type, attributes: {
       season: 2026, value: value, team: team, scope_type: scope_type,

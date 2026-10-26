@@ -7,6 +7,7 @@ class SeasonReviewQuery
     { label: "Batting average", category: "batting", names: %w[avg AVG], qualifier: :plate_appearances },
     { label: "Strikeouts", category: "pitching", name: "SO" },
     { label: "Wins", category: "pitching", name: "W" },
+    { label: "Saves", category: "pitching", names: %w[SV saves] },
     { label: "ERA", category: "pitching", names: %w[ERA era], qualifier: :innings_pitched }
   ].freeze
 
@@ -22,6 +23,7 @@ class SeasonReviewQuery
       totals: batting_totals,
       shutouts: games.count { |game| game.home_score.zero? || game.away_score.zero? },
       one_run_games: games.count { |game| (game.home_score - game.away_score).abs == 1 },
+      complete_games: complete_games,
       fastest_pitches: fastest_pitches,
       leaders: leaders,
       postseason_teams: postseason_teams,
@@ -48,18 +50,38 @@ class SeasonReviewQuery
 
   def games
     @games ||= Game.joins(:schedule).where(schedules: { season: season }, game_type: "R", status: "final")
-      .where.not(home_score: nil, away_score: nil).to_a
+      .where.not(home_score: nil, away_score: nil)
+      .select(:id, :home_team_id, :away_team_id, :home_score, :away_score).to_a
   end
 
   def batting_totals
     lines = GamePlayerBattingLine.joins(game: :schedule)
       .where(schedules: { season: season }, games: { game_type: "R", status: "final" })
-    %i[hits strikeouts walks home_runs triples].index_with { |field| lines.sum(field) }
+    fields = %i[hits strikeouts walks home_runs triples]
+    values = lines.pick(*fields.map { |field| Arel.sql("COALESCE(SUM(game_player_batting_lines.#{field}), 0)") })
+    fields.zip(values).to_h
+  end
+
+  def complete_games
+    rows = PlayerSeasonStat.joins(:stat_type)
+      .where(season: season, scope_type: %w[combined team], stat_types: { category: "pitching", name: %w[CG completeGames] })
+      .pluck(:player_id, :scope_type, :scope_key, "stat_types.name", :value)
+
+    rows.group_by(&:first).sum do |_player_id, player_rows|
+      combined = player_rows.select { |row| row[1] == "combined" }
+      if (value = preferred_opportunity(combined, %w[CG completeGames]))
+        value.to_i
+      else
+        player_rows.select { |row| row[1] == "team" }.group_by { |row| row[2] }
+          .values.sum { |team_rows| preferred_opportunity(team_rows, %w[CG completeGames]).to_i }
+      end
+    end
   end
 
   def fastest_pitches
-    PitchDatum.joins(game: :schedule).where(schedules: { season: season }, games: { game_type: "R" })
+    PitchDatum.where(game_date: Date.new(season, 1, 1)..Date.new(season, 12, 31), game_type: "R")
       .where.not(release_speed: nil).order(release_speed: :desc).limit(10)
+      .select(:player_name, :release_speed, :pitch_name, :game_date)
       .map { |pitch| { player: pitch.player_name, speed: pitch.release_speed, pitch: pitch.pitch_name, date: pitch.game_date } }
   end
 
@@ -128,7 +150,8 @@ class SeasonReviewQuery
   def postseason_games
     @postseason_games ||= Game.joins(:schedule).includes(:home_team, :away_team)
       .where(schedules: { season: season }, game_type: %w[F D L W], status: "final")
-      .where.not(home_score: nil, away_score: nil).to_a
+      .where.not(home_score: nil, away_score: nil)
+      .select(:id, :game_type, :home_team_id, :away_team_id, :home_score, :away_score).to_a
   end
 
   def postseason_teams

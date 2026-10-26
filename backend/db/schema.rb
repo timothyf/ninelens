@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_15_000000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_26_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -176,6 +176,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_15_000000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["game_id", "player_id"], name: "idx_game_batting_lines_game_player", unique: true
+    t.index ["game_id"], name: "idx_game_batting_lines_review_totals", include: ["hits", "strikeouts", "walks", "home_runs", "triples"]
     t.index ["game_id"], name: "index_game_player_batting_lines_on_game_id"
     t.index ["opponent_team_id"], name: "index_game_player_batting_lines_on_opponent_team_id"
     t.index ["player_id", "game_id"], name: "idx_game_batting_lines_player_game"
@@ -568,6 +569,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_15_000000) do
     t.index ["pitcher"], name: "index_pitch_data_on_pitcher"
     t.index ["plate_appearance_id", "pitch_number"], name: "index_pitch_data_on_plate_appearance_id_and_pitch_number"
     t.index ["plate_appearance_id"], name: "index_pitch_data_on_plate_appearance_id"
+    t.index ["release_speed", "game_date"], name: "idx_pitch_data_regular_speed_date", order: { release_speed: :desc }, where: "(((game_type)::text = 'R'::text) AND (release_speed IS NOT NULL))"
   end
 
   create_table "pitcher_pitch_type_daily", force: :cascade do |t|
