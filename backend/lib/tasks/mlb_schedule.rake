@@ -1,4 +1,14 @@
 namespace :mlb_schedule do
+  desc "Count stored MLB schedule games for a season. Usage: bin/rails 'mlb_schedule:count[2026]'"
+  task :count, [ :season ] => :environment do |_task, args|
+    season = args[:season].presence || ENV["SEASON"].presence
+    abort "Usage: bin/rails 'mlb_schedule:count[2026]' or SEASON=2026 bin/rails mlb_schedule:count" unless season.present?
+    abort "Season must be a four-digit year" unless season.match?(/\A\d{4}\z/)
+
+    game_count = Game.joins(:schedule).where(schedules: { season: season.to_i }).count
+    puts "Stored schedule games for #{season}: #{game_count}"
+  end
+
   desc "Download and synchronize MLB games. Usage: bin/rails 'mlb_schedule:sync[2026-04-01,2026-04-07]' GAME_TYPES=R"
   task :sync, [ :start_date, :end_date ] => :environment do |_task, args|
     start_date = args[:start_date].presence || ENV["START_DATE"].presence
