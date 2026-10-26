@@ -1,0 +1,153 @@
+class SeasonReviewQuery
+  BATTING_QUALIFIER_PER_TEAM_GAME = 3.1
+  LEADER_DEFINITIONS = [
+    { label: "Home runs", category: "batting", name: "homeRuns" },
+    { label: "Hits", category: "batting", name: "hits" },
+    { label: "Triples", category: "batting", name: "triples" },
+    { label: "Batting average", category: "batting", names: %w[avg AVG], qualifier: :plate_appearances },
+    { label: "Strikeouts", category: "pitching", name: "SO" },
+    { label: "Wins", category: "pitching", name: "W" },
+    { label: "ERA", category: "pitching", names: %w[ERA era], qualifier: :innings_pitched }
+  ].freeze
+
+  def initialize(season: nil)
+    @requested_season = season
+  end
+
+  def result
+    {
+      season: season,
+      available_seasons: available_seasons,
+      games: games.count,
+      totals: batting_totals,
+      shutouts: games.count { |game| game.home_score.zero? || game.away_score.zero? },
+      one_run_games: games.count { |game| (game.home_score - game.away_score).abs == 1 },
+      fastest_pitches: fastest_pitches,
+      leaders: leaders,
+      postseason_teams: postseason_teams,
+      world_series: world_series,
+      awards_available: false
+    }
+  end
+
+  private
+
+  attr_reader :requested_season
+
+  def season
+    @season ||= begin
+      value = Integer(requested_season, exception: false) if requested_season.present?
+      raise ArgumentError, "Season must be a valid year" if requested_season.present? && value.nil?
+      value || available_seasons.max || ApplicationCalendar.current_date.year
+    end
+  end
+
+  def available_seasons
+    @available_seasons ||= Schedule.distinct.order(:season).pluck(:season)
+  end
+
+  def games
+    @games ||= Game.joins(:schedule).where(schedules: { season: season }, game_type: "R", status: "final")
+      .where.not(home_score: nil, away_score: nil).to_a
+  end
+
+  def batting_totals
+    lines = GamePlayerBattingLine.joins(game: :schedule)
+      .where(schedules: { season: season }, games: { game_type: "R", status: "final" })
+    %i[hits strikeouts walks home_runs triples].index_with { |field| lines.sum(field) }
+  end
+
+  def fastest_pitches
+    PitchDatum.joins(game: :schedule).where(schedules: { season: season }, games: { game_type: "R" })
+      .where.not(release_speed: nil).order(release_speed: :desc).limit(10)
+      .map { |pitch| { player: pitch.player_name, speed: pitch.release_speed, pitch: pitch.pitch_name, date: pitch.game_date } }
+  end
+
+  def leaders
+    LEADER_DEFINITIONS.map do |definition|
+      category = definition.fetch(:category)
+      names = definition[:names] || [ definition.fetch(:name) ]
+      stat = names.lazy.filter_map { |name| StatType.cached_where(category: category, name: name).first }
+        .find { |candidate| PlayerSeasonStat.where(season: season, stat_type: candidate).exists? }
+      rows = stat ? PlayerSeasonStat.where(season: season, stat_type: stat).where.not(scope_type: "league")
+        .where("scope_type = 'combined' OR (scope_type = 'team' AND NOT EXISTS (SELECT 1 FROM player_season_stats combined WHERE combined.player_id = player_season_stats.player_id AND combined.stat_type_id = player_season_stats.stat_type_id AND combined.season = player_season_stats.season AND combined.scope_type = 'combined'))")
+        .joins(:player).includes(:player, :team) : PlayerSeasonStat.none
+      rows = rows.where(player_id: qualified_player_ids(definition[:qualifier])) if definition[:qualifier]
+      rows = rows.order(value: definition[:qualifier] == :innings_pitched ? :asc : :desc).limit(5)
+      { category: definition.fetch(:label), qualifier: qualification_label(definition[:qualifier]), entries: rows.map { |row| { player: row.player.full_name, team: row.team&.abbreviation, value: row.value.to_f } } }
+    end
+  end
+
+  def league_game_count
+    @league_game_count ||= games.flat_map { |game| [ game.home_team_id, game.away_team_id ] }.tally.values.max.to_i
+  end
+
+  def qualification_label(qualifier)
+    case qualifier
+    when :plate_appearances then "Min. #{minimum_plate_appearances} PA"
+    when :innings_pitched then "Min. #{league_game_count} IP"
+    end
+  end
+
+  def minimum_plate_appearances
+    @minimum_plate_appearances ||= (league_game_count * BATTING_QUALIFIER_PER_TEAM_GAME).round
+  end
+
+  def qualified_player_ids(qualifier)
+    return [] if league_game_count.zero?
+
+    @qualified_player_ids ||= {}
+    @qualified_player_ids[qualifier] ||= begin
+      category, aliases = qualifier == :plate_appearances ? [ "batting", %w[plateAppearances PA] ] : [ "pitching", %w[inningsPitched IP] ]
+      rows = PlayerSeasonStat.joins(:stat_type)
+        .where(season: season, scope_type: %w[combined team], stat_types: { category: category, name: aliases })
+        .pluck(:player_id, :scope_type, :scope_key, "stat_types.name", :value)
+
+      rows.group_by(&:first).filter_map do |player_id, player_rows|
+        combined = player_rows.select { |row| row[1] == "combined" }
+        values = if (value = preferred_opportunity(combined, aliases))
+          [ value ]
+        else
+          player_rows.select { |row| row[1] == "team" }.group_by { |row| row[2] }.values.filter_map { |team_rows| preferred_opportunity(team_rows, aliases) }
+        end
+        opportunity = qualifier == :plate_appearances ? values.sum(&:to_f) : values.sum { |value| BaseballInnings.to_outs(value).to_i }
+        threshold = qualifier == :plate_appearances ? minimum_plate_appearances : league_game_count * 3
+        player_id if opportunity >= threshold
+      end
+    end
+  end
+
+  def preferred_opportunity(rows, aliases)
+    aliases.each do |name|
+      row = rows.find { |entry| entry[3] == name }
+      return row[4] if row
+    end
+    nil
+  end
+
+  def postseason_games
+    @postseason_games ||= Game.joins(:schedule).includes(:home_team, :away_team)
+      .where(schedules: { season: season }, game_type: %w[F D L W], status: "final")
+      .where.not(home_score: nil, away_score: nil).to_a
+  end
+
+  def postseason_teams
+    postseason_games.flat_map { |game| [ game.home_team, game.away_team ] }.uniq(&:id).map do |team|
+      wins = postseason_games.count do |game|
+        (game.home_team_id == team.id && game.home_score > game.away_score) || (game.away_team_id == team.id && game.away_score > game.home_score)
+      end
+      { id: team.id, name: team.team_name, abbreviation: team.abbreviation, wins: wins }
+    end.sort_by { |team| [ -team[:wins], team[:name] ] }
+  end
+
+  def world_series
+    series = postseason_games.select { |game| game.game_type == "W" }
+    wins = Hash.new(0)
+    series.each do |game|
+      winner = game.home_score > game.away_score ? game.home_team : game.away_team
+      wins[winner.id] += 1
+    end
+    champion_id = wins.max_by { |_id, count| count }&.first
+    { teams: series.flat_map { |game| [ game.home_team, game.away_team ] }.uniq(&:id).map(&:team_name), champion: series.flat_map { |game| [ game.home_team, game.away_team ] }.uniq(&:id).find { |team| team.id == champion_id }&.team_name }
+  end
+end

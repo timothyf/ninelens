@@ -86,6 +86,7 @@ Rails.application.routes.draw do
     resource :home, only: [:show], controller: :home
     resource :standings, only: [:show], controller: :standings
     resource :postseason, only: [:show], controller: :postseason
+    resource :season_review, only: [:show], controller: :season_review
     resources :positions, only: [:index]
     resources :games, only: [:index, :show] do
       collection do

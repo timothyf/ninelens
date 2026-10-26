@@ -15,6 +15,7 @@ import PlayerComparisonView from '../views/PlayerComparisonView.vue'
 import ScheduleView from '../views/ScheduleView.vue'
 import SavedAnalysisRedirectView from '../views/SavedAnalysisRedirectView.vue'
 import StandingsView from '../views/StandingsView.vue'
+import SeasonReviewView from '../views/SeasonReviewView.vue'
 import TeamDirectoryView from '../views/TeamDirectoryView.vue'
 import TeamProfileView from '../views/TeamProfileView.vue'
 import WatchlistsView from '../views/WatchlistsView.vue'
@@ -42,6 +43,11 @@ const router = createRouter({
       path: '/postseason',
       name: 'postseason',
       component: PostseasonView,
+    },
+    {
+      path: '/season-review',
+      name: 'season-review',
+      component: SeasonReviewView,
     },
     {
       path: '/explore',

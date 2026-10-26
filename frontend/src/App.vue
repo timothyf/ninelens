@@ -138,6 +138,7 @@ watch(() => route.fullPath, closeMobilePanels)
         <RouterLink to="/" @click="closeMobilePanels">Home</RouterLink>
         <RouterLink to="/schedule" @click="closeMobilePanels">Schedule</RouterLink>
         <RouterLink to="/standings" @click="closeMobilePanels">Standings</RouterLink>
+        <RouterLink to="/season-review" @click="closeMobilePanels">Season Review</RouterLink>
         <RouterLink v-if="postseason.active" to="/postseason" @click="closeMobilePanels">Postseason</RouterLink>
         <RouterLink to="/explore" @click="closeMobilePanels">Stat Explorer</RouterLink>
         <RouterLink to="/compare" @click="closeMobilePanels">Compare</RouterLink>
