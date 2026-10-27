@@ -98,6 +98,8 @@ describe('PlayerComparisonView', () => {
 
     expect(track).toHaveBeenCalledWith('player-comparison-run', {
       player_count: 2,
+      player_ids: '600001,600002',
+      player_names: 'Riley Greene, Aaron Judge',
       category: 'batting',
       scope: 'season-and-career',
     })
@@ -180,6 +182,8 @@ describe('PlayerComparisonView', () => {
   })
 
   it('adds an optional third player to the comparison', async () => {
+    const track = vi.fn()
+    vi.stubGlobal('umami', { track })
     const responses = {
       '/api/players/1': profile(1, 'Riley Greene', { id: 10, name: 'Detroit Tigers', abbreviation: 'DET' }, [{ key: 'homeRuns', label: 'HR', value: '24' }]),
       '/api/players/2': profile(2, 'Aaron Judge', { id: 11, name: 'New York Yankees', abbreviation: 'NYY' }, [{ key: 'homeRuns', label: 'HR', value: '38' }]),
@@ -203,6 +207,11 @@ describe('PlayerComparisonView', () => {
     expect(wrapper.get('[data-test="comparison-picker-player c"]').text()).toContain('Tarik Skubal')
     expect(wrapper.get('[data-test="season-comparison"] thead').findAll('th')).toHaveLength(4)
     expect(wrapper.get('[data-test="season-stat-homeRuns"]').findAll('td')).toHaveLength(3)
+    expect(track).toHaveBeenCalledWith('player-comparison-run', expect.objectContaining({
+      player_count: 3,
+      player_ids: '600001,600002,600003',
+      player_names: 'Riley Greene, Aaron Judge, Tarik Skubal',
+    }))
   })
 
   it('uses the season scoring model when both career records contain one season', async () => {

@@ -82,6 +82,8 @@ watch(
 
     window.umami?.track?.('player-comparison-run', {
       player_count: comparisonPlayers.value.length,
+      player_ids: comparisonPlayers.value.map((player) => player.mlbId).join(','),
+      player_names: comparisonPlayers.value.map((player) => player.fullName).join(', '),
       category: sameCategory.value ? comparisonPlayers.value[0].seasonOverview.category : 'mixed',
       scope: showSeasonComparison.value ? 'season-and-career' : 'career-only',
     })
