@@ -20,8 +20,7 @@ RSpec.describe MlbGameDetailsImporter do
       at_bat_number: 1,
       pitch_number: 1,
       pitcher: 669_373,
-      batter: 680_776,
-      raw_data: { "game_pk" => game.mlb_id }
+      batter: 680_776
     )
 
     first_result = import

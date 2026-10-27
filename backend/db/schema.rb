@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_26_020000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_27_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -453,7 +453,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_26_020000) do
     t.string "pitch_name"
     t.string "description"
     t.string "events"
-    t.jsonb "raw_data", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "balls"
@@ -559,6 +558,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_26_020000) do
     t.integer "woba_denom"
     t.bigint "game_id"
     t.bigint "plate_appearance_id"
+    t.float "active_spin"
     t.index ["batter", "game_date"], name: "idx_pitch_data_batter_game_date"
     t.index ["batter"], name: "index_pitch_data_on_batter"
     t.index ["game_date"], name: "index_pitch_data_on_game_date"

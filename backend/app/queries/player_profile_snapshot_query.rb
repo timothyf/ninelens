@@ -1613,7 +1613,7 @@ class PlayerProfileSnapshotQuery
         swings = grouped.count { |row| DailyAnalyticsCalculator.swing?(row) }
         chase_opportunities = grouped.count { |row| row.zone.present? && !row.zone.to_i.between?(1, 9) }
         chases = grouped.count { |row| chase_opportunities.positive? && DailyAnalyticsCalculator.swing?(row) && row.zone.present? && !row.zone.to_i.between?(1, 9) }
-        spin_efficiencies = grouped.filter_map { |row| raw_pitch_value(row, "active_spin", "spin_efficiency") }
+        spin_efficiencies = grouped.filter_map(&:active_spin)
         run_values = grouped.filter_map { |row| row.delta_run_exp&.to_f }
 
         {
@@ -1635,10 +1635,6 @@ class PlayerProfileSnapshotQuery
         }
       end.sort_by { |pitch| -pitch[:pitch_count] }
     }
-  end
-
-  def raw_pitch_value(row, *keys)
-    keys.filter_map { |key| row.raw_data.to_h[key] || row.raw_data.to_h[key.to_sym] }.first&.to_f
   end
 
   def pitcher_batted_ball_metric_summary(rows)

@@ -69,7 +69,7 @@ RSpec.describe SeasonReviewQuery do
       [ 900_003, Date.new(2025, 7, 1), "R", 104.0 ]
     ].each do |game_pk, game_date, game_type, speed|
       PitchDatum.create!(game_pk: game_pk, game_date: game_date, game_type: game_type,
-        at_bat_number: 1, pitch_number: 1, release_speed: speed, raw_data: { "source" => "spec" })
+        at_bat_number: 1, pitch_number: 1, release_speed: speed)
     end
 
     pitches = described_class.new(season: 2026).send(:fastest_pitches)

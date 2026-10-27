@@ -189,8 +189,7 @@ RSpec.describe "Api::Players", type: :request do
       pitch_number: 1,
       batter: @miguel.mlb_id,
       description: "hit_into_play",
-      launch_speed: 99.0,
-      raw_data: { "source" => "spec" }
+      launch_speed: 99.0
     )
 
     get api_player_path(@miguel), params: {
@@ -276,8 +275,7 @@ RSpec.describe "Api::Players", type: :request do
       hit_distance_sc: 287.0,
       hc_x: 118.0,
       hc_y: 142.0,
-      fetched_at_utc: Time.current,
-      raw_data: { "game_pk" => "800001", "at_bat_number" => "1", "pitch_number" => "1" }
+      fetched_at_utc: Time.current
     )
     PitchDatum.create!(
       game_pk: 800_002,
@@ -296,8 +294,7 @@ RSpec.describe "Api::Players", type: :request do
       launch_speed_angle: 6,
       bb_type: "ground_ball",
       hc_x: 80.0,
-      fetched_at_utc: Time.current,
-      raw_data: { "game_pk" => "800002", "at_bat_number" => "1", "pitch_number" => "1" }
+      fetched_at_utc: Time.current
     )
 
     get api_player_path(@miguel)

@@ -125,8 +125,7 @@ RSpec.describe PlayerTrendEventDetector, type: :service do
         pitch_name: fastball ? "4-Seam Fastball" : "Slider",
         release_speed: fastball ? (current ? 93.5 : 96.0) : 86.0,
         zone: chase ? 11 : 5,
-        description: chase && within_window < chase_swing_count ? "swinging_strike" : "called_strike",
-        raw_data: { "source" => "spec" }
+        description: chase && within_window < chase_swing_count ? "swinging_strike" : "called_strike"
       )
     end
   end
@@ -144,8 +143,7 @@ RSpec.describe PlayerTrendEventDetector, type: :service do
         batter: player.mlb_id,
         pitch_type: "FF",
         zone: 11,
-        description: within_window < swing_count ? "foul" : "called_strike",
-        raw_data: { "source" => "spec" }
+        description: within_window < swing_count ? "foul" : "called_strike"
       )
     end
   end

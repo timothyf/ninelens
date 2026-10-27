@@ -52,8 +52,7 @@ RSpec.describe PlayerTrendQuery do
         game_pk: 910_000 + day,
         game_date: Date.new(2026, 7, day),
         at_bat_number: day,
-        pitch_number: pitch_number,
-        raw_data: { "source" => "spec" }
+        pitch_number: pitch_number
       }.merge(attributes)
     )
   end

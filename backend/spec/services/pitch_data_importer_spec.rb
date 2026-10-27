@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe PitchDataImporter, type: :service do
   it "replaces a single game's local pitches when requested" do
     game = create_game
-    PitchDatum.create!(game: game, game_pk: game.mlb_id, at_bat_number: 1, pitch_number: 1, raw_data: { "old" => true })
+    PitchDatum.create!(game: game, game_pk: game.mlb_id, at_bat_number: 1, pitch_number: 1)
 
     result = described_class.import_raw_rows(
       rows: [ { "game_pk" => game.mlb_id.to_s, "at_bat_number" => "2", "pitch_number" => "1", "game_date" => game.official_date.iso8601 } ],
@@ -75,6 +75,20 @@ RSpec.describe PitchDataImporter, type: :service do
     expect(PitchDatum.last.game).to be_nil
     expect(result.dig(:data, :linked_game_count)).to eq(0)
     expect(result.dig(:data, :unlinked_game_count)).to eq(1)
+  end
+
+  it "stores active spin from either source field without retaining the source row" do
+    csv_data = <<~CSV
+      game_pk,at_bat_number,pitch_number,game_date,active_spin,spin_efficiency
+      990001,1,1,2026-04-15,91.5,87.0
+      990001,1,2,2026-04-15,,82.25
+    CSV
+
+    result = described_class.call(csv_data: csv_data, source_name: "spec/active_spin.csv")
+
+    expect(result[:success]).to be(true)
+    expect(PitchDatum.where(game_pk: 990001).order(:pitch_number).pluck(:active_spin)).to eq([91.5, 82.25])
+    expect(PitchDatum.column_names).not_to include("raw_data")
   end
 
   it "returns failure when required columns are missing" do

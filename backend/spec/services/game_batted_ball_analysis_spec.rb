@@ -63,8 +63,7 @@ RSpec.describe GameBattedBallAnalysis do
       launch_angle: launch_angle,
       bb_type: bb_type,
       estimated_woba_using_speedangle: expected_woba,
-      launch_speed_angle: classification,
-      raw_data: { "launch_speed" => launch_speed }
+      launch_speed_angle: classification
     )
   end
 end

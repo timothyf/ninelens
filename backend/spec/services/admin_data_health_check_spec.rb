@@ -16,8 +16,7 @@ RSpec.describe AdminDataHealthCheck do
       game_pk: game.mlb_id,
       game_date: game.official_date,
       at_bat_number: 1,
-      pitch_number: 1,
-      raw_data: { "pitch" => 1 }
+      pitch_number: 1
     )
     result = described_class.call
 
@@ -153,8 +152,7 @@ RSpec.describe AdminDataHealthCheck do
       game_date: postseason_game.official_date,
       game_type: "D",
       at_bat_number: 1,
-      pitch_number: 1,
-      raw_data: { "pitch" => 1 }
+      pitch_number: 1
     )
     TeamDailyMetric.create!(
       team: postseason_game.home_team,

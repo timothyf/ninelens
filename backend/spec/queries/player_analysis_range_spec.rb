@@ -6,7 +6,7 @@ RSpec.describe PlayerAnalysisRange do
   before do
     PitchDatum.create!(
       game_pk: 900_001, game_date: Date.new(2026, 7, 15), at_bat_number: 1,
-      pitch_number: 1, batter: player.mlb_id, raw_data: { "source" => "spec" }
+      pitch_number: 1, batter: player.mlb_id
     )
   end
 

@@ -61,8 +61,7 @@ RSpec.describe OpponentPreparationQuery do
         zone: (index % 9) + 1,
         n_thruorder_pitcher: 1,
         description: index % 5 == 0 ? "swinging_strike" : "called_strike",
-        events: index == 199 ? "strikeout" : nil,
-        raw_data: { "source" => "spec" }
+        events: index == 199 ? "strikeout" : nil
       )
     end
     TeamDailyMetric.create!(

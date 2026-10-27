@@ -252,8 +252,7 @@ RSpec.describe DailyAnalyticsRefresh, type: :service do
         stand: "R",
         p_throws: "R",
         inning_topbot: "Top",
-        pitch_name: attributes[:pitch_type] == "FF" ? "4-Seam Fastball" : "Slider",
-        raw_data: { "source" => "spec" }
+        pitch_name: attributes[:pitch_type] == "FF" ? "4-Seam Fastball" : "Slider"
       }.merge(attributes)
     )
   end

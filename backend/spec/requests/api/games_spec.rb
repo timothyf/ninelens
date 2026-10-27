@@ -310,8 +310,7 @@ RSpec.describe "Api::Games", type: :request do
       strikes: 0,
       release_speed: 96.4,
       zone: 5,
-      n_thruorder_pitcher: 2,
-      raw_data: { "pitch_type" => "FF" }
+      n_thruorder_pitcher: 2
     )
     [
       { pitch_number: 2, pitch_type: "FF", pitch_name: "4-Seam Fastball", description: "swinging_strike", release_speed: 97.0, zone: 11 },
@@ -330,7 +329,6 @@ RSpec.describe "Api::Games", type: :request do
         pitcher: @bibee.mlb_id,
         batter: @skubal.mlb_id,
         n_thruorder_pitcher: 2,
-        raw_data: attributes,
         **attributes
       )
     end
@@ -347,8 +345,7 @@ RSpec.describe "Api::Games", type: :request do
       description: "called_strike",
       release_speed: 88.0,
       zone: 4,
-      n_thruorder_pitcher: 1,
-      raw_data: { "pitch_type" => "CH" }
+      n_thruorder_pitcher: 1
     )
     [
       { pitch_number: 1, description: "called_strike", pitch_type: "FF", pitch_name: "4-Seam Fastball", release_speed: 95.0, zone: 5 },
@@ -362,7 +359,6 @@ RSpec.describe "Api::Games", type: :request do
         pitcher: @skubal.mlb_id,
         batter: @bibee.mlb_id,
         n_thruorder_pitcher: 1,
-        raw_data: attributes,
         **attributes
       )
     end

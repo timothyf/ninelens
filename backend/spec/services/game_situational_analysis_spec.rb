@@ -87,8 +87,7 @@ RSpec.describe GameSituationalAnalysis do
     PitchDatum.create!(
       game: game, plate_appearance: appearance, game_pk: game.mlb_id, at_bat_number: number,
       pitch_number: 1, batter: player.mlb_id, outs_when_up: outs, on_1b: on_1b, on_2b: on_2b, on_3b: on_3b,
-      delta_home_win_exp: delta_wpa, n_priorpa_thisgame_player_at_bat: prior_appearances,
-      raw_data: { "event" => event_type }
+      delta_home_win_exp: delta_wpa, n_priorpa_thisgame_player_at_bat: prior_appearances
     )
     appearance
   end

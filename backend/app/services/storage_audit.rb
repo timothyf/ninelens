@@ -7,7 +7,6 @@ class StorageAudit
     { table: "games", column: "raw_data" },
     { table: "games", column: "boxscore_raw_data" },
     { table: "games", column: "live_feed_raw_data" },
-    { table: "pitch_data", column: "raw_data" },
     { table: "plate_appearances", column: "raw_data" },
     { table: "lineup_entries", column: "raw_data" },
     { table: "game_player_batting_lines", column: "raw_data" },

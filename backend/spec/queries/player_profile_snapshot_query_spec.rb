@@ -38,14 +38,30 @@ RSpec.describe PlayerProfileSnapshotQuery do
     create_player_season_stat(player: player, stat_type: innings_type, attributes: { team: team, season: 2026, value: 1.0 })
     PitchDatum.create!(
       game_id: game.id, game_pk: game.mlb_id, game_date: game.official_date, pitcher: player.mlb_id,
-      at_bat_number: 1, pitch_number: 1, delta_home_win_exp: 0.08, delta_pitcher_run_exp: 0.25,
-      raw_data: { "pitchData" => {} }
+      at_bat_number: 1, pitch_number: 1, delta_home_win_exp: 0.08, delta_pitcher_run_exp: 0.25
     )
 
     values = described_class.new(player: player, on: game.official_date).result
       .dig(:advanced_stats, :seasons, 0, :values)
 
     expect(values).to include(wpa: 0.08, re24: 0.25, shutdowns: 1, meltdowns: 0)
+  end
+
+  it "averages the dedicated active-spin column in the pitch arsenal" do
+    player = create_player(attributes: { mlb_id: 654_322 })
+    date = Date.new(2026, 7, 10)
+    [91.0, 89.0].each_with_index do |active_spin, index|
+      PitchDatum.create!(
+        game_pk: 901_100, game_date: date, pitcher: player.mlb_id,
+        at_bat_number: 1, pitch_number: index + 1, pitch_type: "FF",
+        pfx_x: 0.0, pfx_z: 0.0, active_spin: active_spin
+      )
+    end
+
+    pitches = described_class.new(player: player, on: date).result(sections: ["analytics"])
+      .dig(:pitch_arsenal, :pitches)
+
+    expect(pitches.first[:active_spin]).to eq(90.0)
   end
 
   it "includes last 7, 15, and 30 game splits for batters and pitchers" do
@@ -55,7 +71,7 @@ RSpec.describe PlayerProfileSnapshotQuery do
       game_pk = 900_000 + index
       PitchDatum.create!(
         game_pk: game_pk, game_date: date, batter: player.mlb_id, pitcher: player.mlb_id,
-        at_bat_number: 1, pitch_number: 1, description: "called_strike", events: "", raw_data: { "pitchData" => {} }
+        at_bat_number: 1, pitch_number: 1, description: "called_strike", events: ""
       )
     end
 

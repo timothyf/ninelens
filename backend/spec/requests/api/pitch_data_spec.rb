@@ -20,7 +20,7 @@ RSpec.describe "Api::PitchData", type: :request do
       at_bat_number: 1,
       pitch_number: 1,
       game_date: game.official_date,
-      raw_data: { "game_pk" => game.mlb_id.to_s, "at_bat_number" => "1", "pitch_number" => "1" }
+      active_spin: 91.5
     )
 
     get api_pitch_data_path, params: { game_pk: game.mlb_id }
@@ -28,6 +28,8 @@ RSpec.describe "Api::PitchData", type: :request do
     expect(response).to have_http_status(:ok)
     expect(json_body.dig("data", 0, "id")).to eq(pitch.id)
     expect(json_body.dig("data", 0, "game_id")).to eq(game.id)
+    expect(json_body.dig("data", 0, "active_spin")).to eq(91.5)
+    expect(json_body.fetch("data").first).not_to have_key("raw_data")
   end
 
   it "lists pitch data rows ordered by most recent game context and applies a bounded limit" do
@@ -36,8 +38,7 @@ RSpec.describe "Api::PitchData", type: :request do
       at_bat_number: 2,
       pitch_number: 1,
       game_date: Date.new(2026, 4, 1),
-      pitch_type: "FF",
-      raw_data: { "game_pk" => "123", "at_bat_number" => "2", "pitch_number" => "1" }
+      pitch_type: "FF"
     )
 
     latest = PitchDatum.create!(
@@ -45,8 +46,7 @@ RSpec.describe "Api::PitchData", type: :request do
       at_bat_number: 3,
       pitch_number: 2,
       game_date: Date.new(2026, 4, 2),
-      pitch_type: "SL",
-      raw_data: { "game_pk" => "124", "at_bat_number" => "3", "pitch_number" => "2" }
+      pitch_type: "SL"
     )
 
     get api_pitch_data_path, params: { limit: 1 }
@@ -77,8 +77,7 @@ RSpec.describe "Api::PitchData", type: :request do
         game_pk: 1_000 + index,
         at_bat_number: 1,
         pitch_number: 1,
-        game_date: Date.new(2026, 4, 1),
-        raw_data: { "game_pk" => (1_000 + index).to_s, "at_bat_number" => "1", "pitch_number" => "1" }
+        game_date: Date.new(2026, 4, 1)
       )
     end
 
@@ -99,8 +98,7 @@ RSpec.describe "Api::PitchData", type: :request do
       pitch_number: 1,
       game_date: Date.new(2026, 4, 1),
       pitch_type: "FF",
-      events: "strikeout",
-      raw_data: { "game_pk" => "301", "at_bat_number" => "1", "pitch_number" => "1" }
+      events: "strikeout"
     )
     PitchDatum.create!(
       game_pk: 302,
@@ -108,8 +106,7 @@ RSpec.describe "Api::PitchData", type: :request do
       pitch_number: 1,
       game_date: Date.new(2026, 4, 1),
       pitch_type: "SL",
-      events: "walk",
-      raw_data: { "game_pk" => "302", "at_bat_number" => "1", "pitch_number" => "1" }
+      events: "walk"
     )
 
     get api_pitch_data_path, params: { per_page: 1 }
@@ -124,22 +121,19 @@ RSpec.describe "Api::PitchData", type: :request do
       game_pk: 100,
       at_bat_number: 1,
       pitch_number: 1,
-      game_date: Date.new(2026, 4, 1),
-      raw_data: { "game_pk" => "100", "at_bat_number" => "1", "pitch_number" => "1" }
+      game_date: Date.new(2026, 4, 1)
     )
     middle = PitchDatum.create!(
       game_pk: 200,
       at_bat_number: 1,
       pitch_number: 1,
-      game_date: Date.new(2026, 4, 2),
-      raw_data: { "game_pk" => "200", "at_bat_number" => "1", "pitch_number" => "1" }
+      game_date: Date.new(2026, 4, 2)
     )
     newest = PitchDatum.create!(
       game_pk: 300,
       at_bat_number: 1,
       pitch_number: 1,
-      game_date: Date.new(2026, 4, 3),
-      raw_data: { "game_pk" => "300", "at_bat_number" => "1", "pitch_number" => "1" }
+      game_date: Date.new(2026, 4, 3)
     )
 
     get api_pitch_data_path, params: { page: 2, per_page: 1 }
@@ -165,8 +159,7 @@ RSpec.describe "Api::PitchData", type: :request do
       pitcher: 9001,
       batter: 8001,
       pitch_type: "FF",
-      events: "strikeout",
-      raw_data: { "game_pk" => "777", "at_bat_number" => "1", "pitch_number" => "1" }
+      events: "strikeout"
     )
 
     PitchDatum.create!(
@@ -177,8 +170,7 @@ RSpec.describe "Api::PitchData", type: :request do
       pitcher: 9002,
       batter: 8002,
       pitch_type: "SL",
-      events: "walk",
-      raw_data: { "game_pk" => "888", "at_bat_number" => "1", "pitch_number" => "1" }
+      events: "walk"
     )
 
     get api_pitch_data_path,
@@ -211,8 +203,7 @@ RSpec.describe "Api::PitchData", type: :request do
       pitch_number: 1,
       inning: 7,
       inning_topbot: "top",
-      game_date: Date.new(2026, 4, 30),
-      raw_data: { "game_pk" => "777", "at_bat_number" => "1", "pitch_number" => "1", "inning" => "7" }
+      game_date: Date.new(2026, 4, 30)
     )
     first_inning = PitchDatum.create!(
       game_pk: 777,
@@ -220,8 +211,7 @@ RSpec.describe "Api::PitchData", type: :request do
       pitch_number: 1,
       inning: 1,
       inning_topbot: "top",
-      game_date: Date.new(2026, 4, 30),
-      raw_data: { "game_pk" => "777", "at_bat_number" => "2", "pitch_number" => "1", "inning" => "1" }
+      game_date: Date.new(2026, 4, 30)
     )
     third_inning = PitchDatum.create!(
       game_pk: 777,
@@ -229,8 +219,7 @@ RSpec.describe "Api::PitchData", type: :request do
       pitch_number: 1,
       inning: 3,
       inning_topbot: "bot",
-      game_date: Date.new(2026, 4, 30),
-      raw_data: { "game_pk" => "777", "at_bat_number" => "3", "pitch_number" => "1", "inning" => "3" }
+      game_date: Date.new(2026, 4, 30)
     )
 
     get api_pitch_data_path, params: { game_pk: "777" }
@@ -245,22 +234,19 @@ RSpec.describe "Api::PitchData", type: :request do
       game_pk: 501,
       at_bat_number: 1,
       pitch_number: 1,
-      game_date: Date.new(2026, 4, 28),
-      raw_data: { "game_pk" => "501", "at_bat_number" => "1", "pitch_number" => "1" }
+      game_date: Date.new(2026, 4, 28)
     )
     second_in_range = PitchDatum.create!(
       game_pk: 502,
       at_bat_number: 1,
       pitch_number: 1,
-      game_date: Date.new(2026, 4, 29),
-      raw_data: { "game_pk" => "502", "at_bat_number" => "1", "pitch_number" => "1" }
+      game_date: Date.new(2026, 4, 29)
     )
     PitchDatum.create!(
       game_pk: 503,
       at_bat_number: 1,
       pitch_number: 1,
-      game_date: Date.new(2026, 4, 30),
-      raw_data: { "game_pk" => "503", "at_bat_number" => "1", "pitch_number" => "1" }
+      game_date: Date.new(2026, 4, 30)
     )
 
     get api_pitch_data_path, params: { game_date_start: "2026-04-28", game_date_end: "2026-04-29" }

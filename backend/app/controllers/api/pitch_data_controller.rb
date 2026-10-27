@@ -191,7 +191,7 @@ module Api
         description: row.description,
         events: row.events,
         pitch_name: row.pitch_name,
-        raw_data: row.raw_data,
+        active_spin: row.active_spin,
         created_at: row.created_at,
         updated_at: row.updated_at
       }

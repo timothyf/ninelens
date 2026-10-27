@@ -25,7 +25,7 @@ RSpec.describe "selective Statcast pitch synchronization" do
   it "includes completed games when replacement is explicitly requested" do
     game = game_for(date: Date.new(2026, 7, 2), mlb_id: 700_002)
     game.update!(status: "final", pitch_data_complete_at: 1.day.ago, pitch_data_row_count: 120)
-    PitchDatum.create!(game: game, game_pk: game.mlb_id, at_bat_number: 1, pitch_number: 1, raw_data: { "old" => true })
+    PitchDatum.create!(game: game, game_pk: game.mlb_id, at_bat_number: 1, pitch_number: 1)
     allow(PitchDataDownloader).to receive(:call).and_return(
       success: true,
       data: { rows: [ { "game_pk" => game.mlb_id.to_s, "at_bat_number" => "2", "pitch_number" => "1", "game_date" => "2026-07-02" } ] }

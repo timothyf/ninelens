@@ -20,8 +20,8 @@ RSpec.describe "Api::Admin::Tasks", type: :request do
     stat_type = create_stat_type
     create_player_season_stat(player: player, stat_type: stat_type, attributes: { season: 1901 })
     create_player_season_stat(player: player, stat_type: stat_type, attributes: { season: 2026 })
-    PitchDatum.create!(game_pk: 700_001, at_bat_number: 1, pitch_number: 1, game_date: Date.new(2026, 4, 1), raw_data: { "pitch" => 1 })
-    PitchDatum.create!(game_pk: 700_002, at_bat_number: 1, pitch_number: 1, game_date: Date.new(2026, 5, 31), raw_data: { "pitch" => 2 })
+    PitchDatum.create!(game_pk: 700_001, at_bat_number: 1, pitch_number: 1, game_date: Date.new(2026, 4, 1))
+    PitchDatum.create!(game_pk: 700_002, at_bat_number: 1, pitch_number: 1, game_date: Date.new(2026, 5, 31))
 
     get api_admin_tasks_path, headers: admin_headers
 

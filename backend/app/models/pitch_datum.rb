@@ -9,5 +9,4 @@ class PitchDatum < ApplicationRecord
   validates :game_pk, presence: true
   validates :at_bat_number, presence: true
   validates :pitch_number, presence: true
-  validates :raw_data, presence: true
 end

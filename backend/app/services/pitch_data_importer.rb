@@ -6,7 +6,7 @@ class PitchDataImporter
     id
     created_at
     updated_at
-    raw_data
+    active_spin
     source_start_date
     source_end_date
     fetched_at_utc
@@ -237,7 +237,7 @@ class PitchDataImporter
       description: normalized["description"],
       events: normalized["events"],
       **build_dynamic_attributes(normalized),
-      raw_data: normalized
+      active_spin: active_spin_from(normalized)
     }
   end
 
@@ -325,6 +325,11 @@ class PitchDataImporter
     Float(value.to_s)
   rescue ArgumentError
     nil
+  end
+
+  def active_spin_from(row)
+    value = row["active_spin"] || row["spin_efficiency"]
+    value&.to_f
   end
 
   def parse_datetime(value)
