@@ -35,17 +35,43 @@ class AdminTaskRun < ApplicationRecord
     return 100.0 if status == "completed"
     return 0.0 if total_items.zero?
 
-    base_percentage = [ (processed_items.to_f / total_items * 100).round(1), 100.0 ].min
-    return base_percentage unless task_name == "pitch_data_sync"
+    return [ (processed_items.to_f / total_items * 100).round(1), 100.0 ].min unless task_name == "pitch_data_sync"
 
-    case result_data.to_h["progress_phase"]
+    data = result_data.to_h
+    base_percentage = processed_items.to_f
+    if data["download_game_count"].to_i.positive?
+      base_percentage += data["download_game_count"].to_i * data["download_chunk_fraction"].to_f
+    end
+    base_percentage = [ (base_percentage / total_items * 100).round(1), 100.0 ].min
+
+    case data["progress_phase"]
     when "analytics"
-      80.0
+      analytics_progress(data)
     when "complete"
       100.0
     else
       (base_percentage * 0.8).round(1)
     end
+  end
+
+  def analytics_progress(data)
+    completed = data["analytics_completed_dates"].to_i
+    total = data["analytics_total_dates"].to_i
+    percentage = case data["analytics_work_phase"]
+    when "dates"
+      total.positive? ? 80.0 + (completed.to_f / total * 15.0) : 80.0
+    when "benchmarks_started", "benchmarks"
+      benchmark_total = data["analytics_benchmark_total"].to_i
+      benchmark_completed = data["analytics_benchmark_completed"].to_i
+      benchmark_total.positive? ? 95.0 + (benchmark_completed.to_f / benchmark_total * 4.0) : 95.0
+    when "trend_events_started"
+      99.0
+    when "trend_events_finished"
+      99.9
+    else
+      80.0
+    end
+    percentage.round(1).clamp(80.0, 99.9)
   end
 
   def elapsed_seconds
@@ -55,7 +81,26 @@ class AdminTaskRun < ApplicationRecord
   end
 
   def estimated_remaining_seconds
-    return unless active? && processed_items < total_items
+    return unless active?
+
+    if task_name == "pitch_data_sync" && result_data.to_h["progress_phase"] == "analytics"
+      data = result_data.to_h
+      completed, total, started_key = case data["analytics_work_phase"]
+      when "benchmarks"
+        [ data["analytics_benchmark_completed"].to_i, data["analytics_benchmark_total"].to_i, "analytics_benchmarks_started_at" ]
+      when "dates"
+        [ data["analytics_completed_dates"].to_i, data["analytics_total_dates"].to_i, "analytics_started_at" ]
+      else
+        return
+      end
+      analytics_started_at = Time.iso8601(data[started_key].to_s) if data[started_key].present?
+      return unless analytics_started_at && completed.positive? && total > completed
+
+      elapsed = Time.current - analytics_started_at
+      return [ (elapsed / completed) * (total - completed), 0 ].max.round
+    end
+
+    return unless processed_items < total_items
 
     # Keep the estimate stable while an item is in flight. The baseline is
     # recalculated when an item completes, then simply counts down until the

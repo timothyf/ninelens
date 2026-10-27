@@ -38,6 +38,58 @@ class PitchDataSyncProgressTracker
     )
   end
 
+  def download_started!(chunk_start:, chunk_end:, targeted_game_count:)
+    result_data = task_run.result_data.to_h.deep_dup
+    result_data["download_game_count"] = targeted_game_count
+    result_data["download_chunk_fraction"] = 0.0
+    task_run.update!(
+      current_item_mlb_id: nil,
+      current_item_label: "Downloading Statcast data · #{chunk_start.iso8601} — #{chunk_end.iso8601}",
+      result_data: result_data,
+      last_heartbeat_at: Time.current
+    )
+  end
+
+  def download_subchunk_started!(chunk_start:, chunk_end:, index:, total:)
+    task_run.update!(
+      current_item_label: "Downloading Statcast data · #{chunk_start.iso8601} — #{chunk_end.iso8601} (request #{index} of #{total})",
+      last_heartbeat_at: Time.current
+    )
+  end
+
+  def download_subchunk_finished!(index:, total:, row_count:)
+    update_download_fraction(index.to_f / [ total, 1 ].max, "Downloaded Statcast data · #{row_count} rows (request #{index} of #{total})")
+  end
+
+  def download_finished!
+    result_data = task_run.result_data.to_h.deep_dup
+    result_data["download_chunk_fraction"] = 1.0 if result_data["download_game_count"].to_i.positive?
+    task_run.update!(result_data: result_data, last_heartbeat_at: Time.current)
+  end
+
+  def analytics_progress!(phase:, completed: nil, total: nil, date: nil)
+    result_data = task_run.result_data.to_h.deep_dup
+    result_data["analytics_work_phase"] = phase
+    result_data["analytics_completed_dates"] = completed if completed
+    result_data["analytics_total_dates"] = total if total
+    result_data["analytics_benchmark_total"] = total if phase == "benchmarks_started"
+    result_data["analytics_benchmark_completed"] = completed if phase == "benchmarks"
+    result_data["analytics_benchmarks_started_at"] = Time.current.iso8601 if phase == "benchmarks_started"
+    label = case phase
+    when "dates" then "Refreshing daily analytics · #{date.to_fs(:long)} (#{completed} of #{total} dates)"
+    when "benchmarks_started" then "Refreshing contextual benchmarks (0 of #{total})"
+    when "benchmarks" then "Refreshing contextual benchmarks (#{completed} of #{total})"
+    when "trend_events_started" then "Refreshing player trend events"
+    when "trend_events_finished" then "Player trend events refreshed"
+    else "Refreshing daily analytics"
+    end
+    task_run.update!(
+      current_item_label: label,
+      result_data: result_data,
+      last_heartbeat_at: Time.current
+    )
+  end
+
   def chunk_finished!(success:, processed_game_count:, result_data: {}, message: nil)
     task_run.with_lock do
       task_run.reload
@@ -47,6 +99,9 @@ class PitchDataSyncProgressTracker
       merged_result["duplicate_count"] = merged_result.fetch("duplicate_count", 0) + result_data.fetch(:duplicate_count, 0)
       merged_result["skipped_count"] = merged_result.fetch("skipped_count", 0) + result_data.fetch(:skipped_count, 0)
       merged_result["progress_unit"] = result_data.fetch(:progress_unit, merged_result["progress_unit"])
+      if merged_result["download_game_count"].to_i.positive?
+        merged_result["download_game_count"] = [ merged_result["download_game_count"].to_i - processed_game_count, 0 ].max
+      end
       unless success
         failures = Array(merged_result["failures"])
         failures << { "message" => message, "chunk" => task_run.current_item_label }
@@ -68,10 +123,16 @@ class PitchDataSyncProgressTracker
   end
 
   def analytics_started!
+    result_data = task_run.result_data.to_h.merge(
+      "progress_phase" => "analytics",
+      "analytics_completed_dates" => 0,
+      "analytics_total_dates" => 0,
+      "analytics_started_at" => Time.current.iso8601
+    )
     task_run.update!(
       current_item_mlb_id: nil,
       current_item_label: "Refreshing daily analytics",
-      result_data: task_run.result_data.to_h.merge("progress_phase" => "analytics"),
+      result_data: result_data,
       last_heartbeat_at: Time.current
     )
   end
@@ -115,5 +176,11 @@ class PitchDataSyncProgressTracker
   def game_label(game)
     matchup = [ game.away_team&.abbreviation, game.home_team&.abbreviation ].compact.join(" at ")
     [ matchup.presence || "MLB game #{game.mlb_id}", game.official_date&.to_fs(:long) ].compact.join(" — ")
+  end
+
+  def update_download_fraction(fraction, label)
+    result_data = task_run.result_data.to_h.deep_dup
+    result_data["download_chunk_fraction"] = fraction
+    task_run.update!(result_data: result_data, current_item_label: label, last_heartbeat_at: Time.current)
   end
 end

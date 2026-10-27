@@ -17,6 +17,12 @@ const props = defineProps({
 const emit = defineEmits(['cancel'])
 
 const pitchDataPhase = computed(() => props.task.resultData?.progress_phase || 'downloading')
+const currentItemHeading = computed(() => {
+  if (props.progressMode !== 'pitch-data') return props.currentItemLabel
+  if (pitchDataPhase.value === 'analytics') return 'Current step'
+  if (/^(Downloading|Downloaded) Statcast/.test(props.task.currentItemLabel || '')) return 'Download progress'
+  return props.currentItemLabel
+})
 const progressLabel = computed(() => {
   if (props.progressMode !== 'pitch-data') return taskStatusLabel(props.task.status)
   if (pitchDataPhase.value === 'analytics') return 'Finalizing analytics'
@@ -58,7 +64,7 @@ const cancellationAvailable = computed(() => (
       <div><dt>Elapsed</dt><dd>{{ formatElapsed(task.elapsedSeconds) }}</dd></div>
       <div><dt>Remaining</dt><dd>{{ active ? formatElapsed(task.estimatedRemainingSeconds) : '—' }}</dd></div>
     </dl>
-    <p v-if="task.currentItemLabel" class="sync-progress__current"><span>{{ currentItemLabel }}</span>{{ task.currentItemLabel }}</p>
+    <p v-if="task.currentItemLabel" class="sync-progress__current"><span>{{ currentItemHeading }}</span>{{ task.currentItemLabel }}</p>
     <p
       v-if="progressMode === 'pitch-data' && pitchDataPhase === 'analytics'"
       class="sync-progress__notice"
@@ -92,7 +98,9 @@ const cancellationAvailable = computed(() => (
 .sync-progress header strong, .sync-progress header b { color: #10263d; }
 .sync-progress header b { font-family: 'Avenir Next Condensed', sans-serif; font-size: 1.4rem; }
 .sync-progress__track { height: 10px; margin-top: .65rem; overflow: hidden; border-radius: 999px; background: rgba(16,38,61,.12); }
-.sync-progress__track i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #176087, #2f7d32); transition: width 240ms ease; }
+.sync-progress__track i { position: relative; display: block; width: 0; height: 100%; overflow: hidden; border-radius: inherit; background: linear-gradient(90deg, #176087, #2f7d32); transition: width 240ms ease; }
+.sync-progress__track i::after { position: absolute; inset: 0 auto 0 -45%; width: 45%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent); content: ''; animation: sync-progress-shimmer 1.8s ease-in-out infinite; }
+@keyframes sync-progress-shimmer { to { transform: translateX(325%); } }
 .sync-progress dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .5rem; margin-top: .75rem; }
 .sync-progress dl div { display: grid; gap: .1rem; }
 .sync-progress dd { color: #263e52; font-size: .84rem; font-weight: 800; }
@@ -106,4 +114,5 @@ const cancellationAvailable = computed(() => (
 .sync-progress .admin-button { margin-top: .75rem; }
 .admin-button--danger { background: #8f2d24; }
 @media (max-width: 680px) { .sync-progress dl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .sync-progress__track i::after { animation: none; } }
 </style>

@@ -56,7 +56,13 @@ class PitchDataBatchSync
         chunk_count: chunks.length,
         game_count: targeted_games.length
       )
+      progress_tracker&.download_started!(
+        chunk_start: chunk_start,
+        chunk_end: chunk_end,
+        targeted_game_count: targeted_games.length
+      )
       download_result = download_chunk(chunk_start: chunk_start, chunk_end: chunk_end)
+      progress_tracker&.download_finished!
       report_download_progress(
         download_result[:success] ? :download_finished : :download_failed,
         chunk_start: chunk_start,
@@ -160,7 +166,14 @@ class PitchDataBatchSync
       start_date: chunk_start,
       end_date: chunk_end,
       game_types: game_types,
-      chunk_days: ((chunk_end - chunk_start).to_i + 1)
+      chunk_days: ((chunk_end - chunk_start).to_i + 1),
+      progress_callback: lambda do |event:, chunk_start:, chunk_end:, chunk_index:, chunk_count:, row_count: nil|
+        if event == :chunk_started
+          progress_tracker&.download_subchunk_started!(chunk_start: chunk_start, chunk_end: chunk_end, index: chunk_index, total: chunk_count)
+        else
+          progress_tracker&.download_subchunk_finished!(index: chunk_index, total: chunk_count, row_count: row_count)
+        end
+      end
     )
 
     return { success: true, data: { rows: [] } } if result[:message] == "No pitch data rows returned from Baseball Savant"
@@ -208,7 +221,9 @@ class PitchDataBatchSync
     unique_dates = dates.filter_map { |date| date.presence && Date.parse(date.to_s) }.uniq.sort
     return { skipped: true, reason: "No imported pitch dates" } if unique_dates.empty?
 
-    DailyAnalyticsRefresh.call(dates: unique_dates)
+    DailyAnalyticsRefresh.call(dates: unique_dates, progress_callback: lambda do |**progress|
+      progress_tracker&.analytics_progress!(**progress)
+    end)
   rescue StandardError => error
     { success: false, message: "Pitch data was imported, but daily analytics refresh failed: #{error.message}" }
   end

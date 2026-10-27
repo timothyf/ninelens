@@ -61,22 +61,24 @@ class PitchDataDownloader
 
   attr_reader :start_date, :end_date, :game_types, :chunk_days, :delay
 
-  def self.call(start_date:, end_date:, game_types: DEFAULT_GAME_TYPES, chunk_days: nil, delay: 0.0)
+  def self.call(start_date:, end_date:, game_types: DEFAULT_GAME_TYPES, chunk_days: nil, delay: 0.0, progress_callback: nil)
     new(
       start_date: start_date,
       end_date: end_date,
       game_types: game_types,
       chunk_days: chunk_days,
-      delay: delay
+      delay: delay,
+      progress_callback: progress_callback
     ).call
   end
 
-  def initialize(start_date:, end_date:, game_types: DEFAULT_GAME_TYPES, chunk_days: nil, delay: 0.0)
+  def initialize(start_date:, end_date:, game_types: DEFAULT_GAME_TYPES, chunk_days: nil, delay: 0.0, progress_callback: nil)
     @start_date = parse_date(start_date)
     @end_date = parse_date(end_date)
     @game_types = parse_game_types(game_types)
     @chunk_days = Integer(chunk_days.presence || service_config.fetch(:default_chunk_days), exception: false)
     @delay = delay.to_f
+    @progress_callback = progress_callback
   end
 
   def call
@@ -126,9 +128,12 @@ class PitchDataDownloader
   end
 
   def fetch_rows
-    date_chunks.flat_map do |chunk_start, chunk_end|
+    chunks = date_chunks
+    chunks.each_with_index.flat_map do |(chunk_start, chunk_end), index|
+      progress_callback&.call(event: :chunk_started, chunk_start: chunk_start, chunk_end: chunk_end, chunk_index: index + 1, chunk_count: chunks.length)
       rows = parse_chunk(fetch_csv(build_url(chunk_start, chunk_end)), chunk_start, chunk_end)
       sleep(delay) if delay.positive?
+      progress_callback&.call(event: :chunk_finished, chunk_start: chunk_start, chunk_end: chunk_end, chunk_index: index + 1, chunk_count: chunks.length, row_count: rows.length)
       rows
     end
   end
@@ -185,6 +190,8 @@ class PitchDataDownloader
       default_chunk_days: NineLensConfig.fetch(:operations, :pitch_data, :default_chunk_days)
     )
   end
+
+  attr_reader :progress_callback
 
   def normalize_response_body(body)
     body.to_s

@@ -10,22 +10,24 @@ class DailyAnalyticsRefresh
     TeamDailyMetric
   ].freeze
 
-  def self.call(start_date: nil, end_date: nil, dates: nil, calculation_version: CALCULATION_VERSION, refresh_contextual_benchmarks: true)
+  def self.call(start_date: nil, end_date: nil, dates: nil, calculation_version: CALCULATION_VERSION, refresh_contextual_benchmarks: true, progress_callback: nil)
     new(
       start_date: start_date,
       end_date: end_date,
       dates: dates,
       calculation_version: calculation_version,
-      refresh_contextual_benchmarks: refresh_contextual_benchmarks
+      refresh_contextual_benchmarks: refresh_contextual_benchmarks,
+      progress_callback: progress_callback
     ).call
   end
 
-  def initialize(start_date: nil, end_date: nil, dates: nil, calculation_version: CALCULATION_VERSION, refresh_contextual_benchmarks: true)
+  def initialize(start_date: nil, end_date: nil, dates: nil, calculation_version: CALCULATION_VERSION, refresh_contextual_benchmarks: true, progress_callback: nil)
     @start_date = start_date
     @end_date = end_date
     @dates = dates
     @calculation_version = calculation_version.to_s.strip
     @refresh_contextual_benchmarks = refresh_contextual_benchmarks
+    @progress_callback = progress_callback
   end
 
   def call
@@ -34,12 +36,15 @@ class DailyAnalyticsRefresh
     return failure("Calculation version is required") if calculation_version.blank?
 
     totals = SUMMARY_MODELS.to_h { |model| [ model.table_name, 0 ] }
-    calculation_dates.each do |date|
+    calculation_dates.each_with_index do |date, index|
       counts = DailyAnalyticsCalculator.call(metric_date: date, calculation_version: calculation_version)
       counts.each { |table, count| totals[table] += count }
+      progress_callback&.call(phase: "dates", completed: index + 1, total: calculation_dates.length, date: date)
     end
     benchmark_refreshes = refresh_contextual_benchmarks ? refresh_contextual_benchmark_ranges(calculation_dates) : []
+    progress_callback&.call(phase: "trend_events_started")
     trend_event_refresh = refresh_trend_events(calculation_dates)
+    progress_callback&.call(phase: "trend_events_finished")
 
     {
       success: true,
@@ -63,7 +68,7 @@ class DailyAnalyticsRefresh
 
   private
 
-  attr_reader :start_date, :end_date, :dates, :calculation_version, :refresh_contextual_benchmarks
+  attr_reader :start_date, :end_date, :dates, :calculation_version, :refresh_contextual_benchmarks, :progress_callback
 
   def refresh_trend_events(calculation_dates)
     mlb_ids = PitchDatum.where(game_date: calculation_dates)
@@ -78,7 +83,7 @@ class DailyAnalyticsRefresh
   end
 
   def refresh_contextual_benchmark_ranges(calculation_dates)
-    calculation_dates.map(&:year).uniq.sort.flat_map do |year|
+    ranges = calculation_dates.map(&:year).uniq.sort.flat_map do |year|
       year_range = Date.new(year, 1, 1)..Date.new(year, 12, 31)
       stored_dates = SUMMARY_MODELS.flat_map do |model|
         scope = model.where(calculation_version: calculation_version, metric_date: year_range)
@@ -88,17 +93,21 @@ class DailyAnalyticsRefresh
       next if stored_dates.empty?
 
       last_date = stored_dates.max
-      ranges = [
+      year_ranges = [
         [ Date.new(year, 1, 1), last_date ],
         *[ 7, 14, 30 ].map { |days| [ last_date - (days - 1).days, last_date ] }
       ].uniq
-      ranges.map do |range_start, range_end|
-        ContextualBenchmarkRefresh.call(
-          start_date: range_start,
-          end_date: range_end,
-          calculation_version: calculation_version
-        )
-      end
+      year_ranges
+    end
+    progress_callback&.call(phase: "benchmarks_started", total: ranges.length)
+    ranges.each_with_index.map do |(range_start, range_end), index|
+      result = ContextualBenchmarkRefresh.call(
+        start_date: range_start,
+        end_date: range_end,
+        calculation_version: calculation_version
+      )
+      progress_callback&.call(phase: "benchmarks", completed: index + 1, total: ranges.length)
+      result
     end.compact
   rescue StandardError => error
     [ { success: false, message: "Daily summaries were refreshed, but contextual benchmarks failed: #{error.message}" } ]
