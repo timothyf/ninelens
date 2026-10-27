@@ -1,14 +1,17 @@
 class SeasonReviewQuery
   BATTING_QUALIFIER_PER_TEAM_GAME = 3.1
+  HIGHLIGHT_LIMIT = 8
   LEADER_DEFINITIONS = [
+    { label: "WAR", category: "batting", names: %w[WAR war] },
+    { label: "OPS", category: "batting", names: %w[ops OPS], qualifier: :plate_appearances },
+    { label: "Batting average", category: "batting", names: %w[avg AVG], qualifier: :plate_appearances },
     { label: "Home runs", category: "batting", name: "homeRuns" },
     { label: "Hits", category: "batting", name: "hits" },
     { label: "Triples", category: "batting", name: "triples" },
-    { label: "Batting average", category: "batting", names: %w[avg AVG], qualifier: :plate_appearances },
+    { label: "ERA", category: "pitching", names: %w[ERA era], qualifier: :innings_pitched },
     { label: "Strikeouts", category: "pitching", name: "SO" },
     { label: "Wins", category: "pitching", name: "W" },
-    { label: "Saves", category: "pitching", names: %w[SV saves] },
-    { label: "ERA", category: "pitching", names: %w[ERA era], qualifier: :innings_pitched }
+    { label: "Saves", category: "pitching", names: %w[SV saves] }
   ].freeze
 
   def initialize(season: nil)
@@ -25,6 +28,8 @@ class SeasonReviewQuery
       one_run_games: games.count { |game| (game.home_score - game.away_score).abs == 1 },
       complete_games: complete_games,
       fastest_pitches: fastest_pitches,
+      top_exit_velocities: top_exit_velocities,
+      longest_balls: longest_balls,
       leaders: leaders,
       postseason_teams: postseason_teams,
       world_series: world_series,
@@ -80,9 +85,31 @@ class SeasonReviewQuery
 
   def fastest_pitches
     PitchDatum.where(game_date: Date.new(season, 1, 1)..Date.new(season, 12, 31), game_type: "R")
-      .where.not(release_speed: nil).order(release_speed: :desc).limit(10)
+      .where.not(release_speed: nil).order(release_speed: :desc).limit(HIGHLIGHT_LIMIT)
       .select(:player_name, :release_speed, :pitch_name, :game_date)
       .map { |pitch| { player: pitch.player_name, speed: pitch.release_speed, pitch: pitch.pitch_name, date: pitch.game_date } }
+  end
+
+  def top_exit_velocities
+    batted_balls = PitchDatum.where(game_date: Date.new(season, 1, 1)..Date.new(season, 12, 31), game_type: "R")
+      .where.not(launch_speed: nil).where.not(batter: nil).order(launch_speed: :desc).limit(HIGHLIGHT_LIMIT)
+      .select(:batter, :launch_speed, :events, :game_date).to_a
+    batters = Player.where(mlb_id: batted_balls.map(&:batter)).index_by(&:mlb_id)
+
+    batted_balls.map do |ball|
+      { player: batters[ball.batter]&.full_name, speed: ball.launch_speed, event: ball.events, date: ball.game_date }
+    end
+  end
+
+  def longest_balls
+    batted_balls = PitchDatum.where(game_date: Date.new(season, 1, 1)..Date.new(season, 12, 31), game_type: "R")
+      .where.not(hit_distance_sc: nil).where.not(batter: nil).order(hit_distance_sc: :desc).limit(HIGHLIGHT_LIMIT)
+      .select(:batter, :hit_distance_sc, :events, :game_date).to_a
+    batters = Player.where(mlb_id: batted_balls.map(&:batter)).index_by(&:mlb_id)
+
+    batted_balls.map do |ball|
+      { player: batters[ball.batter]&.full_name, distance: ball.hit_distance_sc, event: ball.events, date: ball.game_date }
+    end
   end
 
   def leaders

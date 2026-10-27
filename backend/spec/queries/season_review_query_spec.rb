@@ -11,6 +11,8 @@ RSpec.describe SeasonReviewQuery do
     end
 
     average = create_stat_type(category: "batting", name: "avg", label: "AVG")
+    war = create_stat_type(category: "batting", name: "WAR", label: "WAR")
+    ops = create_stat_type(category: "batting", name: "ops", label: "OPS")
     appearances = create_stat_type(category: "batting", name: "plateAppearances", label: "PA")
     era = create_stat_type(category: "pitching", name: "ERA", label: "ERA")
     innings = create_stat_type(category: "pitching", name: "inningsPitched", label: "IP")
@@ -25,16 +27,29 @@ RSpec.describe SeasonReviewQuery do
     season_stat(qualified_batter, appearances, 3, team: away)
     season_stat(unqualified_batter, average, 0.500)
     season_stat(unqualified_batter, appearances, 5)
+    season_stat(qualified_batter, war, 6.2)
+    season_stat(unqualified_batter, war, 7.1)
+    season_stat(qualified_batter, ops, 0.950)
+    season_stat(unqualified_batter, ops, 1.100)
 
     season_stat(qualified_pitcher, era, 2.50)
     season_stat(qualified_pitcher, innings, 2.0)
     season_stat(unqualified_pitcher, era, 0.50)
     season_stat(unqualified_pitcher, innings, 1.2)
 
-    leaders = described_class.new(season: 2026).result.fetch(:leaders).index_by { |leader| leader.fetch(:category) }
+    ordered_leaders = described_class.new(season: 2026).result.fetch(:leaders)
+    expect(ordered_leaders.map { |leader| leader.fetch(:category) }).to eq([
+      "WAR", "OPS", "Batting average", "Home runs", "Hits", "Triples",
+      "ERA", "Strikeouts", "Wins", "Saves"
+    ])
+    leaders = ordered_leaders.index_by { |leader| leader.fetch(:category) }
 
     expect(leaders.fetch("Batting average")).to include(qualifier: "Min. 6 PA")
     expect(leaders.fetch("Batting average").fetch(:entries).map { |entry| entry.fetch(:player) }).to eq([ qualified_batter.full_name ])
+    expect(leaders.fetch("WAR").fetch(:entries).map { |entry| entry.fetch(:player) })
+      .to eq([ unqualified_batter.full_name, qualified_batter.full_name ])
+    expect(leaders.fetch("OPS")).to include(qualifier: "Min. 6 PA")
+    expect(leaders.fetch("OPS").fetch(:entries).map { |entry| entry.fetch(:player) }).to eq([ qualified_batter.full_name ])
     expect(leaders.fetch("ERA")).to include(qualifier: "Min. 2 IP")
     expect(leaders.fetch("ERA").fetch(:entries).map { |entry| entry.fetch(:player) }).to eq([ qualified_pitcher.full_name ])
   end
@@ -63,8 +78,11 @@ RSpec.describe SeasonReviewQuery do
   end
 
   it "loads only regular-season pitches from the selected year" do
+    10.times do |index|
+      PitchDatum.create!(game_pk: 900_100 + index, game_date: Date.new(2026, 7, 1), game_type: "R",
+        at_bat_number: 1, pitch_number: 1, release_speed: 90.0 + index)
+    end
     [
-      [ 900_001, Date.new(2026, 7, 1), "R", 101.2 ],
       [ 900_002, Date.new(2026, 10, 1), "D", 105.0 ],
       [ 900_003, Date.new(2025, 7, 1), "R", 104.0 ]
     ].each do |game_pk, game_date, game_type, speed|
@@ -74,7 +92,49 @@ RSpec.describe SeasonReviewQuery do
 
     pitches = described_class.new(season: 2026).send(:fastest_pitches)
 
-    expect(pitches.map { |pitch| pitch.fetch(:speed) }).to eq([ 101.2 ])
+    expect(pitches.map { |pitch| pitch.fetch(:speed) }).to eq((92..99).to_a.reverse.map(&:to_f))
+  end
+
+  it "shows the eight hardest-hit regular-season balls with batter names" do
+    batter = create_player
+    12.times do |index|
+      PitchDatum.create!(game_pk: 910_000 + index, game_date: Date.new(2026, 7, 1), game_type: "R",
+        at_bat_number: 1, pitch_number: 1, batter: batter.mlb_id, launch_speed: 100.0 + index,
+        events: "home_run")
+    end
+    PitchDatum.create!(game_pk: 920_001, game_date: Date.new(2026, 10, 1), game_type: "D",
+      at_bat_number: 1, pitch_number: 1, batter: batter.mlb_id, launch_speed: 120.0)
+    PitchDatum.create!(game_pk: 920_002, game_date: Date.new(2025, 7, 1), game_type: "R",
+      at_bat_number: 1, pitch_number: 1, batter: batter.mlb_id, launch_speed: 121.0)
+    PitchDatum.create!(game_pk: 920_003, game_date: Date.new(2026, 7, 1), game_type: "R",
+      at_bat_number: 1, pitch_number: 1, launch_speed: 122.0)
+
+    balls = described_class.new(season: 2026).send(:top_exit_velocities)
+
+    expect(balls.length).to eq(8)
+    expect(balls.map { |ball| ball.fetch(:speed) }).to eq((104..111).to_a.reverse.map(&:to_f))
+    expect(balls.first).to include(player: batter.full_name, event: "home_run", date: Date.new(2026, 7, 1))
+  end
+
+  it "shows the eight longest regular-season batted balls with batter names" do
+    batter = create_player
+    10.times do |index|
+      PitchDatum.create!(game_pk: 930_000 + index, game_date: Date.new(2026, 7, 1), game_type: "R",
+        at_bat_number: 1, pitch_number: 1, batter: batter.mlb_id, hit_distance_sc: 400.0 + index,
+        events: "home_run")
+    end
+    PitchDatum.create!(game_pk: 940_001, game_date: Date.new(2026, 10, 1), game_type: "D",
+      at_bat_number: 1, pitch_number: 1, batter: batter.mlb_id, hit_distance_sc: 450.0)
+    PitchDatum.create!(game_pk: 940_002, game_date: Date.new(2025, 7, 1), game_type: "R",
+      at_bat_number: 1, pitch_number: 1, batter: batter.mlb_id, hit_distance_sc: 451.0)
+    PitchDatum.create!(game_pk: 940_003, game_date: Date.new(2026, 7, 1), game_type: "R",
+      at_bat_number: 1, pitch_number: 1, hit_distance_sc: 452.0)
+
+    balls = described_class.new(season: 2026).send(:longest_balls)
+
+    expect(balls.length).to eq(8)
+    expect(balls.map { |ball| ball.fetch(:distance) }).to eq((402..409).to_a.reverse.map(&:to_f))
+    expect(balls.first).to include(player: batter.full_name, event: "home_run", date: Date.new(2026, 7, 1))
   end
 
   def season_stat(player, stat_type, value, team: player.team, scope_type: "team", scope_key: nil)
