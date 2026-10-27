@@ -1592,6 +1592,10 @@ async function closeDatabaseDetails() {
   font-weight: 850;
 }
 
+[data-test="player-season-stats-coverage"] dd span {
+  display: block;
+}
+
 .data-coverage p,
 .data-coverage small {
   display: block;

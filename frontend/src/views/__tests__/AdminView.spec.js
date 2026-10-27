@@ -148,8 +148,8 @@ vi.mock('../../composables/useAdminTask', () => ({
       ],
     })),
     playerSeasonStatsMetrics: computed(() => ({
-      earliestSeason: 1876,
-      latestSeason: 2026,
+      batting: { earliestSeason: 1876, latestSeason: 2026 },
+      pitching: { earliestSeason: 1901, latestSeason: 2025 },
       approximateRowCount: 4649481,
     })),
     pitchDataMetrics: computed(() => ({
@@ -392,8 +392,10 @@ describe('AdminView', () => {
     expect(wrapper.find('[data-test="database-details"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('Player season statistics')
     expect(wrapper.text()).toContain('Statcast pitch data')
-    expect(wrapper.get('[data-test="player-season-stats-coverage"]').text()).toContain('1876')
-    expect(wrapper.get('[data-test="player-season-stats-coverage"]').text()).toContain('2026')
+    expect(wrapper.get('[data-test="player-season-stats-coverage"]').text()).toContain('Batting: 1876')
+    expect(wrapper.get('[data-test="player-season-stats-coverage"]').text()).toContain('Pitching: 1901')
+    expect(wrapper.get('[data-test="player-season-stats-coverage"]').text()).toContain('Batting: 2026')
+    expect(wrapper.get('[data-test="player-season-stats-coverage"]').text()).toContain('Pitching: 2025')
     expect(wrapper.get('[data-test="player-season-stats-coverage"]').text()).toContain('4,649,481 stat rows')
     expect(wrapper.get('[data-test="pitch-data-coverage"]').text()).toContain('Apr 1, 2026')
     expect(wrapper.get('[data-test="pitch-data-coverage"]').text()).toContain('May 31, 2026')

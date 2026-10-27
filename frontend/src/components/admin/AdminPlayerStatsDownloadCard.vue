@@ -27,14 +27,20 @@ const currentSeason = new Date().getFullYear()
   >
     <div class="data-coverage" data-test="player-season-stats-coverage">
       <span>Currently stored</span>
-      <dl v-if="metrics.earliestSeason && metrics.latestSeason">
+      <dl v-if="metrics.batting.earliestSeason || metrics.pitching.earliestSeason">
         <div>
           <dt>From season</dt>
-          <dd>{{ metrics.earliestSeason }}</dd>
+          <dd>
+            <span>Batting: {{ metrics.batting.earliestSeason ?? '—' }}</span>
+            <span>Pitching: {{ metrics.pitching.earliestSeason ?? '—' }}</span>
+          </dd>
         </div>
         <div>
           <dt>Through season</dt>
-          <dd>{{ metrics.latestSeason }}</dd>
+          <dd>
+            <span>Batting: {{ metrics.batting.latestSeason ?? '—' }}</span>
+            <span>Pitching: {{ metrics.pitching.latestSeason ?? '—' }}</span>
+          </dd>
         </div>
       </dl>
       <p v-else>No player season statistics are currently stored.</p>

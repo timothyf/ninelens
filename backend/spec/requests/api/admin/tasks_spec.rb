@@ -18,8 +18,11 @@ RSpec.describe "Api::Admin::Tasks", type: :request do
     )
     create_team_membership(player: player, team: tigers, starts_on: Date.new(2025, 12, 31))
     stat_type = create_stat_type
+    pitching_stat_type = create_stat_type(category: "pitching")
     create_player_season_stat(player: player, stat_type: stat_type, attributes: { season: 1901 })
     create_player_season_stat(player: player, stat_type: stat_type, attributes: { season: 2026 })
+    create_player_season_stat(player: player, stat_type: pitching_stat_type, attributes: { season: 1910 })
+    create_player_season_stat(player: player, stat_type: pitching_stat_type, attributes: { season: 2025 })
     PitchDatum.create!(game_pk: 700_001, at_bat_number: 1, pitch_number: 1, game_date: Date.new(2026, 4, 1))
     PitchDatum.create!(game_pk: 700_002, at_bat_number: 1, pitch_number: 1, game_date: Date.new(2026, 5, 31))
 
@@ -99,8 +102,8 @@ RSpec.describe "Api::Admin::Tasks", type: :request do
     table_scans = json_body.dig("meta", "database", "most_read_tables").pluck("total_scans")
     expect(table_scans).to eq(table_scans.sort.reverse)
     expect(json_body.dig("meta", "player_season_stats")).to include(
-      "earliest_season" => 1901,
-      "latest_season" => 2026
+      "batting" => { "earliest_season" => 1901, "latest_season" => 2026 },
+      "pitching" => { "earliest_season" => 1910, "latest_season" => 2025 }
     )
     expect(json_body.dig("meta", "player_season_stats", "approximate_row_count")).to be_a(Integer)
     expect(json_body.dig("meta", "pitch_data")).to include(

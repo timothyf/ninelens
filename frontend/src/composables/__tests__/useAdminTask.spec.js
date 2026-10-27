@@ -69,8 +69,8 @@ describe('useAdminTask', () => {
               ],
             },
             player_season_stats: {
-              earliest_season: 1876,
-              latest_season: 2026,
+              batting: { earliest_season: 1876, latest_season: 2026 },
+              pitching: { earliest_season: 1901, latest_season: 2025 },
               approximate_row_count: 4649481,
             },
             pitch_data: {
@@ -172,8 +172,8 @@ describe('useAdminTask', () => {
       ],
     })
     expect(playerSeasonStatsMetrics.value).toEqual({
-      earliestSeason: 1876,
-      latestSeason: 2026,
+      batting: { earliestSeason: 1876, latestSeason: 2026 },
+      pitching: { earliestSeason: 1901, latestSeason: 2025 },
       approximateRowCount: 4649481,
     })
     expect(pitchDataMetrics.value).toEqual({

@@ -301,12 +301,15 @@ module Api
       end
 
       def player_season_stats_metrics
-        stats = PlayerSeasonStat.arel_table
-        earliest_season, latest_season = PlayerSeasonStat.pick(stats[:season].minimum, stats[:season].maximum)
+        seasons_by_category = PlayerSeasonStat.joins(:stat_type)
+          .where(stat_types: { category: %w[batting pitching] })
+          .group("stat_types.category")
+          .pluck("stat_types.category", Arel.sql("MIN(player_season_stats.season)"), Arel.sql("MAX(player_season_stats.season)"))
+          .to_h { |category, earliest, latest| [category, { earliest_season: earliest, latest_season: latest }] }
 
         {
-          earliest_season: earliest_season,
-          latest_season: latest_season,
+          batting: seasons_by_category.fetch("batting", { earliest_season: nil, latest_season: nil }),
+          pitching: seasons_by_category.fetch("pitching", { earliest_season: nil, latest_season: nil }),
           approximate_row_count: approximate_row_count(PlayerSeasonStat)
         }
       end

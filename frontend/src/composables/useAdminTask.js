@@ -42,7 +42,11 @@ export function useAdminTask() {
     mostReadTables: [],
     measuredAt: null,
   })
-  const playerSeasonStatsMetrics = ref({ earliestSeason: null, latestSeason: null, approximateRowCount: 0 })
+  const playerSeasonStatsMetrics = ref({
+    batting: { earliestSeason: null, latestSeason: null },
+    pitching: { earliestSeason: null, latestSeason: null },
+    approximateRowCount: 0,
+  })
   const pitchDataMetrics = ref({ earliestGameDate: null, latestGameDate: null, approximateRowCount: 0 })
   const gameDetailsMetrics = ref({
     synchronizedGameCount: 0,
@@ -142,8 +146,14 @@ export function useAdminTask() {
       }
       const playerSeasonStats = payload?.meta?.player_season_stats || {}
       playerSeasonStatsMetrics.value = {
-        earliestSeason: playerSeasonStats.earliest_season ?? null,
-        latestSeason: playerSeasonStats.latest_season ?? null,
+        batting: {
+          earliestSeason: playerSeasonStats.batting?.earliest_season ?? null,
+          latestSeason: playerSeasonStats.batting?.latest_season ?? null,
+        },
+        pitching: {
+          earliestSeason: playerSeasonStats.pitching?.earliest_season ?? null,
+          latestSeason: playerSeasonStats.pitching?.latest_season ?? null,
+        },
         approximateRowCount: Number(playerSeasonStats.approximate_row_count || 0),
       }
       const pitchData = payload?.meta?.pitch_data || {}
