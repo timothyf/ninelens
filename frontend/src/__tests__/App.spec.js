@@ -119,11 +119,11 @@ describe('App', () => {
     expect(nav.text()).toContain('Teams')
     expect(nav.text()).toContain('Tools')
     expect(nav.text().indexOf('Teams')).toBeLessThan(nav.text().indexOf('Tools'))
-    expect(nav.text()).not.toContain('Compare')
+    expect(nav.text()).not.toContain('Player Compare')
 
     await nav.get('.app-tools__trigger').trigger('click')
     expect(nav.get('.app-tools__trigger').attributes('aria-expanded')).toBe('true')
-    expect(nav.get('.app-tools__menu').text()).toBe('CompareSeason Review')
+    expect(nav.get('.app-tools__menu').text()).toBe('Player CompareSeason Review')
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     await wrapper.vm.$nextTick()

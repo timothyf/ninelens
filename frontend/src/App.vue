@@ -158,7 +158,7 @@ watch(() => route.fullPath, closeMobilePanels)
             Tools <span aria-hidden="true">⌄</span>
           </button>
           <div v-if="toolsMenuOpen" id="tools-menu" class="app-tools__menu">
-            <RouterLink to="/compare" @click="closeMobilePanels">Compare</RouterLink>
+            <RouterLink to="/compare" @click="closeMobilePanels">Player Compare</RouterLink>
             <RouterLink to="/season-review" @click="closeMobilePanels">Season Review</RouterLink>
           </div>
         </div>

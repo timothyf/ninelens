@@ -60,3 +60,19 @@ environment example sets `APP_DOMAIN`; its backend database name also differs
 from the database configured by the base Compose file. The workflow preserves
 the currently working server sequence; reconcile those configuration files
 against the live server before changing them.
+
+## View production container logs
+
+The production Compose override runs Dozzle on the server's loopback interface
+at port 9999. To open it from your computer, create an SSH tunnel to the server
+and visit `http://localhost:9999`:
+
+```bash
+ssh -L 9999:localhost:9999 <prod-user>@<prod-host>
+```
+
+Use the same SSH access you use for server administration; `<prod-host>` can be
+the server's Tailscale address. Dozzle can see logs from all containers on the
+Docker host. Keep its port private because access to the mounted Docker
+socket grants powerful control over the host. Dozzle shows logs retained by
+Docker, so configure Docker log rotation and retention separately.

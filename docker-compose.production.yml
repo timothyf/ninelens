@@ -28,6 +28,16 @@ services:
     depends_on:
       - frontend
 
+  dozzle:
+    image: amir20/dozzle:v11.3.4
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9999:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dozzle_data:/data
+
 volumes:
   caddy_data:
   caddy_config:
+  dozzle_data:
