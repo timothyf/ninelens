@@ -85,12 +85,30 @@ RSpec.describe MlbStatsApiClient do
     end.to raise_error(RuntimeError, "MLB_STATS_API_RELAY_URL must use HTTPS")
   end
 
-  it "refuses to make a direct MLB request when the relay is not configured" do
+  it "makes a direct MLB request in development when the relay is not configured" do
     ENV.delete("MLB_STATS_API_RELAY_URL")
+    allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("development"))
+    response = Net::HTTPOK.new("1.1", "200", "OK")
+    allow(response).to receive(:body).and_return('{"awards":[]}')
+    request = nil
+    allow(http).to receive(:request) do |value|
+      request = value
+      response
+    end
+
+    expect(described_class.get_json("https://statsapi.mlb.com/api/v1/awards/ALMVP/recipients?season=2025", user_agent: "NineLens")).to eq("awards" => [])
+    expect(Net::HTTP).to have_received(:new).with("statsapi.mlb.com", 443)
+    expect(request.path).to eq("/api/v1/awards/ALMVP/recipients?season=2025")
+    expect(request["X-NineLens-Relay-Token"]).to be_nil
+  end
+
+  it "requires the relay in production" do
+    ENV.delete("MLB_STATS_API_RELAY_URL")
+    allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("production"))
 
     expect do
       described_class.get_json("https://statsapi.mlb.com/api/v1/schedule", user_agent: "NineLens")
-    end.to raise_error(RuntimeError, "MLB_STATS_API_RELAY_URL is required")
+    end.to raise_error(RuntimeError, "MLB_STATS_API_RELAY_URL is required in production")
     expect(Net::HTTP).not_to have_received(:new)
   end
 

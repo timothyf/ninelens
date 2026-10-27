@@ -3,8 +3,7 @@ namespace :mlb_season_awards do
   task :sync, [ :season ] => :environment do |_task, args|
     season = args[:season].presence || ENV["SEASON"].presence || ApplicationCalendar.current_date.year
     result = MlbSeasonAwardsSync.call(season: season, force: true)
-    puts result[:message]
-    abort result[:message] unless result[:success]
+    result[:success] ? puts(result[:message]) : abort(result[:message])
   end
 
   desc "Backfill official award winners. Usage: bin/rails 'mlb_season_awards:backfill[2020,2025]'"
@@ -15,8 +14,7 @@ namespace :mlb_season_awards do
 
     (first..last).each do |season|
       result = MlbSeasonAwardsSync.call(season: season, force: true)
-      puts result[:message]
-      abort result[:message] unless result[:success]
+      result[:success] ? puts(result[:message]) : abort(result[:message])
     end
   end
 end
