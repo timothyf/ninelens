@@ -106,4 +106,27 @@ describe('App', () => {
     expect(wrapper.get('.app-search-shell').classes()).not.toContain('is-open')
     expect(wrapper.find('.app-mobile-scrim').exists()).toBe(false)
   })
+
+  it('shows Compare and Season Review under Tools after Teams', async () => {
+    const wrapper = shallowMount(App, {
+      global: {
+        renderStubDefaultSlot: true,
+        stubs: { RouterLink: true, RouterView: true },
+      },
+    })
+
+    const nav = wrapper.get('.app-primary-nav')
+    expect(nav.text()).toContain('Teams')
+    expect(nav.text()).toContain('Tools')
+    expect(nav.text().indexOf('Teams')).toBeLessThan(nav.text().indexOf('Tools'))
+    expect(nav.text()).not.toContain('Compare')
+
+    await nav.get('.app-tools__trigger').trigger('click')
+    expect(nav.get('.app-tools__trigger').attributes('aria-expanded')).toBe('true')
+    expect(nav.get('.app-tools__menu').text()).toBe('CompareSeason Review')
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await wrapper.vm.$nextTick()
+    expect(nav.find('.app-tools__menu').exists()).toBe(false)
+  })
 })

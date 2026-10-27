@@ -76,7 +76,6 @@ test.describe('mobile layout foundations', () => {
       ['Schedule', '/schedule'],
       ['Standings', '/standings'],
       ['Stat Explorer', '/explore'],
-      ['Compare', '/compare'],
       ['Teams', '/teams'],
     ]
 
@@ -87,6 +86,13 @@ test.describe('mobile layout foundations', () => {
       await link.scrollIntoViewIfNeeded()
       await expect(link).toBeInViewport()
       await link.click()
+      await expect(page).toHaveURL(new RegExp(`${path.replaceAll('/', '\\/')}$`))
+    }
+
+    for (const [name, path] of [['Compare', '/compare'], ['Season Review', '/season-review']]) {
+      await page.getByRole('button', { name: 'Open navigation' }).click()
+      await page.getByRole('button', { name: 'Tools' }).click()
+      await page.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link', { name }).click()
       await expect(page).toHaveURL(new RegExp(`${path.replaceAll('/', '\\/')}$`))
     }
 

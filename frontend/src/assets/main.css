@@ -69,11 +69,66 @@
 
 .app-primary-nav {
   justify-content: flex-start;
-  overflow-x: auto;
-  scrollbar-width: none;
+  overflow: visible;
 }
 
-.app-primary-nav::-webkit-scrollbar { display: none; }
+.app-tools {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.app-tools__trigger {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.8rem;
+  border: 0;
+  border-radius: 999px;
+  color: #dce4e9;
+  background: transparent;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.app-tools__trigger:hover,
+.app-tools__trigger:focus-visible,
+.app-tools__trigger.is-active {
+  color: #10263d;
+  background: #f1d7a8;
+}
+
+.app-tools__menu {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  display: grid;
+  min-width: 180px;
+  padding: 0.4rem;
+  border: 1px solid rgba(16, 38, 61, 0.14);
+  border-radius: 12px;
+  background: #fffdf7;
+  box-shadow: 0 14px 30px rgba(2, 15, 28, 0.2);
+}
+
+.app-bar .app-tools__menu a {
+  padding: 0.55rem;
+  border-radius: 8px;
+  color: #10263d;
+  font-size: 0.78rem;
+}
+
+.app-bar .app-tools__menu a:hover,
+.app-bar .app-tools__menu a:focus-visible,
+.app-bar .app-tools__menu a.router-link-active {
+  color: #8f2d24;
+  background: #f5e8cf;
+}
 
 .app-account {
   position: relative;
@@ -1193,6 +1248,18 @@
     font-size: 0.92rem;
   }
 
+  .app-navigation-shell .app-tools__trigger {
+    width: 100%;
+    padding: 0.7rem 0.8rem;
+    border-radius: 10px;
+    font-size: 0.92rem;
+  }
+
+  .app-navigation-shell .app-tools__menu {
+    position: static;
+    margin: 0.2rem 0 0 0.8rem;
+  }
+
   .app-navigation-shell .app-account {
     display: grid;
     margin-top: auto;
@@ -1273,6 +1340,5 @@
     grid-column: 1 / -1;
     grid-row: 2;
     justify-content: center;
-    overflow-x: auto;
   }
 }

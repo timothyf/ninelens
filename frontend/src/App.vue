@@ -12,6 +12,7 @@ const { postseason, load: loadPostseason } = usePostseason()
 const route = useRoute()
 const router = useRouter()
 const accountMenuOpen = ref(false)
+const toolsMenuOpen = ref(false)
 const navigationOpen = ref(false)
 const searchOpen = ref(false)
 const isAdministrator = computed(() => ['admin', 'administrator'].includes(user.value?.role))
@@ -26,30 +27,34 @@ const passwordChangeTarget = computed(() => ({
 
 function closeAccountMenu(event) {
   if (!event?.target?.closest?.('.app-account')) accountMenuOpen.value = false
+  if (!event?.target?.closest?.('.app-tools')) toolsMenuOpen.value = false
 }
 
 function closeMobilePanels() {
   navigationOpen.value = false
   searchOpen.value = false
   accountMenuOpen.value = false
+  toolsMenuOpen.value = false
 }
 
 function toggleNavigation() {
   navigationOpen.value = !navigationOpen.value
   searchOpen.value = false
   accountMenuOpen.value = false
+  toolsMenuOpen.value = false
 }
 
 async function openSearch() {
   searchOpen.value = true
   navigationOpen.value = false
   accountMenuOpen.value = false
+  toolsMenuOpen.value = false
   await nextTick()
   document.getElementById('global-player-search')?.focus()
 }
 
 function handleKeydown(event) {
-  if (event.key === 'Escape' && (navigationOpen.value || searchOpen.value)) closeMobilePanels()
+  if (event.key === 'Escape' && (navigationOpen.value || searchOpen.value || toolsMenuOpen.value)) closeMobilePanels()
 }
 
 async function signOut() {
@@ -138,11 +143,25 @@ watch(() => route.fullPath, closeMobilePanels)
         <RouterLink to="/" @click="closeMobilePanels">Home</RouterLink>
         <RouterLink to="/schedule" @click="closeMobilePanels">Schedule</RouterLink>
         <RouterLink to="/standings" @click="closeMobilePanels">Standings</RouterLink>
-        <RouterLink to="/season-review" @click="closeMobilePanels">Season Review</RouterLink>
         <RouterLink v-if="postseason.active" to="/postseason" @click="closeMobilePanels">Postseason</RouterLink>
         <RouterLink to="/explore" @click="closeMobilePanels">Stat Explorer</RouterLink>
-        <RouterLink to="/compare" @click="closeMobilePanels">Compare</RouterLink>
         <RouterLink to="/teams" @click="closeMobilePanels">Teams</RouterLink>
+        <div class="app-tools">
+          <button
+            type="button"
+            class="app-tools__trigger"
+            :class="{ 'is-active': route.path === '/compare' || route.path === '/season-review' }"
+            :aria-expanded="toolsMenuOpen"
+            aria-controls="tools-menu"
+            @click.stop="toolsMenuOpen = !toolsMenuOpen"
+          >
+            Tools <span aria-hidden="true">⌄</span>
+          </button>
+          <div v-if="toolsMenuOpen" id="tools-menu" class="app-tools__menu">
+            <RouterLink to="/compare" @click="closeMobilePanels">Compare</RouterLink>
+            <RouterLink to="/season-review" @click="closeMobilePanels">Season Review</RouterLink>
+          </div>
+        </div>
       </nav>
       <div class="app-account">
         <RouterLink v-if="!user" :to="signInTarget" @click="closeMobilePanels">Sign in</RouterLink>
