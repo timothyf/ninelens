@@ -11,6 +11,7 @@ const ALLOWED_PATHS = [
   /^\/api\/v1\/teams\/\d+\/roster$/,
   /^\/api\/v1\/people(?:\/\d+)?$/,
   /^\/api\/v1\/people\/\d+\/stats$/,
+  /^\/api\/v1\/awards\/(?:ALMVP|NLMVP|ALCY|NLCY|ALGG|NLGG)\/recipients$/,
   /^\/api\/v1\/standings$/,
   /^\/api\/v1\/transactions$/,
 ]

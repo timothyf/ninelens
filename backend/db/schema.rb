@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_26_010000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_26_020000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -1005,6 +1005,30 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_26_010000) do
     t.index ["season", "schedule_type"], name: "index_schedules_on_season_and_schedule_type"
     t.index ["source_key"], name: "index_schedules_on_source_key", unique: true
     t.check_constraint "end_date >= start_date", name: "schedules_valid_date_range"
+  end
+
+  create_table "season_award_syncs", force: :cascade do |t|
+    t.integer "season", null: false
+    t.datetime "last_checked_at"
+    t.datetime "last_synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["season"], name: "index_season_award_syncs_on_season", unique: true
+  end
+
+  create_table "season_awards", force: :cascade do |t|
+    t.integer "season", null: false
+    t.string "award_id", null: false
+    t.string "award_name", null: false
+    t.bigint "player_mlb_id", null: false
+    t.string "player_name", null: false
+    t.bigint "team_mlb_id"
+    t.string "position"
+    t.date "awarded_on"
+    t.string "source_url", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["season", "award_id", "player_mlb_id"], name: "idx_season_awards_unique_recipient", unique: true
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|

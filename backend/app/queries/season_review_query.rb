@@ -28,7 +28,7 @@ class SeasonReviewQuery
       leaders: leaders,
       postseason_teams: postseason_teams,
       world_series: world_series,
-      awards_available: false
+      awards_available: SeasonAward.where(season: season).exists?
     }
   end
 
