@@ -13,7 +13,7 @@ class MlbSeasonAwardsSync
   def call
     return failure("Season must be a valid year") unless season && season > 1800 && season <= ApplicationCalendar.current_date.year
 
-    state = SeasonAwardSync.create_or_find_by!(season: season)
+    state = SeasonAwardSync.find_or_create_by!(season: season)
     state.with_lock do
       next success("Season awards are current", refreshed: false) unless force || refresh_due?(state)
 

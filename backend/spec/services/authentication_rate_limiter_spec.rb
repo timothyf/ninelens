@@ -29,6 +29,19 @@ RSpec.describe AuthenticationRateLimiter do
     expect(record.identifier_digest).to match(/\A[0-9a-f]{64}\z/)
   end
 
+  it "reuses an existing counter without attempting another insert" do
+    described_class.consume(action: :login_ip, identifier: "203.0.113.42")
+
+    inserts = []
+    subscriber = ->(*, payload) { inserts << payload[:sql] if payload[:sql].include?('INSERT INTO "authentication_rate_limits"') }
+    result = ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+      described_class.consume(action: :login_ip, identifier: "203.0.113.42")
+    end
+
+    expect(result.allowed).to be(true)
+    expect(inserts).to be_empty
+  end
+
   it "opens a new window after the previous window expires" do
     described_class.consume(action: :login_ip, identifier: "203.0.113.42")
     described_class.consume(action: :login_ip, identifier: "203.0.113.42")

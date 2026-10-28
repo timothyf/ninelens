@@ -21,11 +21,16 @@ RSpec.describe MlbSeasonAwardsSync, type: :service do
     end
 
     first = described_class.call(season: season)
-    second = described_class.call(season: season)
+    inserts = []
+    subscriber = ->(*, payload) { inserts << payload[:sql] if payload[:sql].include?('INSERT INTO "season_award_syncs"') }
+    second = ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+      described_class.call(season: season)
+    end
 
     expect(first[:success]).to be(true)
     expect(first.dig(:data, :award_count)).to eq(6)
     expect(second.dig(:data, :refreshed)).to be(false)
+    expect(inserts).to be_empty
     expect(SeasonAward.where(season: season).pluck(:award_id)).to match_array(SeasonAward::AWARD_IDS)
     expect(MlbStatsApiClient).to have_received(:get_json).exactly(6).times
   end

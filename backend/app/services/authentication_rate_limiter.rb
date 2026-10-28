@@ -54,7 +54,7 @@ class AuthenticationRateLimiter
   attr_reader :action, :identifier
 
   def find_or_create_rate_limit(now)
-    AuthenticationRateLimit.create_or_find_by!(
+    AuthenticationRateLimit.find_or_create_by!(
       action: action.to_s,
       identifier_digest: self.class.identifier_digest(identifier)
     ) do |rate_limit|
