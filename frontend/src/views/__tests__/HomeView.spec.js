@@ -1,4 +1,5 @@
 import { flushPromises, mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import HomeView from '../HomeView.vue'
@@ -103,6 +104,8 @@ const RouterLink = {
 
 describe('HomeView', () => {
   beforeEach(() => {
+    sessionStorage.removeItem('ninelens-home-v1:all')
+    sessionStorage.removeItem('ninelens-home-v1:national')
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue(dashboardPayload),
@@ -110,6 +113,27 @@ describe('HomeView', () => {
   })
 
   afterEach(() => vi.unstubAllGlobals())
+
+  it('shows a recent briefing immediately while refreshing it', async () => {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Detroit', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(new Date())
+    const date = Object.fromEntries(parts.map(({ type, value }) => [type, value]))
+    const today = `${date.year}-${date.month}-${date.day}`
+    const currentPayload = { data: { ...dashboardPayload.data, as_of: today } }
+    fetch.mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue(currentPayload) })
+
+    const first = mount(HomeView, { global: { components: { RouterLink } } })
+    await flushPromises()
+    first.unmount()
+
+    fetch.mockReturnValueOnce(new Promise(() => {}))
+    const second = mount(HomeView, { global: { components: { RouterLink } } })
+    await nextTick()
+    expect(second.find('[data-test="home-loading"]').exists()).toBe(false)
+    expect(second.get('[data-test="home-leaders"]').text()).toContain('Aaron Judge')
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
 
   it('presents the daily slate, league leaders, team pulse, and exploration links', async () => {
     Object.values(dashboardPayload.data.team_pulse).flat().forEach((entry) => { entry.team.logo_url = "/DET.svg" })

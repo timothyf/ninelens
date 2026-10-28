@@ -97,16 +97,17 @@ class HomeSnapshotQuery
   def leaderboard_rows(definition)
     candidates = leaderboard_groups.filter_map do |rows|
       first = rows.first
-      next unless first.stat_type.category == definition.fetch(:category)
+      next unless first[4] == definition.fetch(:category)
 
       value = stat_value(rows, definition.fetch(:aliases))
       next if value.nil?
-      next unless league_eligible?(first)
+      player = leaderboard_players[first[0]]
+      next unless player && league_eligible?(first, player)
 
       {
-        player: serialize_player(first.player),
-        team: serialize_leader_team(first),
-        scope: { type: first.scope_type, key: first.scope_key },
+        player: serialize_player(player),
+        team: serialize_leader_team(first, player),
+        scope: { type: first[2], key: first[3] },
         stats: {
           definition.fetch(:key) => value,
           "atBats" => stat_value(rows, %w[atBats AB]),
@@ -122,20 +123,38 @@ class HomeSnapshotQuery
     sort_rows(deduplicated, definition)
   end
 
-  def league_eligible?(stat)
+  def league_eligible?(stat, player)
     return true if league.nil?
 
-    MlbRosterBatchSync::TEAM_IDS_BY_LEAGUE.fetch(league).include?(stat.team&.mlb_id || stat.player.team&.mlb_id)
+    team = leaderboard_teams[stat[1] || player.team_id]
+    MlbRosterBatchSync::TEAM_IDS_BY_LEAGUE.fetch(league).include?(team&.mlb_id)
   end
 
   def leaderboard_groups
-    @leaderboard_groups ||= PlayerSeasonStat
-      .joins(:stat_type)
-      .where(season: season, stat_types: { name: leaderboard_stat_names })
-      .includes(:stat_type, :player, :team)
-      .to_a
-      .group_by { |row| [ row.player_id, row.team_id, row.scope_type, row.scope_key, row.stat_type.category ] }
-      .values
+    @leaderboard_groups ||= begin
+      rows = PlayerSeasonStat
+        .joins(:stat_type)
+        .where(season: season, stat_types: { name: leaderboard_stat_names })
+        .pluck(:player_id, :team_id, :scope_type, :scope_key, "stat_types.category", "stat_types.name", :value)
+      @leaderboard_player_ids = rows.map(&:first).uniq
+      @leaderboard_team_ids = rows.map { |row| row[1] }.compact.uniq
+      rows.group_by { |row| row.first(5) }.values
+    end
+  end
+
+  def leaderboard_players
+    @leaderboard_players ||= begin
+      leaderboard_groups
+      Player.where(id: @leaderboard_player_ids).select(:id, :mlb_id, :first_name, :last_name, :team_id).index_by(&:id)
+    end
+  end
+
+  def leaderboard_teams
+    @leaderboard_teams ||= begin
+      leaderboard_groups
+      team_ids = @leaderboard_team_ids + leaderboard_players.values.map(&:team_id)
+      Team.where(id: team_ids.uniq).select(:id, :mlb_id, :name, :abbreviation).index_by(&:id)
+    end
   end
 
   def leaderboard_stat_names
@@ -147,8 +166,8 @@ class HomeSnapshotQuery
 
   def stat_value(rows, aliases)
     aliases.each do |name|
-      row = rows.find { |candidate| candidate.stat_type.name == name }
-      return row.value.to_s("F") if row
+      row = rows.find { |candidate| candidate[5] == name }
+      return row[6].to_s("F") if row
     end
     nil
   end
@@ -176,13 +195,13 @@ class HomeSnapshotQuery
     }
   end
 
-  def serialize_leader_team(stat)
-    team = stat.team || stat.player.team
+  def serialize_leader_team(stat, player)
+    team = leaderboard_teams[stat[1] || player.team_id]
     {
       id: team&.id,
       mlb_id: team&.mlb_id,
-      name: team&.name || stat.scope_key,
-      abbreviation: team&.abbreviation || stat.scope_key
+      name: team&.name || stat[3],
+      abbreviation: team&.abbreviation || stat[3]
     }
   end
 
