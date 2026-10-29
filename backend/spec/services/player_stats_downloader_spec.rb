@@ -2,6 +2,20 @@ require "rails_helper"
 require "csv"
 
 RSpec.describe PlayerStatsDownloader, type: :service do
+  it "uses the FanGraphs API client for batting and fielding leaderboards" do
+    downloader = described_class.new(category: "batting", start_year: 2026, end_year: 2026)
+    requests = []
+    allow(FangraphsApiClient).to receive(:get_json) do |url, **options|
+      requests << [ URI(url), options ]
+      { "data" => [] }
+    end
+
+    expect(downloader.send(:fetch_fangraphs_values, 2026)).to eq({})
+    expect(downloader.send(:fetch_fangraphs_fielding_values, 2026)).to eq({})
+    expect(requests.map { |uri, _| URI.decode_www_form(uri.query).to_h.fetch("stats") }).to eq(%w[bat fld])
+    expect(requests.map { |uri, _| uri.path }).to eq([ "/api/leaders/major-league/data" ] * 2)
+  end
+
   it "does not require the batting WAR setting for pitching imports" do
     downloader = described_class.new(category: "pitching", start_year: 2026, end_year: 2026)
 

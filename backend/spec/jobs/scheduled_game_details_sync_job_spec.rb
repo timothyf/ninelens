@@ -30,6 +30,16 @@ RSpec.describe ScheduledGameDetailsSyncJob, type: :job do
     expect { described_class.perform_now }.to have_enqueued_job(MlbGameDetailsSyncJob)
   end
 
+  it "runs on the due minute even when the previous launch took part of a second" do
+    create_game(mlb_id: 810_006, official_date: Date.new(2026, 7, 15))
+    AutomationSetting.game_details_sync.update!(
+      interval_minutes: 10,
+      last_started_at: 10.minutes.ago + 0.75
+    )
+
+    expect { described_class.perform_now }.to have_enqueued_job(MlbGameDetailsSyncJob)
+  end
+
   it "does not start a run when disabled" do
     AutomationSetting.game_details_sync.update!(enabled: false)
     create_game(mlb_id: 810_002, official_date: Date.new(2026, 7, 15))

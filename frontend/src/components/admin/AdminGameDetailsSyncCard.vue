@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 
-import { formatCount, formatDate } from '../../utils/adminFormatting'
+import { formatCount, formatDate, formatTimestamp } from '../../utils/adminFormatting'
 import {
   analyticsRefreshClass,
   analyticsRefreshMessage,
@@ -113,6 +113,10 @@ defineExpose({
       {{ starting ? 'Starting synchronization…' : active ? 'Synchronization in progress…' : 'Synchronize game details' }}
     </button>
 
+    <p v-if="task" class="game-details-last-run" data-test="game-details-last-run">
+      {{ task.initiatedBy ? `Started by ${task.initiatedBy.name || task.initiatedBy.email}` : 'Automatic run' }} ·
+      {{ formatTimestamp(task.createdAt) }} · {{ task.status }}
+    </p>
     <AdminSyncProgress
       v-if="task"
       :task="task"
@@ -153,4 +157,5 @@ defineExpose({
 .game-details-auto-sync-interval button { padding: .45rem .7rem; border: 0; border-radius: 8px; color: #fff; background: #20543c; font: inherit; font-weight: 800; cursor: pointer; }
 .game-details-auto-sync-interval button:disabled { opacity: .5; cursor: not-allowed; }
 .game-details-auto-sync-interval small { flex-basis: 100%; color: #697784; }
+.game-details-last-run { margin: .8rem 0 0; color: #53616b; font-size: .76rem; }
 </style>

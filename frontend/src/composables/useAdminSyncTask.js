@@ -123,6 +123,23 @@ export function useAdminSyncTask({ taskName, normalizeEstimate, messages }) {
     }
   }
 
+  async function loadLatestTask() {
+    requestError.value = ''
+    try {
+      const query = new URLSearchParams({ task_name: taskName })
+      const payload = await request(
+        `/api/admin/task_runs?${query}`,
+        { headers: adminRequestHeaders({ Accept: 'application/json' }) },
+        messages.loadRequest,
+      )
+      const latestTask = payload?.data?.[0]
+      return latestTask ? replaceTask(latestTask) : null
+    } catch (caught) {
+      requestError.value = caught.message || messages.load
+      return null
+    }
+  }
+
   async function cancel() {
     if (!task.value?.id || !active.value) return null
     requestError.value = ''
@@ -153,5 +170,6 @@ export function useAdminSyncTask({ taskName, normalizeEstimate, messages }) {
     cancel,
     poll,
     loadActiveTask,
+    loadLatestTask,
   }
 }

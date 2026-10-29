@@ -17,6 +17,7 @@ const adminTaskLastResult = ref(null)
 const startGameDetailsSync = vi.fn()
 const cancelGameDetailsSync = vi.fn()
 const loadActiveGameDetailsSync = vi.fn()
+const loadLatestGameDetailsSync = vi.fn()
 const estimateGameDetailsSync = vi.fn()
 const gameDetailsTask = ref(null)
 const startPitchDataSync = vi.fn()
@@ -205,6 +206,7 @@ vi.mock('../../composables/useGameDetailsSync', () => ({
     estimate: estimateGameDetailsSync,
     cancel: cancelGameDetailsSync,
     loadActiveTask: loadActiveGameDetailsSync,
+    loadLatestTask: loadLatestGameDetailsSync,
   }),
 }))
 
@@ -291,6 +293,7 @@ describe('AdminView', () => {
     startGameDetailsSync.mockReset().mockResolvedValue({ id: 11, status: 'queued' })
     cancelGameDetailsSync.mockReset().mockResolvedValue({ id: 11, status: 'running', cancelRequested: true })
     loadActiveGameDetailsSync.mockReset().mockResolvedValue(null)
+    loadLatestGameDetailsSync.mockReset().mockResolvedValue(null)
     estimateGameDetailsSync.mockReset().mockResolvedValue({
       gameCount: 25,
       estimatedSeconds: 1326,

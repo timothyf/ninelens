@@ -1,6 +1,8 @@
-# NineLens MLB relay
+# NineLens data relays
 
 This Netlify Function provides a private egress path from NineLens to the MLB Stats API. It is not a general-purpose proxy: it accepts only authenticated `GET` requests, fixes the upstream host to `statsapi.mlb.com`, and allowlists the MLB paths NineLens uses.
+
+The `fangraphs-relay` function uses the same shared secret and forwards only `GET` requests to the FanGraphs major-league leaders API. Player season batting, pitching, and fielding leaderboard requests use it. RosterResource payroll page requests remain direct.
 
 ## Deploy
 
@@ -30,5 +32,7 @@ This Netlify Function provides a private egress path from NineLens to the MLB St
    ```
 
 6. Rebuild and recreate the NineLens backend container. The frontend does not receive either secret.
+
+When `MLB_STATS_API_RELAY_URL` ends in `/mlb-relay`, the backend automatically sends FanGraphs leaderboard requests to the sibling `/fangraphs-relay` endpoint using `MLB_STATS_API_RELAY_TOKEN`. For a different deployment layout, set `FANGRAPHS_API_RELAY_URL` to the full HTTPS function URL and optionally set `FANGRAPHS_API_RELAY_TOKEN` if it uses a different secret.
 
 Run `npm test` from this directory to test authentication, path validation, and upstream forwarding locally.

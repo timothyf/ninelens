@@ -122,4 +122,19 @@ describe('useGameDetailsSync', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
     wrapper.unmount()
   })
+
+  it('loads the latest completed task so an automatic run is visible after it finishes', async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: [taskPayload({ status: 'completed', created_at: '2026-10-29T01:30:00Z' })] }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { api, wrapper } = mountComposable()
+
+    await api.loadLatestTask()
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/admin/task_runs?task_name=mlb_game_details_sync', expect.any(Object))
+    expect(api.task.value).toMatchObject({ status: 'completed', createdAt: '2026-10-29T01:30:00Z' })
+    wrapper.unmount()
+  })
 })

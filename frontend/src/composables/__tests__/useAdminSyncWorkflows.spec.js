@@ -15,6 +15,7 @@ function syncService(task = ref(null)) {
     estimate: vi.fn(),
     cancel: vi.fn().mockResolvedValue({ cancelRequested: true }),
     loadActiveTask: vi.fn().mockResolvedValue(null),
+    loadLatestTask: vi.fn().mockResolvedValue(null),
   }
 }
 
@@ -216,7 +217,7 @@ describe('useAdminSyncWorkflows', () => {
   it('recovers active tasks and refreshes overview when either workflow finishes', async () => {
     const { wrapper, loadOverview } = mountComposable({ gameDetailsSync, pitchDataSync, rosterSync })
     await flushPromises()
-    expect(gameDetailsSync.loadActiveTask).toHaveBeenCalledOnce()
+    expect(gameDetailsSync.loadLatestTask).toHaveBeenCalledOnce()
     expect(pitchDataSync.loadActiveTask).toHaveBeenCalledOnce()
     expect(rosterSync.loadActiveTask).toHaveBeenCalledOnce()
 
@@ -240,6 +241,21 @@ describe('useAdminSyncWorkflows', () => {
     wrapper.unmount()
   })
 
+  it('refreshes the latest game-detail task while the Admin page stays open', async () => {
+    const interval = vi.spyOn(window, 'setInterval')
+    const { wrapper } = mountComposable({ gameDetailsSync, pitchDataSync, rosterSync })
+    await flushPromises()
+
+    const refresh = interval.mock.calls.find(([, milliseconds]) => milliseconds === 30_000)?.[0]
+    expect(refresh).toBeTypeOf('function')
+    refresh()
+    await flushPromises()
+
+    expect(gameDetailsSync.loadLatestTask).toHaveBeenCalledTimes(2)
+    wrapper.unmount()
+    interval.mockRestore()
+  })
+
   it('runs a deferred analytics refresh and reloads its task state', async () => {
     gameDetailsSync.task.value = {
       status: 'completed',
@@ -254,7 +270,7 @@ describe('useAdminSyncWorkflows', () => {
       end_date: '2026-05-15',
     })
     expect(loadOverview).toHaveBeenCalledOnce()
-    expect(gameDetailsSync.loadActiveTask).toHaveBeenCalledTimes(2)
+    expect(gameDetailsSync.loadLatestTask).toHaveBeenCalledTimes(2)
     wrapper.unmount()
   })
 })

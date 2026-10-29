@@ -286,18 +286,7 @@ class PlayerStatsDownloader
     }.to_query
     uri.query = query
 
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    http.open_timeout = service_config.fetch(:timeout_seconds).to_i
-    http.read_timeout = service_config.fetch(:timeout_seconds).to_i
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request["User-Agent"] = service_config.fetch(:user_agent)
-    request["Accept"] = "application/json,text/plain,*/*"
-
-    response = http.request(request)
-    raise "HTTP #{response.code}: #{response.message}" unless response.is_a?(Net::HTTPSuccess)
-
-    payload = JSON.parse(response.body)
+    payload = FangraphsApiClient.get_json(uri.to_s, timeout_seconds: service_config.fetch(:timeout_seconds), user_agent: service_config.fetch(:user_agent))
     Array(payload["data"]).each_with_object({}) do |row, values|
       mlb_id = Integer(row["xMLBAMID"], exception: false)
       next unless mlb_id
@@ -363,18 +352,8 @@ class PlayerStatsDownloader
       pagenum: 1
     }.to_query
 
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    http.open_timeout = service_config.fetch(:timeout_seconds).to_i
-    http.read_timeout = service_config.fetch(:timeout_seconds).to_i
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request["User-Agent"] = service_config.fetch(:user_agent)
-    request["Accept"] = "application/json,text/plain,*/*"
-
-    response = http.request(request)
-    raise "HTTP #{response.code}: #{response.message}" unless response.is_a?(Net::HTTPSuccess)
-
-    rows_by_player = Array(JSON.parse(response.body)["data"]).each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |row, values|
+    payload = FangraphsApiClient.get_json(uri.to_s, timeout_seconds: service_config.fetch(:timeout_seconds), user_agent: service_config.fetch(:user_agent))
+    rows_by_player = Array(payload["data"]).each_with_object(Hash.new { |hash, key| hash[key] = [] }) do |row, values|
       player_id = Integer(row["xMLBAMID"], exception: false)
       position = (row["Position"].presence || row["Pos"]).to_s.strip
       next if player_id.nil? || position.blank?

@@ -5,7 +5,7 @@ class ScheduledGameDetailsSyncJob < ApplicationJob
     setting = AutomationSetting.game_details_sync
     setting.with_lock do
       next unless setting.enabled?
-      next if setting.last_started_at && Time.current < setting.last_started_at + setting.interval_minutes.minutes
+      next if setting.last_started_at && Time.current < setting.last_started_at.beginning_of_minute + setting.interval_minutes.minutes
       AdminTaskRun.active.where(task_name: MlbGameDetailsTaskLauncher::TASK_NAME).find_each do |run|
         AdminTaskRunReconciler.call(run)
       end

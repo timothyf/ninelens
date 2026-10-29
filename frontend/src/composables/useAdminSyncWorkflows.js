@@ -1,4 +1,4 @@
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { useGameDetailsSync } from './useGameDetailsSync'
 import { usePitchDataSync } from './usePitchDataSync'
@@ -14,6 +14,7 @@ import { gameDetailsRefreshParameters } from '../utils/gameDetailsTaskPresentati
 
 const FINISHED_STATUSES = ['completed', 'failed', 'cancelled']
 const ACTIVE_STATUSES = ['queued', 'running']
+const LATEST_GAME_DETAILS_REFRESH_MS = 30_000
 
 export function useAdminSyncWorkflows({
   gameDetailsOptions,
@@ -95,7 +96,14 @@ export function useAdminSyncWorkflows({
     }
   })
 
-  onMounted(() => Promise.all([gameDetailsSync.loadActiveTask(), pitchDataSync.loadActiveTask(), rosterSync.loadActiveTask()]))
+  let latestGameDetailsTimer = null
+  onMounted(() => {
+    Promise.all([gameDetailsSync.loadLatestTask(), pitchDataSync.loadActiveTask(), rosterSync.loadActiveTask()])
+    latestGameDetailsTimer = window.setInterval(() => {
+      if (!gameDetailsSync.active.value && !gameDetailsSync.starting.value) gameDetailsSync.loadLatestTask()
+    }, LATEST_GAME_DETAILS_REFRESH_MS)
+  })
+  onBeforeUnmount(() => window.clearInterval(latestGameDetailsTimer))
 
   watch(
     () => gameDetailsSync.task.value?.status,
@@ -187,7 +195,7 @@ export function useAdminSyncWorkflows({
     const result = await runTask('daily_analytics_refresh', parameters)
     if (result) {
       await loadOverview()
-      await gameDetailsSync.loadActiveTask()
+      await gameDetailsSync.loadLatestTask()
     }
   }
 
