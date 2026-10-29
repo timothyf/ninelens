@@ -17,6 +17,7 @@ import AdminTaskCard from '../components/admin/AdminTaskCard.vue'
 import AdminTaskResult from '../components/admin/AdminTaskResult.vue'
 import AdminUserManagement from '../components/admin/AdminUserManagement.vue'
 import { useAdminSyncWorkflows } from '../composables/useAdminSyncWorkflows'
+import { useGameDetailsAutomation } from '../composables/useGameDetailsAutomation'
 import { useAdminTask } from '../composables/useAdminTask'
 import { usePitchDataImport } from '../composables/usePitchDataImport'
 import { usePlayerSeasonStatsDownload } from '../composables/usePlayerSeasonStatsDownload'
@@ -167,6 +168,21 @@ const {
   confirmRosterSync,
 } = useAdminSyncWorkflows({ gameDetailsOptions, pitchOptions, rosterOptions, loadOverview, runTask })
 const {
+  enabled: autoGameDetailsSyncEnabled,
+  intervalMinutes: autoGameDetailsSyncIntervalMinutes,
+  loading: autoGameDetailsSyncLoading,
+  saving: autoGameDetailsSyncSaving,
+  error: autoGameDetailsSyncError,
+  load: loadAutoGameDetailsSync,
+  setEnabled: setAutoGameDetailsSyncEnabled,
+  setIntervalMinutes: setAutoGameDetailsSyncIntervalMinutes,
+} = useGameDetailsAutomation()
+
+function toggleAutoGameDetailsSync() {
+  if (autoGameDetailsSyncEnabled.value === null || autoGameDetailsSyncSaving.value) return
+  return setAutoGameDetailsSyncEnabled(!autoGameDetailsSyncEnabled.value)
+}
+const {
   downloading: statsDownloading,
   error: statsDownloadError,
   summary: statsDownloadSummary,
@@ -256,6 +272,7 @@ const headerDeployment = computed(() => {
 onMounted(() =>
   Promise.all([
     loadOverview(),
+    loadAutoGameDetailsSync(),
     loadLatestTask?.(),
     loadLatestStatsDownload?.(),
     loadLatestStatsImport?.(),
@@ -608,7 +625,14 @@ async function closeDatabaseDetails() {
           :any-action-running="anyActionRunning"
           :running-task="runningTask"
           :error="gameDetailsSyncError"
+          :auto-sync-enabled="autoGameDetailsSyncEnabled"
+          :auto-sync-interval-minutes="autoGameDetailsSyncIntervalMinutes"
+          :auto-sync-loading="autoGameDetailsSyncLoading"
+          :auto-sync-saving="autoGameDetailsSyncSaving"
+          :auto-sync-error="autoGameDetailsSyncError"
           @submit="requestGameDetailsSync"
+          @toggle-auto-sync="toggleAutoGameDetailsSync"
+          @save-auto-sync-interval="setAutoGameDetailsSyncIntervalMinutes"
           @cancel-active="cancelActiveGameDetailsSync"
           @refresh-analytics="refreshGameDetailsAnalytics"
         />

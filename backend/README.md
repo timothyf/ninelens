@@ -26,6 +26,8 @@ bin/jobs start
 
 Alternatively, set `SOLID_QUEUE_IN_PUMA=1` to run the worker in Puma.
 
+In production, Solid Queue checks for game-detail synchronization every minute. The Admin page controls whether automatic synchronization is enabled and its interval, initially 15 minutes and configurable from 5 minutes to 24 hours. The interval is measured from the last automatic task launch; changing it takes effect on the next check without a redeploy. A scheduled check uses the current `America/Detroit` date, skips when no stored games exist for that date or a game-detail synchronization is already active, and creates a normal tracked Admin task when work is available. Turning the switch off prevents future automatic tasks; it does not cancel a task already running. Switch changes are recorded in the audit log. This scheduler requires the production Solid Queue process to be running.
+
 Before exposing a new production database to network traffic, bootstrap the first human administrator from a private deployment shell:
 
 ```sh

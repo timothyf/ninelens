@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_27_010000) do
+ActiveRecord::Schema[7.1].define(version: 2026_10_29_000100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -119,6 +119,17 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_27_010000) do
     t.index ["action", "identifier_digest"], name: "idx_auth_rate_limits_action_identifier", unique: true
     t.index ["window_started_at"], name: "index_authentication_rate_limits_on_window_started_at"
     t.check_constraint "attempt_count >= 0", name: "authentication_rate_limits_nonnegative_attempts"
+  end
+
+  create_table "automation_settings", force: :cascade do |t|
+    t.string "key", null: false
+    t.boolean "enabled", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "interval_minutes", default: 15, null: false
+    t.datetime "last_started_at"
+    t.index ["key"], name: "index_automation_settings_on_key", unique: true
+    t.check_constraint "interval_minutes >= 5 AND interval_minutes <= 1440", name: "automation_settings_valid_interval"
   end
 
   create_table "batter_split_summaries", force: :cascade do |t|

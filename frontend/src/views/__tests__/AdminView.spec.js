@@ -31,6 +31,11 @@ const estimateRosterSync = vi.fn()
 const rosterTask = ref(null)
 const rosterSnapshots = ref([])
 const adminDeployment = ref(null)
+const autoGameDetailsEnabled = ref(true)
+const autoGameDetailsIntervalMinutes = ref(15)
+const setAutoGameDetailsEnabled = vi.fn()
+const setAutoGameDetailsIntervalMinutes = vi.fn()
+const loadAutoGameDetails = vi.fn()
 
 vi.mock('../../composables/useAdminTask', () => ({
   useAdminTask: () => ({
@@ -203,6 +208,19 @@ vi.mock('../../composables/useGameDetailsSync', () => ({
   }),
 }))
 
+vi.mock('../../composables/useGameDetailsAutomation', () => ({
+  useGameDetailsAutomation: () => ({
+    enabled: autoGameDetailsEnabled,
+    intervalMinutes: autoGameDetailsIntervalMinutes,
+    loading: computed(() => false),
+    saving: computed(() => false),
+    error: computed(() => ''),
+    load: loadAutoGameDetails,
+    setEnabled: setAutoGameDetailsEnabled,
+    setIntervalMinutes: setAutoGameDetailsIntervalMinutes,
+  }),
+}))
+
 vi.mock('../../composables/usePitchDataSync', () => ({
   usePitchDataSync: () => ({
     task: computed(() => pitchDataTask.value),
@@ -314,6 +332,47 @@ describe('AdminView', () => {
     rosterTask.value = null
     rosterSnapshots.value = []
     adminDeployment.value = null
+    autoGameDetailsEnabled.value = true
+    autoGameDetailsIntervalMinutes.value = 15
+    loadAutoGameDetails.mockReset().mockResolvedValue()
+    setAutoGameDetailsEnabled.mockReset().mockImplementation(async (enabled) => {
+      autoGameDetailsEnabled.value = enabled
+    })
+    setAutoGameDetailsIntervalMinutes.mockReset().mockImplementation(async (interval) => {
+      autoGameDetailsIntervalMinutes.value = interval
+    })
+  })
+
+  it('shows and updates the automatic game-detail sync switch', async () => {
+    const wrapper = mount(AdminView)
+    const toggle = wrapper.get('[data-test="game-details-auto-sync-switch"]')
+    expect(toggle.attributes('aria-checked')).toBe('true')
+    expect(loadAutoGameDetails).toHaveBeenCalledOnce()
+
+    await toggle.trigger('click')
+    await flushPromises()
+
+    expect(setAutoGameDetailsEnabled).toHaveBeenCalledWith(false)
+    expect(toggle.attributes('aria-checked')).toBe('false')
+  })
+
+  it('saves a new automatic game-detail sync interval', async () => {
+    const wrapper = mount(AdminView)
+    const input = wrapper.get('[data-test="game-details-auto-sync-interval"]')
+    const save = wrapper.get('[data-test="game-details-auto-sync-save-interval"]')
+    expect(input.element.value).toBe('15')
+    expect(save.element.disabled).toBe(true)
+
+    await input.setValue('4')
+    expect(save.element.disabled).toBe(true)
+    await input.setValue('30')
+    expect(save.element.disabled).toBe(false)
+    await save.trigger('click')
+    await flushPromises()
+
+    expect(setAutoGameDetailsIntervalMinutes).toHaveBeenCalledWith(30)
+    expect(input.element.value).toBe('30')
+    expect(save.element.disabled).toBe(true)
   })
 
   it('shows the last deployment date and time from deployment metadata', async () => {
