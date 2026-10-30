@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { API_BASE_URL } from '../config'
 
-const empty = () => ({ season: null, available_seasons: [], games: 0, totals: {}, shutouts: 0, one_run_games: 0, complete_games: 0, fastest_pitches: [], top_exit_velocities: [], longest_balls: [], leaders: [], postseason_teams: [], world_series: { teams: [], champion: null }, awards_available: false })
+const empty = () => ({ season: null, available_seasons: [], games: 0, totals: {}, shutouts: 0, one_run_games: 0, complete_games: 0, fastest_pitches: [], top_exit_velocities: [], longest_balls: [], leaders: [], champions: { world: null, leagues: [], divisions: [] }, postseason_teams: [], world_series: { teams: [], champion: null }, awards_available: false })
 
 export function useSeasonReview(season) {
   const review = ref(empty())

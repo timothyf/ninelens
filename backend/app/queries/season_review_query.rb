@@ -31,6 +31,7 @@ class SeasonReviewQuery
       top_exit_velocities: top_exit_velocities,
       longest_balls: longest_balls,
       leaders: leaders,
+      champions: champions,
       postseason_teams: postseason_teams,
       world_series: world_series,
       awards_available: SeasonAward.where(season: season).exists?
@@ -190,6 +191,72 @@ class SeasonReviewQuery
     end.sort_by { |team| [ -team[:wins], team[:name] ] }
   end
 
+  def champions
+    {
+      status: season < ApplicationCalendar.current_date.year ? "historical" : "current",
+      world: series_winner(postseason_games.select { |game| game.game_type == "W" }),
+      leagues: %w[american national].map do |league|
+        teams = division_teams.select { |division| division.fetch(:league) == league }.flat_map { |division| division.fetch(:teams) }
+        { name: league == "american" ? "American League" : "National League",
+          team: series_winner(postseason_games.select { |game| game.game_type == "L" && teams.include?(game.home_team_id) && teams.include?(game.away_team_id) }) }
+      end,
+      divisions: division_teams.map do |division|
+        { name: division.fetch(:name), team: division_winner(division) }
+      end
+    }
+  end
+
+  def division_teams
+    @division_teams ||= StandingsSnapshotQuery::DIVISIONS.map do |division|
+      division.slice(:name, :league).merge(teams: Team.where(mlb_id: division.fetch(:team_mlb_ids)).pluck(:id))
+    end
+  end
+
+  def division_winner(division)
+    return unless games.any?
+    return unless regular_season_complete?
+
+    rows = division.fetch(:teams).filter_map do |team_id|
+      played = games.select { |game| game.home_team_id == team_id || game.away_team_id == team_id }
+      next if played.empty?
+
+      wins = played.count do |game|
+        team_id == game.home_team_id ? game.home_score > game.away_score : game.away_score > game.home_score
+      end
+      [team_id, wins, played.length]
+    end
+    return if rows.empty?
+
+    ranked = rows.sort_by { |team_id, wins, played| [-(wins.to_f / played), -wins, team_id] }
+    return if ranked.second && ranked.first[1].to_f / ranked.first[2] == ranked.second[1].to_f / ranked.second[2]
+
+    winner = ranked.first
+    team_payload(Team.find(winner.first))
+  end
+
+  def regular_season_complete?
+    return @regular_season_complete if defined?(@regular_season_complete)
+
+    @regular_season_complete = season < ApplicationCalendar.current_date.year ||
+      !Game.joins(:schedule).where(schedules: { season: season }, game_type: "R")
+        .where.not(status: %w[final canceled cancelled]).exists?
+  end
+
+  def series_winner(series)
+    wins = series.each_with_object(Hash.new(0)) do |game, counts|
+      team_id = game.home_score > game.away_score ? game.home_team_id : game.away_team_id
+      counts[team_id] += 1
+    end
+    team_id, count = wins.max_by { |_id, total| total }
+    return unless count.to_i >= 4
+
+    team_payload(Team.find(team_id))
+  end
+
+  def team_payload(team)
+    { id: team.id, name: team.name, abbreviation: team.abbreviation, logo_url: team.logo_url }
+  end
+
   def world_series
     series = postseason_games.select { |game| game.game_type == "W" }
     wins = Hash.new(0)
@@ -197,7 +264,7 @@ class SeasonReviewQuery
       winner = game.home_score > game.away_score ? game.home_team : game.away_team
       wins[winner.id] += 1
     end
-    champion_id = wins.max_by { |_id, count| count }&.first
+    champion_id = wins.max_by { |_id, count| count }&.first if wins.values.max.to_i >= 4
     { teams: series.flat_map { |game| [ game.home_team, game.away_team ] }.uniq(&:id).map(&:team_name), champion: series.flat_map { |game| [ game.home_team, game.away_team ] }.uniq(&:id).find { |team| team.id == champion_id }&.team_name }
   end
 end

@@ -1,6 +1,42 @@
 require "rails_helper"
 
 RSpec.describe SeasonReviewQuery do
+  it "shows completed world, league, and division champions without crowning an unfinished series" do
+    al_east = create_team(mlb_id: 110)
+    al_rival = create_team(mlb_id: 111)
+    nl_east = create_team(mlb_id: 144)
+    nl_rival = create_team(mlb_id: 146)
+    schedule = create_schedule(season: 2025)
+
+    3.times do |index|
+      create_game(schedule: schedule, home_team: al_east, away_team: al_rival,
+        official_date: Date.new(2025, 7, index + 1), status: "final", home_score: 5, away_score: 2)
+      create_game(schedule: schedule, home_team: nl_east, away_team: nl_rival,
+        official_date: Date.new(2025, 7, index + 1), status: "final", home_score: 5, away_score: 2)
+    end
+    4.times do |index|
+      create_game(schedule: schedule, home_team: al_east, away_team: al_rival, game_type: "L",
+        official_date: Date.new(2025, 10, index + 1), status: "final", home_score: 5, away_score: 2)
+      create_game(schedule: schedule, home_team: nl_east, away_team: nl_rival, game_type: "L",
+        official_date: Date.new(2025, 10, index + 1), status: "final", home_score: 5, away_score: 2)
+    end
+    3.times do |index|
+      create_game(schedule: schedule, home_team: al_east, away_team: nl_east, game_type: "W",
+        official_date: Date.new(2025, 10, index + 10), status: "final", home_score: 5, away_score: 2)
+    end
+
+    query = described_class.new(season: 2025)
+    champions = query.send(:champions)
+    expect(champions[:world]).to be_nil
+    expect(champions[:leagues].map { |row| row.dig(:team, :name) }).to eq([al_east.name, nl_east.name])
+    expect(champions[:divisions].find { |row| row[:name] == "AL East" }.dig(:team, :name)).to eq(al_east.name)
+    expect(query.send(:world_series)[:champion]).to be_nil
+
+    create_game(schedule: schedule, home_team: al_east, away_team: nl_east, game_type: "W",
+      official_date: Date.new(2025, 10, 13), status: "final", home_score: 5, away_score: 2)
+    expect(described_class.new(season: 2025).send(:champions)[:world][:name]).to eq(al_east.name)
+  end
+
   it "shows only qualified batting average and ERA leaders, including combined team opportunities" do
     home = create_team
     away = create_team
