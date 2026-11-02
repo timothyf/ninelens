@@ -99,8 +99,7 @@ class MlbRosterSnapshotSync
         position_code: position["abbreviation"].presence || position["code"],
         position_name: position["name"],
         status_code: status["code"],
-        status_description: status["description"],
-        raw_data: entry
+        status_description: status["description"]
       )
     end
   end

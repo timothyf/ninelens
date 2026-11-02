@@ -88,8 +88,7 @@ class MlbTradeImporter
           from_team_mlb_id: integer_id(from_team["id"]),
           from_team_name: from_team["name"],
           to_team_mlb_id: integer_id(to_team["id"]),
-          to_team_name: to_team["name"],
-          raw_data: transaction
+          to_team_name: to_team["name"]
         )
         participant.save!
       end

@@ -36,7 +36,9 @@ RSpec.describe MlbRosterSnapshotSync do
     expect(team.roster_snapshots.pluck(:roster_type)).to contain_exactly("40Man", "active")
     expect(TeamMembership.count).to eq(0)
 
-    active_entry = team.roster_snapshots.find_by!(roster_type: "active").roster_snapshot_players.first
+    active_snapshot = team.roster_snapshots.find_by!(roster_type: "active")
+    expect(active_snapshot.raw_data).to eq(active_payload)
+    active_entry = active_snapshot.roster_snapshot_players.first
     expect(active_entry).to have_attributes(
       player_id: existing_player.id,
       mlb_id: 592_450,

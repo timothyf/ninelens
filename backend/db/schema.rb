@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_10_29_000200) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_01_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -948,7 +948,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_29_000200) do
     t.string "position_name"
     t.string "status_code"
     t.string "status_description"
-    t.jsonb "raw_data", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["mlb_id"], name: "index_roster_snapshot_players_on_mlb_id"
@@ -1253,7 +1252,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_10_29_000200) do
     t.string "from_team_name"
     t.integer "to_team_mlb_id"
     t.string "to_team_name"
-    t.jsonb "raw_data", default: {}, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["from_team_id"], name: "index_trade_participants_on_from_team_id"

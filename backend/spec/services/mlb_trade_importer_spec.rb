@@ -44,6 +44,7 @@ RSpec.describe MlbTradeImporter do
       source_name: "MLB Stats API transactions",
       last_synced_at: fetched_at + 1.hour
     )
+    expect(trade.raw_data).to eq(payload)
     expect(trade.trade_participants.find_by!(player_mlb_id: wood.mlb_id)).to have_attributes(
       player: wood,
       player_name: "James Wood",
