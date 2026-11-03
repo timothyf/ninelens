@@ -118,6 +118,7 @@ RSpec.describe DailyAnalyticsRefresh, type: :service do
       .to include(
         "pitches_seen" => 3,
         "plate_appearances" => 1,
+        "at_bats" => 1,
         "barrel_count" => 1,
         "barrel_percentage" => 100.0,
         "average_bat_speed" => 75.6
@@ -165,6 +166,19 @@ RSpec.describe DailyAnalyticsRefresh, type: :service do
       "average_exit_velocity" => 101.0,
       "hard_hit_percentage" => 100.0
     )
+  end
+
+  it "excludes non-at-bat outcomes and incomplete appearances from split at-bats" do
+    create_pitch(at_bat_number: 2, pitch_number: 1, events: "hit_by_pitch")
+    create_pitch(at_bat_number: 3, pitch_number: 1, events: "sac_fly")
+    create_pitch(at_bat_number: 4, pitch_number: 1, events: "walk")
+    create_pitch(at_bat_number: 5, pitch_number: 1, description: "called_strike")
+    create_pitch(at_bat_number: 6, pitch_number: 1, events: "field_out")
+
+    described_class.call(start_date: date, end_date: date, refresh_contextual_benchmarks: false)
+
+    metrics = BatterSplitSummary.find_by!(player: batter, split_type: "pitcher_hand", split_value: "R").metrics
+    expect(metrics).to include("plate_appearances" => 6, "at_bats" => 2, "hits" => 1)
   end
 
   it "includes finalized postseason games in daily analytics" do

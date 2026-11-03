@@ -400,6 +400,7 @@ RSpec.describe "Api::Teams", type: :request do
       source_name: DailyAnalyticsRefresh::SOURCE_NAME,
       metrics: {
         plate_appearances: 8,
+        at_bats: 5,
         pitches_seen: 32,
         hits: 3,
         walks: 1,
@@ -522,6 +523,41 @@ RSpec.describe "Api::Teams", type: :request do
     expect(json_body.dig("data", "performance_dashboard", "recent_form", "7", "sampled_games")).to be >= 1
     expect(json_body.dig("data", "performance_dashboard", "drill_down", "players", "hitters")).not_to be_empty
     expect(json_body.dig("data", "performance_dashboard", "platoon_splits", "offense", "vs_left", "sample_size")).to eq(8.0)
+    expect(json_body.dig("data", "performance_dashboard", "platoon_splits", "offense", "vs_left", "batting_average")).to eq(0.6)
+  end
+
+  it "does not report a batting average from legacy split rows without at-bats" do
+    player = create_player(team: @tigers)
+    BatterSplitSummary.create!(
+      player: player,
+      team: @tigers,
+      split_type: "pitcher_hand",
+      split_value: "L",
+      metric_date: Date.current,
+      source_start_date: Date.current,
+      source_end_date: Date.current,
+      sample_size: 4,
+      calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION,
+      calculated_at: Time.current,
+      source_name: DailyAnalyticsRefresh::SOURCE_NAME,
+      metrics: { plate_appearances: 4, hits: 2, walks: 1 }
+    )
+    TeamDailyMetric.create!(
+      team: @tigers,
+      metric_date: Date.current,
+      source_start_date: Date.current,
+      source_end_date: Date.current,
+      sample_size: 1,
+      calculation_version: DailyAnalyticsRefresh::CALCULATION_VERSION,
+      calculated_at: Time.current,
+      source_name: DailyAnalyticsRefresh::SOURCE_NAME,
+      metrics: { games: 1 }
+    )
+
+    get api_team_path(@tigers), params: { include: "overview" }
+
+    expect(response).to have_http_status(:ok)
+    expect(json_body.dig("data", "performance_dashboard", "platoon_splits", "offense", "vs_left", "batting_average")).to be_nil
   end
 
   it "uses team games and historical team-scoped player stats for team stats" do

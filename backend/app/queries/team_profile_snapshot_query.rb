@@ -1192,6 +1192,7 @@ class TeamProfileSnapshotQuery
       .to_a
 
     plate_appearances = rows.sum { |row| metric_number(row, :plate_appearances) }
+    at_bats = rows.sum { |row| metric_number(row, :at_bats) } if rows.all? { |row| row.metrics.key?("at_bats") }
     pitches_seen = rows.sum { |row| metric_number(row, :pitches_seen) }
     hits = rows.sum { |row| metric_number(row, :hits) }
     walks = rows.sum { |row| metric_number(row, :walks) }
@@ -1204,7 +1205,7 @@ class TeamProfileSnapshotQuery
     {
       sample_size: plate_appearances,
       pitches_seen: pitches_seen,
-      batting_average: ratio_or_nil(hits, [ plate_appearances - walks, 1 ].max),
+      batting_average: ratio_or_nil(hits, at_bats),
       strikeout_rate: ratio_or_nil(strikeouts, plate_appearances),
       walk_rate: ratio_or_nil(walks, plate_appearances),
       hard_hit_rate: ratio_or_nil(hard_hit_sum, batted_balls),

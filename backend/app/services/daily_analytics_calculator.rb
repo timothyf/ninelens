@@ -187,6 +187,7 @@ class DailyAnalyticsCalculator
       {
         pitches_seen: grouped.length,
         plate_appearances: plate_appearance_count(grouped),
+        at_bats: at_bat_count(grouped),
         swings: swings,
         swing_percentage: percent(swings, grouped.length),
         whiffs: grouped.count { |pitch| whiff?(pitch) },
@@ -505,6 +506,13 @@ class DailyAnalyticsCalculator
   def terminal_event_count(grouped, event_names)
     grouped.select { |pitch| event_names.include?(pitch.events.to_s.downcase) }
       .map { |pitch| [ pitch.game_pk, pitch.at_bat_number ] }.uniq.length
+  end
+
+  def at_bat_count(grouped)
+    grouped.select do |pitch|
+      event = pitch.events.to_s.downcase
+      event.present? && !GameSituationalAnalysis::NON_AT_BAT_EVENTS.include?(event)
+    end.map { |pitch| [ pitch.game_pk, pitch.at_bat_number ] }.uniq.length
   end
 
   def swing?(pitch)
