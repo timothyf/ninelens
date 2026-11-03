@@ -49,7 +49,9 @@ export function useAdminTask() {
   })
   const pitchDataMetrics = ref({ earliestGameDate: null, latestGameDate: null, approximateRowCount: 0 })
   const gameDetailsMetrics = ref({
+    totalGameCount: 0,
     synchronizedGameCount: 0,
+    seasons: [],
     earliestGameDate: null,
     latestGameDate: null,
     battingLineCount: 0,
@@ -164,7 +166,13 @@ export function useAdminTask() {
       }
       const gameDetails = payload?.meta?.game_details || {}
       gameDetailsMetrics.value = {
+        totalGameCount: Number(gameDetails.total_game_count || 0),
         synchronizedGameCount: Number(gameDetails.synchronized_game_count || 0),
+        seasons: (gameDetails.seasons || []).map((season) => ({
+          season: Number(season.season),
+          totalGameCount: Number(season.total_game_count || 0),
+          synchronizedGameCount: Number(season.synchronized_game_count || 0),
+        })),
         earliestGameDate: gameDetails.earliest_game_date || null,
         latestGameDate: gameDetails.latest_game_date || null,
         battingLineCount: Number(gameDetails.batting_line_count || 0),

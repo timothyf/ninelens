@@ -329,9 +329,18 @@ module Api
         synchronized = Game.where.not(details_last_synced_at: nil)
         dates = Game.arel_table
         earliest_date, latest_date = synchronized.pick(dates[:official_date].minimum, dates[:official_date].maximum)
+        seasons = Game.joins(:schedule)
+          .group("schedules.season")
+          .pluck("schedules.season", Arel.sql("COUNT(games.id)"), Arel.sql("COUNT(games.details_last_synced_at)"))
+          .sort_by { |season, _total, _synchronized| -season }
+          .map do |season, total, synchronized_count|
+            { season: season, total_game_count: total, synchronized_game_count: synchronized_count }
+          end
 
         {
+          total_game_count: Game.count,
           synchronized_game_count: synchronized.count,
+          seasons: seasons,
           earliest_game_date: earliest_date&.iso8601,
           latest_game_date: latest_date&.iso8601,
           batting_line_count: GamePlayerBattingLine.count,

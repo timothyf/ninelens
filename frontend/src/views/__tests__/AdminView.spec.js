@@ -164,7 +164,12 @@ vi.mock('../../composables/useAdminTask', () => ({
       approximateRowCount: 125000,
     })),
     gameDetailsMetrics: computed(() => ({
+      totalGameCount: 80,
       synchronizedGameCount: 72,
+      seasons: [
+        { season: 2026, totalGameCount: 50, synchronizedGameCount: 44 },
+        { season: 2025, totalGameCount: 30, synchronizedGameCount: 28 },
+      ],
       earliestGameDate: '2026-03-26',
       latestGameDate: '2026-05-31',
       battingLineCount: 2100,
@@ -469,7 +474,10 @@ describe('AdminView', () => {
     expect(wrapper.text()).toContain('MLB schedule synchronization')
     expect(wrapper.get('[data-test="schedule-sync-form"]').text()).toContain('games, teams, venues, statuses, and probable pitchers')
     expect(wrapper.get('[data-test="game-details-sync-form"]').text()).toContain('player game lines, batting orders, substitutions, plate appearances')
-    expect(wrapper.get('[data-test="game-details-coverage"]').text()).toContain('72')
+    expect(wrapper.get('[data-test="game-details-coverage"]').text()).toContain('72 of 80 scheduled games')
+    expect(wrapper.get('[data-test="game-details-season-coverage"]').text()).toContain('44 of 50 scheduled games have game details synchronized in 2026')
+    await wrapper.get('#game-details-coverage-season').setValue('2025')
+    expect(wrapper.get('[data-test="game-details-season-coverage"]').text()).toContain('28 of 30 scheduled games have game details synchronized in 2025')
     expect(wrapper.get('[data-test="game-details-coverage"]').text()).toContain('5,400 plate appearances')
     expect(wrapper.get('[data-test="game-details-coverage"]').text()).toContain('18,000 linked pitches')
     expect(wrapper.text()).toContain('MLB profile synchronization')

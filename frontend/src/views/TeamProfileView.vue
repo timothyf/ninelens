@@ -509,8 +509,12 @@ function scheduleOpponentLogo(game) {
 
 function isToday(value) {
   const now = new Date()
-  const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-')
+  const today = localIsoDate(now)
   return value === today
+}
+
+function localIsoDate(date = new Date()) {
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-')
 }
 
 const dashboard = computed(() => team.value?.performanceDashboard || {})
@@ -746,7 +750,7 @@ async function recommendLineup() {
     const response = await fetch(`/api/teams/${encodeURIComponent(team.value.id)}/lineup_scenarios/recommend`, {
       method: 'POST',
       headers: adminRequestHeaders({ Accept: 'application/json', 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ season: team.value.season, scenario_date: new Date().toISOString().slice(0, 10), evaluation_inputs: { pitcher_hand: lineupEvaluation.pitcherHand }, decision_constraints: decisionConstraints(), decision_weights: Object.fromEntries(Object.entries(lineupDecision.weights).map(([key, value]) => [key, Number(value)])), alternative_count: lineupDecision.alternativeCount }),
+      body: JSON.stringify({ season: team.value.season, scenario_date: localIsoDate(), evaluation_inputs: { pitcher_hand: lineupEvaluation.pitcherHand }, decision_constraints: decisionConstraints(), decision_weights: Object.fromEntries(Object.entries(lineupDecision.weights).map(([key, value]) => [key, Number(value)])), alternative_count: lineupDecision.alternativeCount }),
     })
     const payload = await response.json().catch(() => ({}))
     if (!response.ok) throw new Error((payload.data?.errors || [payload.message || 'Unable to recommend a lineup.']).join(' '))
@@ -769,7 +773,7 @@ async function saveLineupScenario() {
       headers: adminRequestHeaders({ Accept: 'application/json', 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         season: team.value.season,
-        scenario_date: new Date().toISOString().slice(0, 10),
+        scenario_date: localIsoDate(),
         name: lineupName.value.trim() || `${team.value.abbreviation} lineup scenario`,
         notes: lineupNotes.value.trim(),
         evaluation_inputs: {

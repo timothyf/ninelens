@@ -33,7 +33,14 @@ const props = defineProps({
 const emit = defineEmits(['submit', 'cancel-active', 'refresh-analytics', 'toggle-auto-sync', 'save-auto-sync-interval'])
 const syncButton = ref(null)
 const draftIntervalMinutes = ref(null)
+const selectedSeason = ref('')
 watch(() => props.autoSyncIntervalMinutes, (value) => { draftIntervalMinutes.value = value }, { immediate: true })
+watch(() => props.metrics.seasons, (seasons) => {
+  if (!seasons?.some((entry) => entry.season === Number(selectedSeason.value))) {
+    selectedSeason.value = seasons?.[0]?.season ?? ''
+  }
+}, { immediate: true })
+const selectedSeasonMetrics = computed(() => props.metrics.seasons?.find((entry) => entry.season === Number(selectedSeason.value)))
 const intervalValid = computed(() => Number.isInteger(draftIntervalMinutes.value) && draftIntervalMinutes.value >= 5 && draftIntervalMinutes.value <= 1440)
 const intervalChanged = computed(() => draftIntervalMinutes.value !== props.autoSyncIntervalMinutes)
 
@@ -60,11 +67,19 @@ defineExpose({
   >
     <div class="data-coverage" data-test="game-details-coverage">
       <span>Currently stored</span>
-      <dl v-if="metrics.synchronizedGameCount">
-        <div><dt>Games synchronized</dt><dd>{{ formatCount(metrics.synchronizedGameCount) }}</dd></div>
-        <div><dt>Game-date span</dt><dd>{{ formatDate(metrics.earliestGameDate) }}–{{ formatDate(metrics.latestGameDate) }}</dd></div>
+      <dl>
+        <div><dt>Game details synchronized</dt><dd>{{ formatCount(metrics.synchronizedGameCount) }} of {{ formatCount(metrics.totalGameCount) }} scheduled games</dd></div>
+        <div v-if="metrics.synchronizedGameCount"><dt>Game-date span</dt><dd>{{ formatDate(metrics.earliestGameDate) }}–{{ formatDate(metrics.latestGameDate) }}</dd></div>
       </dl>
-      <p v-else>No game box scores or live feeds have been synchronized.</p>
+      <div class="game-details-season-coverage" data-test="game-details-season-coverage">
+        <label for="game-details-coverage-season">Season</label>
+        <select id="game-details-coverage-season" v-model.number="selectedSeason" :disabled="!metrics.seasons?.length">
+          <option v-if="!metrics.seasons?.length" value="">No seasons stored</option>
+          <option v-for="entry in metrics.seasons" :key="entry.season" :value="entry.season">{{ entry.season }}</option>
+        </select>
+        <p v-if="selectedSeasonMetrics">{{ formatCount(selectedSeasonMetrics.synchronizedGameCount) }} of {{ formatCount(selectedSeasonMetrics.totalGameCount) }} scheduled games have game details synchronized in {{ selectedSeasonMetrics.season }}.</p>
+      </div>
+      <p v-if="!metrics.synchronizedGameCount">No game box scores or live feeds have been synchronized.</p>
       <small>{{ formatCount(metrics.plateAppearanceCount) }} plate appearances · {{ formatCount(metrics.linkedPitchCount) }} linked pitches</small>
     </div>
     <div class="game-details-auto-sync" data-test="game-details-auto-sync">
@@ -145,6 +160,10 @@ defineExpose({
 </template>
 
 <style scoped>
+.game-details-season-coverage { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin: .8rem 0; padding-top: .8rem; border-top: 1px solid rgba(16,38,61,.1); }
+.game-details-season-coverage label { color: #61707b; font-size: .75rem; font-weight: 800; }
+.game-details-season-coverage select { min-width: 6rem; padding: .4rem; border: 1px solid rgba(16,38,61,.2); border-radius: 8px; background: #fffdf7; color: #10263d; font: inherit; }
+.game-details-season-coverage p { flex-basis: 100%; margin: .15rem 0 0; color: #10263d; font-weight: 700; }
 .game-details-auto-sync { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 1rem 0; padding: .9rem; border: 1px solid rgba(23,96,135,.2); border-radius: 12px; background: rgba(231,237,241,.55); }
 .game-details-auto-sync strong { color: #10263d; font-size: .85rem; }
 .game-details-auto-sync p { margin: .3rem 0 0; color: #53616b; font-size: .76rem; line-height: 1.4; }

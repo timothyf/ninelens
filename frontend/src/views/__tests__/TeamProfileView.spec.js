@@ -393,6 +393,38 @@ describe('TeamProfileView', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/teams/1?include=overview&season=2026', expect.any(Object))
   })
 
+  it('uses the local calendar date for lineup recommendations and saved scenarios', async () => {
+    vi.stubEnv('TZ', 'America/Detroit')
+    const fetchMock = vi.fn((url) => Promise.resolve({
+      ok: true,
+      json: async () => url.endsWith('/recommend') ? { data: { recommended: [] } } : payload,
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+    const wrapper = mount(TeamProfileView, {
+      props: { teamId: '1' },
+      global: { stubs: { RouterLink: RouterLinkStub } },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Lineup scenarios')
+
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-16T01:30:00Z'))
+    try {
+      await wrapper.vm.recommendLineup()
+      await wrapper.vm.saveLineupScenario()
+    } finally {
+      vi.useRealTimers()
+      vi.unstubAllEnvs()
+    }
+
+    const lineupCalls = fetchMock.mock.calls.filter(([url]) => String(url).includes('/lineup_scenarios'))
+    expect(lineupCalls).toHaveLength(2)
+    expect(lineupCalls.map(([, options]) => JSON.parse(options.body).scenario_date)).toEqual([
+      '2026-07-15',
+      '2026-07-15',
+    ])
+  })
+
   it('renders the overview and opens a separate roster tab on the active roster', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }))
     const wrapper = mount(TeamProfileView, {

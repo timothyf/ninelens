@@ -6,7 +6,7 @@ RSpec.describe "Api::Admin::Tasks", type: :request do
   it "lists the admin tasks exposed through the API" do
     early_schedule = create_schedule(start_date: Date.new(2026, 3, 26), end_date: Date.new(2026, 4, 7))
     late_schedule = create_schedule(start_date: Date.new(2026, 5, 2), end_date: Date.new(2026, 5, 31))
-    create_game(schedule: early_schedule, official_date: Date.new(2026, 3, 26))
+    create_game(schedule: early_schedule, official_date: Date.new(2026, 3, 26), details_last_synced_at: Time.current)
     create_game(schedule: late_schedule, official_date: Date.new(2026, 9, 22))
     tigers = create_team(mlb_id: 116, name: "Detroit Tigers", abbreviation: "DET")
     player = create_player(team: tigers)
@@ -112,7 +112,11 @@ RSpec.describe "Api::Admin::Tasks", type: :request do
     )
     expect(json_body.dig("meta", "pitch_data", "approximate_row_count")).to be_a(Integer)
     expect(json_body.dig("meta", "game_details")).to include(
-      "synchronized_game_count" => 0,
+      "total_game_count" => 2,
+      "synchronized_game_count" => 1,
+      "seasons" => [
+        { "season" => 2026, "total_game_count" => 2, "synchronized_game_count" => 1 }
+      ],
       "plate_appearance_count" => 0,
       "linked_pitch_count" => 0
     )
@@ -145,6 +149,28 @@ RSpec.describe "Api::Admin::Tasks", type: :request do
     expect(json_body.dig("meta", "roster_coverage")).to eq(
       "earliest_date" => nil,
       "latest_date" => nil
+    )
+    expect(json_body.dig("meta", "game_details")).to include(
+      "total_game_count" => 0,
+      "synchronized_game_count" => 0,
+      "seasons" => []
+    )
+  end
+
+  it "reports game detail coverage separately for each stored season" do
+    season_2025 = create_schedule(season: 2025, start_date: Date.new(2025, 3, 20), end_date: Date.new(2025, 9, 28))
+    season_2026 = create_schedule(season: 2026)
+    create_game(schedule: season_2025, official_date: Date.new(2025, 4, 1), details_last_synced_at: Time.current)
+    create_game(schedule: season_2025, official_date: Date.new(2025, 4, 2))
+    create_game(schedule: season_2026, official_date: Date.new(2026, 4, 1))
+
+    get api_admin_tasks_path, headers: admin_headers
+
+    expect(json_body.dig("meta", "game_details", "seasons")).to eq(
+      [
+        { "season" => 2026, "total_game_count" => 1, "synchronized_game_count" => 0 },
+        { "season" => 2025, "total_game_count" => 2, "synchronized_game_count" => 1 }
+      ]
     )
   end
 

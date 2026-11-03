@@ -79,7 +79,12 @@ describe('useAdminTask', () => {
               approximate_row_count: 125000,
             },
             game_details: {
+              total_game_count: 80,
               synchronized_game_count: 72,
+              seasons: [
+                { season: 2026, total_game_count: 50, synchronized_game_count: 44 },
+                { season: 2025, total_game_count: 30, synchronized_game_count: 28 },
+              ],
               earliest_game_date: '2026-03-26',
               latest_game_date: '2026-05-31',
               batting_line_count: 2100,
@@ -182,7 +187,12 @@ describe('useAdminTask', () => {
       approximateRowCount: 125000,
     })
     expect(gameDetailsMetrics.value).toEqual({
+      totalGameCount: 80,
       synchronizedGameCount: 72,
+      seasons: [
+        { season: 2026, totalGameCount: 50, synchronizedGameCount: 44 },
+        { season: 2025, totalGameCount: 30, synchronizedGameCount: 28 },
+      ],
       earliestGameDate: '2026-03-26',
       latestGameDate: '2026-05-31',
       battingLineCount: 2100,
