@@ -82,8 +82,8 @@ describe('useAdminTask', () => {
               total_game_count: 80,
               synchronized_game_count: 72,
               seasons: [
-                { season: 2026, total_game_count: 50, synchronized_game_count: 44 },
-                { season: 2025, total_game_count: 30, synchronized_game_count: 28 },
+                { season: 2026, total_game_count: 50, synchronized_game_count: 44, final_game_count: 44, final_synchronized_game_count: 44 },
+                { season: 2025, total_game_count: 30, synchronized_game_count: 28, final_game_count: 30, final_synchronized_game_count: 28 },
               ],
               earliest_game_date: '2026-03-26',
               latest_game_date: '2026-05-31',
@@ -190,8 +190,8 @@ describe('useAdminTask', () => {
       totalGameCount: 80,
       synchronizedGameCount: 72,
       seasons: [
-        { season: 2026, totalGameCount: 50, synchronizedGameCount: 44 },
-        { season: 2025, totalGameCount: 30, synchronizedGameCount: 28 },
+        { season: 2026, totalGameCount: 50, synchronizedGameCount: 44, finalGameCount: 44, finalSynchronizedGameCount: 44 },
+        { season: 2025, totalGameCount: 30, synchronizedGameCount: 28, finalGameCount: 30, finalSynchronizedGameCount: 28 },
       ],
       earliestGameDate: '2026-03-26',
       latestGameDate: '2026-05-31',

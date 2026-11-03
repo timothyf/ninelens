@@ -329,12 +329,28 @@ module Api
         synchronized = Game.where.not(details_last_synced_at: nil)
         dates = Game.arel_table
         earliest_date, latest_date = synchronized.pick(dates[:official_date].minimum, dates[:official_date].maximum)
-        seasons = Game.joins(:schedule)
+        season_counts = Game.joins(:schedule)
           .group("schedules.season")
           .pluck("schedules.season", Arel.sql("COUNT(games.id)"), Arel.sql("COUNT(games.details_last_synced_at)"))
           .sort_by { |season, _total, _synchronized| -season }
-          .map do |season, total, synchronized_count|
-            { season: season, total_game_count: total, synchronized_game_count: synchronized_count }
+        final_counts_by_season = Game.joins(:schedule)
+          .where(status: "final")
+          .where("games.official_date <= ?", Date.current)
+          .without_cancelled
+          .group("schedules.season")
+          .pluck("schedules.season", Arel.sql("COUNT(games.id)"), Arel.sql("COUNT(games.details_last_synced_at)"))
+          .to_h do |season, total, synchronized_count|
+            [season, { total: total, synchronized: synchronized_count }]
+          end
+        seasons = season_counts.map do |season, total, synchronized_count|
+            final_counts = final_counts_by_season.fetch(season, { total: 0, synchronized: 0 })
+            {
+              season: season,
+              total_game_count: total,
+              synchronized_game_count: synchronized_count,
+              final_game_count: final_counts[:total],
+              final_synchronized_game_count: final_counts[:synchronized]
+            }
           end
 
         {

@@ -68,7 +68,7 @@ defineExpose({
     <div class="data-coverage" data-test="game-details-coverage">
       <span>Currently stored</span>
       <dl>
-        <div><dt>Game details synchronized</dt><dd>{{ formatCount(metrics.synchronizedGameCount) }} of {{ formatCount(metrics.totalGameCount) }} scheduled games</dd></div>
+        <div><dt>Game details synchronized, all stored games</dt><dd>{{ formatCount(metrics.synchronizedGameCount) }} of {{ formatCount(metrics.totalGameCount) }} games</dd></div>
         <div v-if="metrics.synchronizedGameCount"><dt>Game-date span</dt><dd>{{ formatDate(metrics.earliestGameDate) }}–{{ formatDate(metrics.latestGameDate) }}</dd></div>
       </dl>
       <div class="game-details-season-coverage" data-test="game-details-season-coverage">
@@ -77,7 +77,8 @@ defineExpose({
           <option v-if="!metrics.seasons?.length" value="">No seasons stored</option>
           <option v-for="entry in metrics.seasons" :key="entry.season" :value="entry.season">{{ entry.season }}</option>
         </select>
-        <p v-if="selectedSeasonMetrics">{{ formatCount(selectedSeasonMetrics.synchronizedGameCount) }} of {{ formatCount(selectedSeasonMetrics.totalGameCount) }} scheduled games have game details synchronized in {{ selectedSeasonMetrics.season }}.</p>
+        <p v-if="selectedSeasonMetrics">{{ formatCount(selectedSeasonMetrics.finalSynchronizedGameCount) }} of {{ formatCount(selectedSeasonMetrics.finalGameCount) }} final games have game details synchronized in {{ selectedSeasonMetrics.season }}.</p>
+        <small v-if="selectedSeasonMetrics">{{ formatCount(selectedSeasonMetrics.totalGameCount - selectedSeasonMetrics.finalGameCount) }} other stored games are outside the final-game count. This matches the scope of <code>mlb_game_details:missing</code>.</small>
       </div>
       <p v-if="!metrics.synchronizedGameCount">No game box scores or live feeds have been synchronized.</p>
       <small>{{ formatCount(metrics.plateAppearanceCount) }} plate appearances · {{ formatCount(metrics.linkedPitchCount) }} linked pitches</small>

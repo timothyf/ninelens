@@ -172,6 +172,8 @@ export function useAdminTask() {
           season: Number(season.season),
           totalGameCount: Number(season.total_game_count || 0),
           synchronizedGameCount: Number(season.synchronized_game_count || 0),
+          finalGameCount: Number(season.final_game_count || 0),
+          finalSynchronizedGameCount: Number(season.final_synchronized_game_count || 0),
         })),
         earliestGameDate: gameDetails.earliest_game_date || null,
         latestGameDate: gameDetails.latest_game_date || null,
