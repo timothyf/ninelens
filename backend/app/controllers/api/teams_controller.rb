@@ -26,25 +26,32 @@ module Api
       snapshot = TeamProfileSnapshotQuery.new(team: team, season: params[:season], user: current_user, includes: includes).result
 
       render json: { data: serialize_team(team).merge(snapshot) }
-    rescue ActiveRecord::RecordNotFound => error
-      render json: { message: error.message, error: error.class.name }, status: :not_found
+    rescue ActiveRecord::RecordNotFound
+      render_team_not_found
     rescue StandardError => error
-      Rails.logger.error("Team profile failed: #{error.class}: #{error.message}")
-      render json: { message: "#{error.class}: #{error.message}", error: error.class.name }, status: :internal_server_error
+      render_team_failure(error, context: "Team profile", message: "Unable to load team profile")
     end
 
     def stats_summary
       team = Team.find(params[:id])
       summary = TeamProfileSnapshotQuery.new(team: team, season: params[:season]).official_stats_summary
       render json: { data: summary }
-    rescue ActiveRecord::RecordNotFound => error
-      render json: { message: error.message, error: error.class.name }, status: :not_found
+    rescue ActiveRecord::RecordNotFound
+      render_team_not_found
     rescue StandardError => error
-      Rails.logger.error("Team stats summary failed: #{error.class}: #{error.message}")
-      render json: { message: "#{error.class}: #{error.message}", error: error.class.name }, status: :internal_server_error
+      render_team_failure(error, context: "Team stats summary", message: "Unable to load team stats summary")
     end
 
     private
+
+    def render_team_not_found
+      render json: { message: "Team not found", request_id: request.request_id }, status: :not_found
+    end
+
+    def render_team_failure(error, context:, message:)
+      Rails.logger.error("[#{request.request_id}] #{context} failed: #{error.class}: #{error.message}")
+      render json: { message: message, request_id: request.request_id }, status: :internal_server_error
+    end
 
     def serialize_team(team)
       {

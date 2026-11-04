@@ -86,7 +86,8 @@ RSpec.describe "Api::Teams", type: :request do
     expect(MlbTeamStatsDownloader).to have_received(:call).with(season: Date.current.year, category: "pitching").once
   end
 
-  it "returns the Rails exception details when the profile cannot be built" do
+  it "logs profile failures without exposing internal exception details" do
+    allow(Rails.logger).to receive(:error)
     allow(TeamProfileSnapshotQuery).to receive(:new).and_raise(
       ActiveRecord::StatementInvalid,
       'PG::UndefinedTable: ERROR: relation "team_daily_metrics" does not exist'
@@ -95,10 +96,28 @@ RSpec.describe "Api::Teams", type: :request do
     get api_team_path(@tigers), params: { include: "overview" }
 
     expect(response).to have_http_status(:internal_server_error)
-    expect(json_body).to include(
-      "error" => "ActiveRecord::StatementInvalid",
-      "message" => 'ActiveRecord::StatementInvalid: PG::UndefinedTable: ERROR: relation "team_daily_metrics" does not exist'
-    )
+    expect(json_body).to eq("message" => "Unable to load team profile", "request_id" => response.headers.fetch("X-Request-Id"))
+    expect(Rails.logger).to have_received(:error).with(include(json_body.fetch("request_id"), "ActiveRecord::StatementInvalid", "team_daily_metrics"))
+  end
+
+  it "logs stats summary failures without exposing internal exception details" do
+    allow(Rails.logger).to receive(:error)
+    allow(TeamProfileSnapshotQuery).to receive(:new).and_raise(StandardError, "upstream secret=private")
+
+    get stats_summary_api_team_path(@tigers)
+
+    expect(response).to have_http_status(:internal_server_error)
+    expect(json_body).to eq("message" => "Unable to load team stats summary", "request_id" => response.headers.fetch("X-Request-Id"))
+    expect(Rails.logger).to have_received(:error).with(include(json_body.fetch("request_id"), "StandardError", "upstream secret=private"))
+  end
+
+  it "returns a generic not-found response from both team endpoints" do
+    [ api_team_path(id: 0), stats_summary_api_team_path(id: 0) ].each do |path|
+      get path
+
+      expect(response).to have_http_status(:not_found)
+      expect(json_body).to eq("message" => "Team not found", "request_id" => response.headers.fetch("X-Request-Id"))
+    end
   end
 
   it "only embeds workflow summaries visible to the signed-in owner or an administrator" do
