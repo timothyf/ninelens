@@ -124,6 +124,40 @@ RSpec.describe "Api::Players", type: :request do
     expect(json_body.dig("data", 0, "display_team", "name")).to eq("Detroit Tigers")
   end
 
+  it "resolves listing display teams in batches" do
+    create_team_membership(player: @miguel, team: @angels, starts_on: Date.current - 2.days, roster_status: "injured_10_day")
+    create_team_membership(player: @miguel, team: @dodgers, starts_on: Date.current - 1.day)
+
+    retired = create_player(team: @dodgers, attributes: { mlb_id: 700_001, first_name: "Retired", last_name: "Veteran" })
+    retired.create_profile!(source_name: "MLB Stats API", last_synced_at: Time.current, raw_data: { "active" => false })
+    stat_type = create_stat_type(name: "gamesPlayed", label: "G", category: "batting")
+    [ 2018, 2019, 2020 ].each do |season|
+      create_player_season_stat(player: retired, stat_type: stat_type, attributes: { team: @tigers, season: season, value: 100 })
+    end
+    create_player_season_stat(player: retired, stat_type: stat_type, attributes: { team: @dodgers, season: 2021, value: 100 })
+    extra_retired = create_player(team: @angels, attributes: { mlb_id: 700_002, first_name: "Former", last_name: "Slugger" })
+    extra_retired.create_profile!(source_name: "MLB Stats API", last_synced_at: Time.current, raw_data: { "active" => false })
+    create_player_season_stat(player: extra_retired, stat_type: stat_type, attributes: { team: @dodgers, season: 2022, value: 100 })
+
+    sql = []
+    subscriber = ->(_name, _started, _finished, _unique_id, payload) { sql << payload[:sql] }
+    ActiveSupport::Notifications.subscribed(subscriber, "sql.active_record") do
+      get api_players_path, params: { per_page: 25 }
+    end
+
+    expect(response).to have_http_status(:ok)
+    display_teams = json_body.fetch("data").to_h { |player| [ player.fetch("id"), player.dig("display_team", "name") ] }
+    expect(display_teams).to include(
+      @miguel.id => "Los Angeles Dodgers",
+      retired.id => "Detroit Tigers",
+      extra_retired.id => "Los Angeles Dodgers"
+    )
+    expect(sql.grep(/FROM "player_profiles"/).length).to eq(1)
+    expect(sql.grep(/FROM "team_memberships"/).length).to eq(1)
+    expect(sql.grep(/FROM "player_season_stats"/).length).to eq(1)
+    expect(sql.grep(/FROM "teams"/).length).to be <= 3
+  end
+
   it "returns a null profile when profile data has not been synchronized" do
     get api_player_path(@miguel)
 

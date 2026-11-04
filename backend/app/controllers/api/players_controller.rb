@@ -2,9 +2,11 @@ module Api
   class PlayersController < ApplicationController
     def index
       query = PlayersIndexQuery.new(params: index_params)
+      players = query.results.preload(:profile).to_a
+      display_teams = PlayerDisplayTeamsQuery.call(players: players)
 
       render json: {
-        data: query.results.map { |player| serialize_player(player) },
+        data: players.map { |player| serialize_player(player, display_team: display_teams.fetch(player.id)) },
         meta: query.metadata
       }
     end
@@ -85,7 +87,7 @@ module Api
       params[:sections].to_s.split(",").map(&:strip).reject(&:blank?)
     end
 
-    def serialize_player(player, include_profile: false, include_positions: false, include_contract: false)
+    def serialize_player(player, display_team: player.display_team, include_profile: false, include_positions: false, include_contract: false)
       data = {
         id: player.id,
         mlb_id: player.mlb_id,
@@ -93,7 +95,7 @@ module Api
         last_name: player.last_name,
         full_name: player.full_name,
         team: serialize_team(player.team),
-        display_team: serialize_team(player.display_team),
+        display_team: serialize_team(display_team),
         created_at: player.created_at,
         updated_at: player.updated_at
       }
