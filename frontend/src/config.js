@@ -33,7 +33,11 @@ export const frontendConfig = Object.freeze({
   }),
 })
 
-export const API_BASE_URL = frontendConfig.apiBaseUrl
+export const API_BASE_URL = frontendConfig.apiBaseUrl.replace(/\/+$/, '')
+
+export function apiUrl(path) {
+  return `${API_BASE_URL}${path}`
+}
 
 export function teamLogoUrl(mlbId) {
   return `${frontendConfig.externalUrls.mlbStaticBaseUrl}/team-logos/${mlbId}.svg`

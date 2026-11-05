@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { adminRequestHeaders } from '../composables/apiAuth'
 import NotesPanel from '../components/NotesPanel.vue'
+import { apiUrl } from '../config'
 
 const props = defineProps({ scenarioId: { type: [String, Number], required: true } })
 const scenario = ref(null)
@@ -10,7 +11,7 @@ const error = ref('')
 async function load() {
   error.value = ''
   try {
-    const response = await fetch(`/api/lineup_scenarios/${encodeURIComponent(props.scenarioId)}`, {
+    const response = await fetch(apiUrl(`/api/lineup_scenarios/${encodeURIComponent(props.scenarioId)}`), {
       headers: adminRequestHeaders({ Accept: 'application/json' }),
     })
     const payload = await response.json().catch(() => ({}))

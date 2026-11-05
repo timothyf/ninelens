@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { formatTwoDecimalPitchingRate } from '../utils/baseballStatFormatting'
 import { adminRequestHeaders } from '../composables/apiAuth'
+import { apiUrl } from '../config'
 
 const props = defineProps({
   reportId: { type: [String, Number], required: true },
@@ -19,7 +20,7 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const response = await fetch(`/api/opponent_reports/${encodeURIComponent(props.reportId)}`, {
+    const response = await fetch(apiUrl(`/api/opponent_reports/${encodeURIComponent(props.reportId)}`), {
       headers: adminRequestHeaders({ Accept: 'application/json' }),
     })
     const payload = await response.json().catch(() => ({}))
@@ -65,7 +66,7 @@ async function refreshReport() {
   refreshing.value = true
   refreshError.value = ''
   try {
-    const response = await fetch(`/api/opponent_reports/${encodeURIComponent(props.reportId)}/refresh`, {
+    const response = await fetch(apiUrl(`/api/opponent_reports/${encodeURIComponent(props.reportId)}/refresh`), {
       method: 'POST', headers: adminRequestHeaders({ Accept: 'application/json' }),
     })
     const payload = await response.json().catch(() => ({}))

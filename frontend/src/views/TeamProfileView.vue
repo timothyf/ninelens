@@ -7,7 +7,7 @@ import { adminRequestHeaders } from '../composables/apiAuth'
 import { formatTwoDecimalPitchingRate } from '../utils/baseballStatFormatting'
 import SavedAnalysisControls from '../components/SavedAnalysisControls.vue'
 import TeamLeadersCard from '../components/TeamLeadersCard.vue'
-import { frontendConfig, teamLogoUrl } from '../config'
+import { apiUrl, frontendConfig, teamLogoUrl } from '../config'
 import { teamThemeStyle } from '../utils/teamThemes'
 
 const props = defineProps({
@@ -189,7 +189,7 @@ watch(
 
 async function loadAvailableTeams() {
   try {
-    const response = await fetch('/api/teams', { headers: { Accept: 'application/json' } })
+    const response = await fetch(apiUrl('/api/teams'), { headers: { Accept: 'application/json' } })
     if (!response.ok) return
     const payload = await response.json()
     availableTeams.value = (payload.data || []).map((team) => ({
@@ -693,7 +693,7 @@ async function saveOpponentReport() {
   savingReport.value = true
   reportSaveError.value = ''
   try {
-    const response = await fetch(`/api/teams/${encodeURIComponent(team.value.id)}/opponent_reports`, {
+    const response = await fetch(apiUrl(`/api/teams/${encodeURIComponent(team.value.id)}/opponent_reports`), {
       method: 'POST',
       headers: adminRequestHeaders({ Accept: 'application/json', 'Content-Type': 'application/json' }),
       body: JSON.stringify({ season: team.value.season }),
@@ -747,7 +747,7 @@ async function recommendLineup() {
   recommendingLineup.value = true
   lineupError.value = ''
   try {
-    const response = await fetch(`/api/teams/${encodeURIComponent(team.value.id)}/lineup_scenarios/recommend`, {
+    const response = await fetch(apiUrl(`/api/teams/${encodeURIComponent(team.value.id)}/lineup_scenarios/recommend`), {
       method: 'POST',
       headers: adminRequestHeaders({ Accept: 'application/json', 'Content-Type': 'application/json' }),
       body: JSON.stringify({ season: team.value.season, scenario_date: localIsoDate(), evaluation_inputs: { pitcher_hand: lineupEvaluation.pitcherHand }, decision_constraints: decisionConstraints(), decision_weights: Object.fromEntries(Object.entries(lineupDecision.weights).map(([key, value]) => [key, Number(value)])), alternative_count: lineupDecision.alternativeCount }),
@@ -768,7 +768,7 @@ async function saveLineupScenario() {
   savingLineup.value = true
   lineupError.value = ''
   try {
-    const response = await fetch(`/api/teams/${encodeURIComponent(team.value.id)}/lineup_scenarios`, {
+    const response = await fetch(apiUrl(`/api/teams/${encodeURIComponent(team.value.id)}/lineup_scenarios`), {
       method: 'POST',
       headers: adminRequestHeaders({ Accept: 'application/json', 'Content-Type': 'application/json' }),
       body: JSON.stringify({

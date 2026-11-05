@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { authRequestHeaders } from '../composables/apiAuth'
+import { apiUrl } from '../config'
 
 const props = defineProps({ savedAnalysisId: { type: [String, Number], required: true } })
 const router = useRouter()
@@ -10,7 +11,7 @@ const error = ref('')
 
 onMounted(async () => {
   try {
-    const response = await fetch(`/api/saved_analyses/${encodeURIComponent(props.savedAnalysisId)}`, {
+    const response = await fetch(apiUrl(`/api/saved_analyses/${encodeURIComponent(props.savedAnalysisId)}`), {
       headers: authRequestHeaders({ Accept: 'application/json' }),
     })
     const payload = await response.json().catch(() => ({}))
