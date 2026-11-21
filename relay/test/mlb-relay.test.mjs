@@ -129,12 +129,12 @@ test("allows only the selected official season award routes", async () => {
     },
   })
 
-  for (const id of ["ALMVP", "NLMVP", "ALCY", "NLCY", "ALGG", "NLGG"]) {
+  for (const id of ["ALMVP", "NLMVP", "ALCY", "NLCY", "ALROY", "NLROY", "ALGG", "NLGG"]) {
     assert.equal((await handler(request(`/api/v1/awards/${id}/recipients?season=2025`))).status, 200)
   }
   assert.equal((await handler(request("/api/v1/awards/OTHER/recipients?season=2025"))).status, 400)
   assert.equal((await handler(request("/api/v1/awards/ALMVP?season=2025"))).status, 400)
-  assert.equal(paths.length, 6)
+  assert.equal(paths.length, 8)
 })
 
 test("passes an MLB upstream failure through to NineLens", async () => {
