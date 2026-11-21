@@ -104,8 +104,8 @@ const RouterLink = {
 
 describe('HomeView', () => {
   beforeEach(() => {
-    sessionStorage.removeItem('ninelens-home-v1:all')
-    sessionStorage.removeItem('ninelens-home-v1:national')
+    sessionStorage.removeItem('ninelens-home-v4:all')
+    sessionStorage.removeItem('ninelens-home-v4:national')
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue(dashboardPayload),
@@ -183,5 +183,45 @@ describe('HomeView', () => {
     await flushPromises()
 
     expect(wrapper.get('[data-test="home-error"]').text()).toContain('Unable to load today’s NineLens briefing')
+  })
+
+  it('shows the offseason briefing and season review links when supplied', async () => {
+    fetch.mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ data: {
+      ...dashboardPayload.data,
+      as_of: '2026-11-20',
+      offseason: {
+        season: 2026,
+        recent_moves: [{ id: 'trade-1', type: 'Trade', date: '2026-11-18', player_id: 30, player_name: 'Aaron Judge', description: 'Winter trade' }],
+        free_agents: [
+          { player_id: 31, player_name: 'Tarik Skubal', position: 'P', former_team: 'DET', war: 5.3, war_season: 2026, experience_years: 8,
+            stat_line: { season: 2026, type: 'pitching', values: { W: 12, L: 7, ERA: 2.72, WHIP: 0.96 } } },
+          { player_id: 32, player_name: 'Alex Agent', position: '1B', former_team: 'NYM', war: 3.1, war_season: 2026, experience_years: 5,
+            stat_line: { season: 2026, type: 'batting', values: { AVG: 0.285, OBP: 0.36, SLG: 0.51 } } },
+        ],
+        awards: [
+          { id: 1, name: 'AL MVP', player_id: 30, player_name: 'Aaron Judge' },
+          { id: 2, name: 'Jackie Robinson AL Rookie of the Year', player_id: 33, player_name: 'Kevin McGonigle' },
+          { id: 3, name: 'Jackie Robinson NL Rookie of the Year', player_id: 34, player_name: 'Sal Stewart' },
+        ],
+      },
+    } }) })
+    const wrapper = mount(HomeView, { global: { components: { RouterLink } } })
+    await flushPromises()
+
+    const briefing = wrapper.get('[data-test="offseason-briefing"]')
+    expect(briefing.text()).toContain('2026–2027 offseason')
+    expect(briefing.text()).toContain('Winter trade')
+    expect(briefing.text()).toContain('Tarik Skubal')
+    expect(briefing.text()).toContain('P · 2026 · 12–7 W–L / 2.72 ERA / 0.960 WHIP')
+    expect(briefing.text()).toContain('1B · 2026 · .285 / .360 / .510 AVG/OBP/SLG')
+    expect(briefing.text()).toContain('5.3 WAR')
+    expect(briefing.text()).toContain('WAR (2026)')
+    expect(briefing.text()).toContain('8 MLB seasons')
+    expect(briefing.text()).toContain('AL MVP')
+    expect(briefing.text()).toContain('Jackie Robinson AL Rookie of the Year')
+    expect(briefing.text()).toContain('Kevin McGonigle')
+    expect(briefing.text()).toContain('Jackie Robinson NL Rookie of the Year')
+    expect(briefing.text()).toContain('Sal Stewart')
+    expect(briefing.text()).toContain('Review 2026 season')
   })
 })

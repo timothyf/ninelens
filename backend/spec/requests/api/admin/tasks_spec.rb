@@ -195,6 +195,17 @@ RSpec.describe "Api::Admin::Tasks", type: :request do
     )
   end
 
+  it "queues transaction histories with a player-based total through the task route" do
+    2.times { create_player }
+
+    expect do
+      post run_api_admin_task_path("mlb_player_team_histories_sync"), headers: admin_headers,
+        params: { limit: 1 }
+    end.to have_enqueued_job(MlbPlayerTeamHistoriesSyncJob)
+
+    expect(json_body.dig("data", "total_items")).to eq(1)
+  end
+
   it "requires the configured admin token for task execution" do
     ENV["ADMIN_API_TOKEN"] = "secret-token"
 

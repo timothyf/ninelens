@@ -627,7 +627,14 @@ describe('AdminView', () => {
     await wrapper.get('[data-test="team-history-sync-form"]').trigger('submit')
     expect(runTask).toHaveBeenCalledWith(
       'mlb_player_team_histories_sync',
-      expect.objectContaining({ limit: null, mlb_ids: null }),
+      expect.objectContaining({ season: null, limit: null, mlb_ids: null }),
+    )
+
+    await wrapper.get('[data-test="team-history-sync-form"] input[type="number"]').setValue('2025')
+    await wrapper.get('[data-test="team-history-sync-form"]').trigger('submit')
+    expect(runTask).toHaveBeenCalledWith(
+      'mlb_player_team_histories_sync',
+      expect.objectContaining({ season: 2025 }),
     )
 
     await wrapper.get('[data-test="roster-team-scope"]').setValue('national')
@@ -994,6 +1001,30 @@ describe('AdminView', () => {
 
     await progressWrapper.get('[data-test="roster-sync-cancel-active"]').trigger('click')
     expect(cancelRosterSync).toHaveBeenCalledOnce()
+  })
+
+  it('shows player-based transaction history progress', () => {
+    adminTaskCurrentTask.value = {
+      id: 30,
+      taskName: 'mlb_player_team_histories_sync',
+      status: 'running',
+      totalItems: 1200,
+      completedItems: 432,
+      failedItems: 3,
+      processedItems: 435,
+      progressPercentage: 36.3,
+      currentItemLabel: 'Tarik Skubal · MLB #669373',
+      cancelRequested: false,
+      elapsedSeconds: 3600,
+      estimatedRemainingSeconds: 6300,
+      errorMessage: null,
+    }
+    const wrapper = mount(AdminView)
+
+    const progress = wrapper.get('[data-test="team-history-sync-progress"]')
+    expect(progress.text()).toContain('435 of 1,200 players')
+    expect(progress.text()).toContain('Tarik Skubal · MLB #669373')
+    expect(progress.text()).toContain('Cancel after current player')
   })
 
   it('displays stored Active and 40-man snapshot players', async () => {

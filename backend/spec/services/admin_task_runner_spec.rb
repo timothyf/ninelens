@@ -56,7 +56,7 @@ RSpec.describe AdminTaskRunner do
       params: { limit: "2", mlb_ids: "656427" }
     )
 
-    expect(MlbPlayerTeamHistoriesSync).to have_received(:call).with(limit: 2, mlb_ids: "656427")
+    expect(MlbPlayerTeamHistoriesSync).to have_received(:call).with(limit: 2, mlb_ids: "656427", season: nil)
   end
 
   it "runs game-detail synchronization for a stored date range" do

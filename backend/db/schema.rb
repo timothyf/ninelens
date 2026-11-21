@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_11_01_000000) do
+ActiveRecord::Schema[7.1].define(version: 2026_11_21_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "plpgsql"
@@ -1023,6 +1023,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_11_01_000000) do
     t.datetime "last_synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "catalog_signature"
     t.index ["season"], name: "index_season_award_syncs_on_season", unique: true
   end
 

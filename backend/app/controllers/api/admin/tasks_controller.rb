@@ -118,6 +118,10 @@ module Api
             season: task_params[:season],
             initiated_by: current_user
           )
+        when MlbPlayerTeamHistoriesSyncTaskLauncher::TASK_NAME
+          MlbPlayerTeamHistoriesSyncTaskLauncher.call(
+            limit: task_params[:limit], mlb_ids: task_params[:mlb_ids], season: task_params[:season], initiated_by: current_user
+          )
         else
           AdminTaskLauncher.call(task_name: params[:task_name], params: task_params.to_h, initiated_by: current_user)
         end

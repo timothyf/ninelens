@@ -2,7 +2,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { API_BASE_URL } from '../config'
 
 const CACHE_AGE_MS = 15 * 60 * 1000
-const CACHE_PREFIX = 'ninelens-home-v1:'
+const CACHE_PREFIX = 'ninelens-home-v4:'
 
 function todayInDetroit() {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -36,6 +36,7 @@ const emptyDashboard = () => ({
   as_of: null,
   season: null,
   games: [],
+  offseason: null,
   leaders: [],
   team_pulse: {
     best_records: [],

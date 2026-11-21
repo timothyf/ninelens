@@ -60,6 +60,38 @@ RSpec.describe "Api::Admin::TaskRuns", type: :request do
     )
   end
 
+  it "queues transaction history synchronization with the selected player count" do
+    selected = create_player(attributes: { mlb_id: 656_427 })
+    create_player(attributes: { mlb_id: 669_360 })
+    create_player(attributes: { mlb_id: 700_001 })
+
+    expect do
+      post api_admin_task_runs_path, params: {
+        task_name: "mlb_player_team_histories_sync", mlb_ids: "#{selected.mlb_id},669360", limit: 1, season: 2025
+      }, headers: admin_headers
+    end.to have_enqueued_job(MlbPlayerTeamHistoriesSyncJob)
+
+    expect(response).to have_http_status(:accepted)
+    expect(json_body.fetch("data")).to include(
+      "task_name" => "mlb_player_team_histories_sync",
+      "task_parameters" => include("season" => "2025"),
+      "total_items" => 1,
+      "completed_items" => 0,
+      "failed_items" => 0
+    )
+  end
+
+  it "rejects a transaction history season in the future" do
+    post api_admin_task_runs_path, params: {
+      task_name: "mlb_player_team_histories_sync",
+      season: ApplicationCalendar.current_date.year + 1
+    }, headers: admin_headers
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(json_body.fetch("message")).to include("Season must be between 1900")
+    expect(AdminTaskRun.where(task_name: "mlb_player_team_histories_sync")).to be_empty
+  end
+
   it "estimates and enqueues a tracked roster synchronization by team count" do
     get estimate_api_admin_task_runs_path, params: {
       task_name: "mlb_roster_sync",

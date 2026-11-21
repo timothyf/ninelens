@@ -2,6 +2,7 @@ class SeasonAward < ApplicationRecord
   AWARD_GROUPS = {
     "MVP" => { "AL" => "ALMVP", "NL" => "NLMVP" },
     "Cy Young" => { "AL" => "ALCY", "NL" => "NLCY" },
+    "Rookie of the Year" => { "AL" => "ALROY", "NL" => "NLROY" },
     "Gold Glove" => { "AL" => "ALGG", "NL" => "NLGG" }
   }.freeze
   AWARD_IDS = AWARD_GROUPS.values.flat_map(&:values).freeze

@@ -81,6 +81,7 @@ const profileOptions = reactive({
 })
 
 const teamHistoryOptions = reactive({
+  season: '',
   limit: '',
   mlbIds: '',
 })
@@ -347,6 +348,7 @@ async function handleProfileSync() {
 
 async function handleTeamHistorySync() {
   await runTask('mlb_player_team_histories_sync', {
+    season: teamHistoryOptions.season || null,
     limit: teamHistoryOptions.limit || null,
     mlb_ids: teamHistoryOptions.mlbIds || null,
   })

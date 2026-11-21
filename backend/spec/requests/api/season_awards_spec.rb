@@ -29,7 +29,7 @@ RSpec.describe "Season awards API", type: :request do
     expect(response).to have_http_status(:ok)
     data = response.parsed_body.fetch("data")
     expect(data.fetch("status")).to eq("ready")
-    expect(data.fetch("groups").map { |group| group.fetch("name") }).to eq(["MVP", "Cy Young", "Gold Glove"])
+    expect(data.fetch("groups").map { |group| group.fetch("name") }).to eq(["MVP", "Cy Young", "Rookie of the Year", "Gold Glove"])
     expect(data.dig("groups", 0, "leagues", 0, "recipients", 0, "player_name")).to eq("Test Winner")
   end
 end

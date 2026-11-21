@@ -65,7 +65,8 @@ class AdminTaskRunReconciler
     job_class = {
       MlbGameDetailsTaskLauncher::TASK_NAME => "MlbGameDetailsSyncJob",
       PitchDataSyncTaskLauncher::TASK_NAME => "PitchDataSyncJob",
-      MlbRosterSyncTaskLauncher::TASK_NAME => "MlbRosterBatchSyncJob"
+      MlbRosterSyncTaskLauncher::TASK_NAME => "MlbRosterBatchSyncJob",
+      MlbPlayerTeamHistoriesSyncTaskLauncher::TASK_NAME => "MlbPlayerTeamHistoriesSyncJob"
     }.fetch(task_run.task_name) do
       task_run.task_name.in?(AdminImportTaskLauncher::TASK_NAMES) ? "AdminImportJob" : "AdminTaskJob"
     end

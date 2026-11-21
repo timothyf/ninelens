@@ -7,33 +7,44 @@ class MlbPlayerTeamHistoryImporter
   JOIN_DESCRIPTIONS = /assigned|claimed|purchased|selected|signed|trade/i
   LEAVE_DESCRIPTIONS = /declared free agency|elected free agency|released|retired/i
 
-  def self.call(player:, payload:, source_url: nil, fetched_at: Time.current)
-    new(player: player, payload: payload, source_url: source_url, fetched_at: fetched_at).call
+  def self.call(player:, payload:, source_url: nil, fetched_at: Time.current, season: nil)
+    new(player: player, payload: payload, source_url: source_url, fetched_at: fetched_at, season: season).call
   end
 
-  def initialize(player:, payload:, source_url: nil, fetched_at: Time.current)
+  def initialize(player:, payload:, source_url: nil, fetched_at: Time.current, season: nil)
     @player = player
     @payload = payload
     @source_url = source_url
     @fetched_at = fetched_at.is_a?(Time) ? fetched_at : Time.zone.parse(fetched_at.to_s)
+    @season = season
   end
 
   def call
     return failure("Player is required") unless player.is_a?(Player)
-    return failure("MLB transactions payload must include a transactions array") unless transactions.is_a?(Array)
+    return failure("MLB transactions payload must include a transactions array") unless payload_transactions.is_a?(Array)
     return failure("Fetched-at timestamp is required") if fetched_at.nil?
+    if season && payload_transactions.empty?
+      return success("No MLB transactions to update for #{season}", transaction_count: 0, tenure_count: 0, skipped_team_ids: [])
+    end
 
     tenures = build_tenures
     TeamMembership.transaction do
-      player.team_memberships.where(source_name: SOURCE_NAME).delete_all
-      tenures.each { |tenure| create_membership!(tenure) }
+      if season
+        player.team_memberships.where(source_name: SOURCE_NAME)
+          .where("starts_on <= ? AND (ends_on IS NULL OR ends_on >= ?)", window_end, window_start).delete_all
+        tenures.select { |tenure| overlaps_window?(tenure[:starts_on], tenure[:ends_on]) }
+          .each { |tenure| create_membership!(tenure) }
+      else
+        player.team_memberships.where(source_name: SOURCE_NAME).delete_all
+        tenures.each { |tenure| create_membership!(tenure) }
+      end
       player.refresh_current_team!
     end
 
     success(
       "Synchronized #{tenures.length} MLB organization tenures",
-      transaction_count: transactions.length,
-      tenure_count: tenures.length,
+      transaction_count: payload_transactions.length,
+      tenure_count: season ? tenures.count { |tenure| overlaps_window?(tenure[:starts_on], tenure[:ends_on]) } : tenures.length,
       skipped_team_ids: skipped_team_ids.to_a.sort
     )
   rescue ActiveRecord::ActiveRecordError => error
@@ -42,10 +53,44 @@ class MlbPlayerTeamHistoryImporter
 
   private
 
-  attr_reader :player, :payload, :source_url, :fetched_at
+  attr_reader :player, :payload, :source_url, :fetched_at, :season
+
+  def payload_transactions
+    payload.is_a?(Hash) ? payload["transactions"] : nil
+  end
 
   def transactions
-    payload.is_a?(Hash) ? payload["transactions"] : nil
+    @transactions ||= season ? (outside_window_events + payload_transactions).uniq { |transaction| transaction["id"] || transaction } : payload_transactions
+  end
+
+  def window_start = Date.new(season, 1, 1)
+  def window_end = [ Date.new(season, 12, 31), ApplicationCalendar.current_date ].min
+
+  def overlaps_window?(starts_on, ends_on)
+    starts_on <= window_end && (ends_on.nil? || ends_on >= window_start)
+  end
+
+  def outside_window_events
+    player.team_memberships.where(source_name: SOURCE_NAME).includes(:team).flat_map do |membership|
+      [ boundary_event(membership, :start), boundary_event(membership, :end) ].compact
+    end
+  end
+
+  def boundary_event(membership, boundary)
+    date = boundary == :start ? membership.starts_on : membership.ends_on&.+(1.day)
+    return if date.nil? || date.between?(window_start, window_end)
+
+    stored = membership.raw_data.to_h[boundary == :start ? "start_transaction" : "end_transaction"]
+    return stored if stored.is_a?(Hash) && transaction_date(stored) == date
+
+    {
+      "id" => boundary == :start ? -membership.id : -1_000_000_000 - membership.id,
+      "_synthetic" => true,
+      "date" => date.iso8601,
+      "typeCode" => boundary == :start ? "SGN" : "DFA",
+      "typeDesc" => boundary == :start ? "Signed" : "Declared Free Agency",
+      "toTeam" => { "id" => membership.team.mlb_id, "name" => membership.team.name }
+    }
   end
 
   def build_tenures
@@ -147,10 +192,14 @@ class MlbPlayerTeamHistoryImporter
       source_url: source_url,
       last_synced_at: fetched_at,
       raw_data: {
-        "start_transaction" => tenure[:start_transaction],
-        "end_transaction" => tenure[:end_transaction]
+        "start_transaction" => persisted_transaction(tenure[:start_transaction]),
+        "end_transaction" => persisted_transaction(tenure[:end_transaction])
       }
     )
+  end
+
+  def persisted_transaction(transaction)
+    transaction unless transaction&.fetch("_synthetic", false)
   end
 
   def success(message, data = {})

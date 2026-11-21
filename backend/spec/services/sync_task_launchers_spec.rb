@@ -70,4 +70,17 @@ RSpec.describe "Synchronization task launchers" do
       season: 2026
     )
   end
+
+  it "estimates a season's transaction history task from its selected players" do
+    current_player = create_player
+    create_player_season_stat(player: current_player, attributes: { season: 2026 })
+    old_player = create_player
+    create_player_season_stat(player: old_player, attributes: { season: 2025 })
+    allow(MlbPlayerTeamHistoriesSyncJob).to receive(:perform_later).and_return(double("job"))
+
+    run = MlbPlayerTeamHistoriesSyncTaskLauncher.call(season: 2026)
+
+    expect(run).to have_attributes(total_items: 1)
+    expect(run.task_parameters).to include("season" => 2026)
+  end
 end

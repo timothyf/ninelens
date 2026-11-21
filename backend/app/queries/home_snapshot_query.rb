@@ -26,6 +26,7 @@ class HomeSnapshotQuery
       games: games,
       leaders: leaders,
       team_pulse: team_pulse,
+      offseason: OffseasonBriefingQuery.new(on: on).result,
       freshness: freshness
     }
   end

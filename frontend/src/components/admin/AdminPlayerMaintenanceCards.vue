@@ -39,10 +39,11 @@ const emit = defineEmits(['sync-profiles', 'sync-team-histories', 'cancel-team-h
     source="Player organization trail"
     title="MLB transaction history synchronization"
     command="mlb_player_team_histories:sync"
-    description="Downloads official MLB transactions and rebuilds dated major-league organization tenures for Player Profile Team History cards."
+    description="Downloads official MLB transactions and rebuilds dated major-league organization tenures. Choose a season to include players with stats, roster membership, or an organization change in that year; other years are preserved."
     @submit.prevent="emit('sync-team-histories')"
   >
-    <div class="admin-fields admin-fields--two">
+    <div class="admin-fields admin-fields--three">
+      <label><span>Season (optional)</span><input v-model="teamHistoryOptions.season" type="number" min="1900" :max="new Date().getFullYear()" placeholder="All history" /></label>
       <label><span>Limit (optional)</span><input v-model="teamHistoryOptions.limit" type="number" min="1" /></label>
       <label><span>MLB IDs (optional)</span><input v-model="teamHistoryOptions.mlbIds" type="text" placeholder="656427, 669360" /></label>
     </div>

@@ -26,7 +26,7 @@ class MlbSeasonAwardsSync
         SeasonAward.transaction(requires_new: true) do
           SeasonAward.where(season: season).delete_all
           SeasonAward.insert_all!(rows) if rows.any?
-          state.update!(last_synced_at: checked_at)
+          state.update!(last_synced_at: checked_at, catalog_signature: SeasonAward::AWARD_IDS.join(","))
         end
         success("Synchronized #{rows.length} award winners for #{season}", refreshed: true)
       rescue StandardError => error
@@ -43,8 +43,9 @@ class MlbSeasonAwardsSync
 
   def refresh_due?(state)
     lifetime = season == ApplicationCalendar.current_date.year ? 1.day : 30.days
+    return false if state.last_checked_at && state.last_checked_at > (state.last_synced_at || Time.at(0)) && state.last_checked_at >= RETRY_AFTER_FAILURE.ago
+    return true if state.catalog_signature != SeasonAward::AWARD_IDS.join(",")
     return false if state.last_synced_at && state.last_synced_at >= lifetime.ago
-    return false if state.last_checked_at && state.last_checked_at >= RETRY_AFTER_FAILURE.ago
 
     true
   end

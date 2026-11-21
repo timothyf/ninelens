@@ -101,6 +101,55 @@ RSpec.describe MlbPlayerTeamHistoryImporter do
     expect(player.team_memberships.exists?(snapshot.id)).to be(true)
   end
 
+  it "rebuilds only the selected season and retains tenures in earlier and later years" do
+    first = create_team(mlb_id: 138)
+    second = create_team(mlb_id: 110)
+    old_destination = create_team(mlb_id: 116)
+    new_destination = create_team(mlb_id: 119)
+    later = create_team(mlb_id: 147)
+    player = create_player(team: later)
+    original = [
+      transaction(1, "2023-02-01", "SGN", "Signed", to: first),
+      transaction(2, "2024-07-01", "TR", "Trade", from: first, to: second),
+      transaction(3, "2025-07-01", "TR", "Trade", from: second, to: old_destination),
+      transaction(4, "2026-02-01", "TR", "Trade", from: old_destination, to: later)
+    ]
+    described_class.call(player: player, payload: { "transactions" => original })
+    preserved_ids = player.team_memberships.where(source_name: described_class::SOURCE_NAME)
+      .where(starts_on: [ Date.new(2023, 2, 1), Date.new(2026, 2, 1) ]).pluck(:id)
+
+    result = described_class.call(player: player,
+      payload: { "transactions" => [ transaction(5, "2025-07-01", "TR", "Trade", from: second, to: new_destination) ] },
+      season: 2025)
+
+    expect(result[:success]).to be(true)
+    expect(result.dig(:data, :transaction_count)).to eq(1)
+    expect(transaction_memberships(player).map { |membership| [ membership.team_id, membership.starts_on, membership.ends_on ] }).to eq(
+      [
+        [ first.id, Date.new(2023, 2, 1), Date.new(2024, 6, 30) ],
+        [ second.id, Date.new(2024, 7, 1), Date.new(2025, 6, 30) ],
+        [ new_destination.id, Date.new(2025, 7, 1), Date.new(2026, 1, 31) ],
+        [ later.id, Date.new(2026, 2, 1), nil ]
+      ]
+    )
+    expect(player.team_memberships.where(id: preserved_ids).count).to eq(2)
+  end
+
+  it "leaves stored history untouched when the selected season has no transactions" do
+    team = create_team(mlb_id: 138)
+    player = create_player(team: team)
+    membership = create_team_membership(player: player, team: team,
+      starts_on: Date.new(2025, 2, 1), roster_status: "organization",
+      source_name: described_class::SOURCE_NAME)
+
+    result = described_class.call(player: player, payload: { "transactions" => [] }, season: 2025)
+
+    expect(result[:success]).to be(true)
+    expect(result.dig(:data, :transaction_count)).to eq(0)
+    expect(membership.reload.starts_on).to eq(Date.new(2025, 2, 1))
+    expect(player.team_memberships.where(source_name: described_class::SOURCE_NAME).pluck(:id)).to eq([ membership.id ])
+  end
+
   def transaction(id, date, type_code, type_desc, from: nil, to: nil)
     {
       "id" => id,

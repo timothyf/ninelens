@@ -14,7 +14,7 @@ RSpec.describe MlbSeasonAwardsSync, type: :service do
     }
   end
 
-  it "stores all six official award lists and reuses the season cache" do
+  it "stores all eight official award lists and reuses the season cache" do
     allow(MlbStatsApiClient).to receive(:get_json) do |url, **|
       award_id = url.match(%r{/awards/([^/]+)/recipients})[1]
       { "awards" => [recipient(award_id, SeasonAward::AWARD_IDS.index(award_id) + 100)] }
@@ -28,11 +28,25 @@ RSpec.describe MlbSeasonAwardsSync, type: :service do
     end
 
     expect(first[:success]).to be(true)
-    expect(first.dig(:data, :award_count)).to eq(6)
+    expect(first.dig(:data, :award_count)).to eq(8)
     expect(second.dig(:data, :refreshed)).to be(false)
     expect(inserts).to be_empty
     expect(SeasonAward.where(season: season).pluck(:award_id)).to match_array(SeasonAward::AWARD_IDS)
-    expect(MlbStatsApiClient).to have_received(:get_json).exactly(6).times
+    expect(MlbStatsApiClient).to have_received(:get_json).exactly(8).times
+  end
+
+  it "refreshes a recent cache when the award catalog gains Rookie of the Year" do
+    SeasonAwardSync.create!(season: season, last_checked_at: Time.current, last_synced_at: Time.current)
+    allow(MlbStatsApiClient).to receive(:get_json) do |url, **|
+      award_id = url.match(%r{/awards/([^/]+)/recipients})[1]
+      { "awards" => [recipient(award_id, SeasonAward::AWARD_IDS.index(award_id) + 100)] }
+    end
+
+    result = described_class.call(season: season)
+
+    expect(result.dig(:data, :refreshed)).to be(true)
+    expect(SeasonAward.where(season: season, award_id: %w[ALROY NLROY]).count).to eq(2)
+    expect(SeasonAwardSync.find_by!(season: season).catalog_signature).to eq(SeasonAward::AWARD_IDS.join(","))
   end
 
   it "keeps the last complete award set when one league request fails" do

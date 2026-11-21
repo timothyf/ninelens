@@ -16,7 +16,7 @@ class AdminTaskRunner
     },
     "mlb_player_team_histories_sync" => {
       name: "MLB player organization history sync",
-      description: "Download official MLB transactions, rebuild dated organization tenures, and store complete trade packages."
+      description: "Download official MLB transactions, rebuild dated organization tenures, and store complete trade packages. Optionally limit updates to one season."
     },
     "mlb_player_contracts_download" => {
       name: "MLB player salary and contract download",
@@ -109,7 +109,8 @@ class AdminTaskRunner
   def mlb_player_team_histories_sync
     MlbPlayerTeamHistoriesSync.call(
       limit: optional_positive_integer(:limit),
-      mlb_ids: params[:mlb_ids].presence
+      mlb_ids: params[:mlb_ids].presence,
+      season: params[:season].presence
     )
   end
 

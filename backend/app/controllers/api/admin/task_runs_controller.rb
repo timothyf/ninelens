@@ -39,6 +39,8 @@ module Api
           )
         when MlbRosterSyncTaskLauncher::TASK_NAME
           MlbRosterSyncTaskLauncher.call(team_scope: params[:team_scope], team_mlb_id: params[:team_mlb_id], season: params[:season], initiated_by: current_user)
+        when MlbPlayerTeamHistoriesSyncTaskLauncher::TASK_NAME
+          MlbPlayerTeamHistoriesSyncTaskLauncher.call(limit: params[:limit], mlb_ids: params[:mlb_ids], season: params[:season], initiated_by: current_user)
         else
           AdminTaskLauncher.call(task_name: params[:task_name], params: generic_task_params, initiated_by: current_user)
         end

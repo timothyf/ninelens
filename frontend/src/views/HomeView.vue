@@ -18,6 +18,7 @@ const leaderSections = computed(() => [
   { key: 'batting', label: 'Batting', leaders: dashboard.value.leaders.filter((leader) => leader.category === 'batting') },
   { key: 'pitching', label: 'Pitching', leaders: dashboard.value.leaders.filter((leader) => leader.category === 'pitching') },
 ])
+const offseason = computed(() => dashboard.value.offseason)
 
 function formatDate(value, options = { month: 'short', day: 'numeric' }) {
   if (!value) return 'Today'
@@ -38,6 +39,17 @@ function leaderValue(leader, value) {
   if (leader.key === 'ERA') return number.toFixed(2)
   if (['battingWAR', 'pitchingWAR'].includes(leader.key)) return number.toFixed(1)
   return Math.round(number).toLocaleString()
+}
+
+function freeAgentStatLine(line) {
+  if (!line) return 'Season stats unavailable'
+  const values = line.values || {}
+  if (line.type === 'pitching') {
+    const record = values.W != null && values.L != null ? `${Math.round(values.W)}–${Math.round(values.L)}` : '—'
+    return `${line.season} · ${record} W–L / ${values.ERA != null ? Number(values.ERA).toFixed(2) : '—'} ERA / ${values.WHIP != null ? Number(values.WHIP).toFixed(3) : '—'} WHIP`
+  }
+  const rate = (value) => value != null ? Number(value).toFixed(3).replace(/^0\./, '.') : '—'
+  return `${line.season} · ${rate(values.AVG)} / ${rate(values.OBP)} / ${rate(values.SLG)} AVG/OBP/SLG`
 }
 
 function teamLogo(team) {
@@ -71,8 +83,7 @@ function signed(value) {
       <div class="home-hero__copy">
         <h1>Baseball intelligence,<br /> brought into focus.</h1>
         <p>
-          Track today’s slate, scan the league’s top performers, and move directly into the player and team analysis
-          behind the numbers.
+          {{ offseason ? 'Catch up on winter moves, free agents, and the season’s award winners.' : 'Track today’s slate, scan the league’s top performers, and move directly into the player and team analysis behind the numbers.' }}
         </p>
         <div class="home-hero__tools">
           <div class="home-actions">
@@ -99,6 +110,52 @@ function signed(value) {
     </div>
 
     <template v-else>
+      <section v-if="offseason" class="home-panel offseason-panel" data-test="offseason-briefing">
+        <header class="home-heading">
+          <div>
+            <p class="home-eyebrow">Around the league</p>
+            <h2>{{ offseason.season }}–{{ offseason.season + 1 }} offseason</h2>
+          </div>
+          <RouterLink :to="{ name: 'season-review', query: { season: String(offseason.season) } }">Review {{ offseason.season }} season →</RouterLink>
+        </header>
+        <div class="offseason-grid">
+          <article>
+            <h3>Recent moves</h3>
+            <ol v-if="offseason.recent_moves?.length">
+              <li v-for="move in offseason.recent_moves" :key="move.id">
+                <span class="offseason-meta">{{ move.type }} · {{ formatDate(move.date) }}</span>
+                <RouterLink v-if="move.player_id" :to="{ name: 'player-profile', params: { id: move.player_id } }">{{ move.player_name }}</RouterLink>
+                <strong v-else>{{ move.player_name || 'League move' }}</strong>
+                <p>{{ move.description }}</p>
+              </li>
+            </ol>
+            <p v-else class="home-empty">No offseason moves are stored yet.</p>
+          </article>
+          <article>
+            <h3>Notable free agents</h3>
+            <ol v-if="offseason.free_agents?.length">
+              <li v-for="agent in offseason.free_agents" :key="agent.player_id">
+                <RouterLink :to="{ name: 'player-profile', params: { id: agent.player_id } }">{{ agent.player_name }}</RouterLink>
+                <span class="offseason-meta">{{ agent.position || 'Position unavailable' }} · {{ freeAgentStatLine(agent.stat_line) }}</span>
+                <span class="offseason-meta">Last with {{ agent.former_team }} · {{ agent.war != null ? Number(agent.war).toFixed(1) : '—' }} WAR <template v-if="agent.war_season">({{ agent.war_season }})</template><template v-else>(unavailable)</template> · {{ agent.experience_years ?? '—' }} MLB {{ agent.experience_years === 1 ? 'season' : 'seasons' }}</span>
+              </li>
+            </ol>
+            <p v-else class="home-empty">No confirmed free agents are stored yet.</p>
+          </article>
+          <article>
+            <h3>{{ offseason.season }} awards</h3>
+            <ol v-if="offseason.awards?.length">
+              <li v-for="award in offseason.awards" :key="award.id">
+                <span class="offseason-meta">{{ award.name }}</span>
+                <RouterLink v-if="award.player_id" :to="{ name: 'player-profile', params: { id: award.player_id } }">{{ award.player_name }}</RouterLink>
+                <strong v-else>{{ award.player_name }}</strong>
+              </li>
+            </ol>
+            <p v-else class="home-empty">Award winners have not been stored yet.</p>
+            <RouterLink class="offseason-review-link" :to="{ name: 'season-review', query: { season: String(offseason.season) } }">Explore the full season review →</RouterLink>
+          </article>
+        </div>
+      </section>
       <section class="home-panel slate-panel" data-test="today-games">
         <header class="home-heading">
           <div>
@@ -440,6 +497,81 @@ function signed(value) {
   padding: clamp(1.1rem, 3vw, 1.65rem);
 }
 
+.offseason-panel {
+  background: linear-gradient(145deg, rgba(255, 252, 245, .98), rgba(231, 238, 240, .9));
+}
+
+.offseason-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .85rem;
+}
+
+.offseason-grid article {
+  min-width: 0;
+  padding: 1.2rem;
+  border: 1px solid #d9d7ce;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, .76);
+}
+
+.offseason-grid h3 {
+  margin: 0 0 .65rem;
+  color: #a93627;
+  font-size: .73rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.offseason-grid ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.offseason-grid li {
+  display: grid;
+  gap: .15rem;
+  padding: .62rem 0;
+  border-top: 1px solid #ebe8df;
+  font-size: .84rem;
+}
+
+.offseason-grid li a,
+.offseason-grid li strong {
+  color: #10263d;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.offseason-grid li a:hover,
+.offseason-review-link:hover {
+  text-decoration: underline;
+}
+
+.offseason-grid li p {
+  margin: .1rem 0 0;
+  color: #576b78;
+  font-size: .74rem;
+  line-height: 1.4;
+}
+
+.offseason-meta {
+  color: #697680;
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+.offseason-review-link {
+  display: inline-block;
+  margin-top: .9rem;
+  color: #183e5b;
+  font-size: .75rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
 .home-heading {
   display: flex;
   justify-content: space-between;
@@ -765,6 +897,9 @@ function signed(value) {
 }
 
 @media (max-width: 800px) {
+  .offseason-grid {
+    grid-template-columns: 1fr;
+  }
   .home-shell {
     width: min(100% - 1.2rem, 1440px);
     padding-top: 1rem;

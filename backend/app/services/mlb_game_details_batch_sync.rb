@@ -273,7 +273,7 @@ class MlbGameDetailsBatchSync
   end
 
   def expire_home_snapshot_cache!
-    Rails.cache.delete_matched("home-snapshot/v2/*")
+    Rails.cache.delete_matched("home-snapshot/v5/*")
   end
 
   def success(message, data)
