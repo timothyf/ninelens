@@ -34,4 +34,10 @@ describe('private workflow route guards', () => {
     expect(router.currentRoute.value.name).toBe('login')
     expect(router.currentRoute.value.query).toEqual({ redirect: path })
   })
+
+  it('keeps the free agents page public', async () => {
+    await router.push('/free-agents')
+
+    expect(router.currentRoute.value.name).toBe('free-agents')
+  })
 })

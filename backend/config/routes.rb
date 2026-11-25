@@ -85,6 +85,7 @@ Rails.application.routes.draw do
     end
     resource :alert_digest, only: [ :show, :update ], controller: :alert_digest
     resource :home, only: [:show], controller: :home
+    resource :free_agents, only: [:show], controller: :free_agents
     resource :standings, only: [:show], controller: :standings
     resource :postseason, only: [:show], controller: :postseason
     resource :season_review, only: [:show], controller: :season_review

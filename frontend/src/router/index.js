@@ -5,6 +5,7 @@ import AdminView from '../views/AdminView.vue'
 import AccessDeniedView from '../views/AccessDeniedView.vue'
 import GameSummaryView from '../views/GameSummaryView.vue'
 import HomeView from '../views/HomeView.vue'
+import FreeAgentsView from '../views/FreeAgentsView.vue'
 import LineupScenarioView from '../views/LineupScenarioView.vue'
 import LoginView from '../views/LoginView.vue'
 import ChangePasswordView from '../views/ChangePasswordView.vue'
@@ -28,6 +29,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+    },
+    {
+      path: '/free-agents',
+      name: 'free-agents',
+      component: FreeAgentsView,
     },
     {
       path: '/schedule',

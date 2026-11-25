@@ -81,3 +81,5 @@ dumpdb.sh
 ssh-prod.sh
 transferdb.sh
 /ninelens-transfer
+frontend/src/assets/ninelens_logo.psd
+

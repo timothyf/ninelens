@@ -40,3 +40,5 @@ __screenshots__/
 # Vite
 *.timestamp-*-*.mjs
 
+.psd
+

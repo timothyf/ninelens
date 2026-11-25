@@ -222,6 +222,7 @@ describe('HomeView', () => {
     expect(briefing.text()).toContain('Kevin McGonigle')
     expect(briefing.text()).toContain('Jackie Robinson NL Rookie of the Year')
     expect(briefing.text()).toContain('Sal Stewart')
+    expect(briefing.text()).toContain('View All')
     expect(briefing.text()).toContain('Review 2026 season')
   })
 })

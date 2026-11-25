@@ -141,6 +141,7 @@ function signed(value) {
               </li>
             </ol>
             <p v-else class="home-empty">No confirmed free agents are stored yet.</p>
+            <RouterLink class="offseason-review-link" :to="{ name: 'free-agents' }">View All →</RouterLink>
           </article>
           <article>
             <h3>{{ offseason.season }} awards</h3>
