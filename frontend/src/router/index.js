@@ -5,6 +5,7 @@ import AdminView from '../views/AdminView.vue'
 import AccessDeniedView from '../views/AccessDeniedView.vue'
 import GameSummaryView from '../views/GameSummaryView.vue'
 import HomeView from '../views/HomeView.vue'
+import OffseasonTransactionsView from '../views/OffseasonTransactionsView.vue'
 import FreeAgentsView from '../views/FreeAgentsView.vue'
 import LineupScenarioView from '../views/LineupScenarioView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -29,6 +30,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+    },
+    {
+      path: '/offseason-transactions',
+      name: 'offseason-transactions',
+      component: OffseasonTransactionsView,
     },
     {
       path: '/free-agents',

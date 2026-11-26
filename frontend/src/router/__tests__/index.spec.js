@@ -40,4 +40,10 @@ describe('private workflow route guards', () => {
 
     expect(router.currentRoute.value.name).toBe('free-agents')
   })
+
+  it('keeps the offseason transactions page public', async () => {
+    await router.push('/offseason-transactions')
+
+    expect(router.currentRoute.value.name).toBe('offseason-transactions')
+  })
 })

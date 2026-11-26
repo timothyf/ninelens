@@ -28,34 +28,8 @@ class OffseasonBriefingQuery
     on.month <= 2 ? on.year - 1 : on.year
   end
 
-  def offseason_start
-    Date.new(completed_season, 10, 1)
-  end
-
   def recent_moves
-    trades = Trade.where(occurred_on: offseason_start..on).order(occurred_on: :desc, id: :desc).limit(ITEM_LIMIT).includes(:trade_participants)
-      .map do |trade|
-        participant = trade.trade_participants.first
-        {
-          id: "trade-#{trade.id}", type: "Trade", date: trade.occurred_on,
-          player_id: participant&.player_id, player_name: participant&.player_name,
-          description: trade.description
-        }
-      end
-
-    signings = TeamMembership.where(source_name: MlbPlayerTeamHistoryImporter::SOURCE_NAME, starts_on: offseason_start..on)
-      .order(starts_on: :desc, id: :desc).limit(50).includes(:player, :team).filter_map do |membership|
-        transaction = membership.raw_data.to_h["start_transaction"].to_h
-        next unless transaction["typeCode"].to_s.upcase.in?(%w[SFA SGN]) || transaction["typeDesc"].to_s.match?(/signed/i)
-
-        {
-          id: "signing-#{membership.id}", type: "Signing", date: membership.starts_on,
-          player_id: membership.player_id, player_name: membership.player.full_name,
-          description: "#{membership.player.full_name} signed with #{membership.team.name}"
-        }
-      end
-
-    (trades + signings).sort_by { |move| [ -move[:date].jd, move[:id] ] }.first(ITEM_LIMIT)
+    OffseasonTransactionsQuery.new(on: on).entries.first(ITEM_LIMIT)
   end
 
   def free_agents

@@ -211,6 +211,7 @@ describe('HomeView', () => {
     const briefing = wrapper.get('[data-test="offseason-briefing"]')
     expect(briefing.text()).toContain('2026–2027 offseason')
     expect(briefing.text()).toContain('Winter trade')
+    expect(briefing.findAllComponents(RouterLink).some((link) => link.props('to')?.name === 'offseason-transactions')).toBe(true)
     expect(briefing.text()).toContain('Tarik Skubal')
     expect(briefing.text()).toContain('P · 2026 · 12–7 W–L / 2.72 ERA / 0.960 WHIP')
     expect(briefing.text()).toContain('1B · 2026 · .285 / .360 / .510 AVG/OBP/SLG')
